@@ -48,8 +48,8 @@ The old URLs that are going away are redirected:
 | --- | --- | --- |
 | `/property-detail/?pid=8` | `/properties/water-street/` | `assets/js/legacy.js`, one per building |
 | `/unit-detail/?uid=62` | `/properties/water-street/#units` | same, one per available unit |
-| `/careers/` | `/about-us/` | `_redirects` 301, plus a stub page |
-| `www.evolution24.net/*` | `evolution24.net/*` | `_redirects` 301 |
+| `/careers/` | `/about-us/` | 301 from `vercel.json` (or `_redirects`), plus a stub page |
+| `www.evolution24.net/*` | `evolution24.net/*` | 301 from `vercel.json` (or `_redirects`) |
 
 The query-string redirects are done in JavaScript because no static host redirects on a
 query string portably. Those two stub pages are `noindex` and disallowed in `robots.txt`.
