@@ -1,0 +1,1353 @@
+{
+ "301-central-avenue": [
+  {
+   "id": "01-exterior-aerial",
+   "alt": "Aerial view of the red-brick block at 301 Central Avenue, downtown Rochester",
+   "w": 1284,
+   "h": 698,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "02-living-room",
+   "alt": "Open living room with exposed ceiling and sofa, 301 Central Avenue",
+   "w": 1859,
+   "h": 2479,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1859
+   ]
+  },
+  {
+   "id": "03-living-room-sofa",
+   "alt": "Living room with black sofa and marble coffee table",
+   "w": 2171,
+   "h": 2895,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "04-kitchen",
+   "alt": "White galley kitchen with stainless appliances",
+   "w": 1288,
+   "h": 1717,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1288
+   ]
+  },
+  {
+   "id": "05-kitchen-galley",
+   "alt": "Galley kitchen looking toward the windows",
+   "w": 1937,
+   "h": 2583,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1937
+   ]
+  },
+  {
+   "id": "06-kitchen-refrigerator",
+   "alt": "Kitchen with stainless refrigerator and dark accent wall",
+   "w": 1352,
+   "h": 1802,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1352
+   ]
+  },
+  {
+   "id": "07-dining-nook",
+   "alt": "Round dining table with two chairs by the window",
+   "w": 1861,
+   "h": 2482,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1861
+   ]
+  },
+  {
+   "id": "08-bedroom-brick",
+   "alt": "Bedroom with exposed brick wall and upholstered bed",
+   "w": 1611,
+   "h": 2149,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1611
+   ]
+  },
+  {
+   "id": "09-bedroom-art",
+   "alt": "Bedroom with exposed brick and framed art",
+   "w": 1377,
+   "h": 1836,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1377
+   ]
+  },
+  {
+   "id": "10-bedroom-bay-window",
+   "alt": "Bedroom with bay windows",
+   "w": 1238,
+   "h": 1651,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1238
+   ]
+  },
+  {
+   "id": "11-bedroom-sunlit",
+   "alt": "Sunlit bedroom with upholstered headboard",
+   "w": 2828,
+   "h": 2121,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "12-shower-marble",
+   "alt": "Marble-tiled walk-in shower",
+   "w": 2817,
+   "h": 2994,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "13-bathroom",
+   "alt": "Bathroom with white vanity",
+   "w": 1970,
+   "h": 2627,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1970
+   ]
+  },
+  {
+   "id": "14-washer-dryer",
+   "alt": "In-unit washer and dryer",
+   "w": 3024,
+   "h": 1892,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "15-closet",
+   "alt": "Walk-in closet",
+   "w": 2379,
+   "h": 3172,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  }
+ ],
+ "2215-james-street": [
+  {
+   "id": "01-exterior",
+   "alt": "Historic house with two-storey columned porches at 2215 James Street, Syracuse",
+   "w": 640,
+   "h": 426,
+   "thumb": false,
+   "widths": [
+    480,
+    640
+   ]
+  }
+ ],
+ "121-park-drive": [
+  {
+   "id": "01-exterior",
+   "alt": "Restored Victorian mansion at 121 Park Drive, Manlius, with wraparound porch",
+   "w": 1440,
+   "h": 1920,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1440
+   ]
+  },
+  {
+   "id": "02-porch-view",
+   "alt": "Covered porch overlooking the large wooded backyard",
+   "w": 640,
+   "h": 480,
+   "thumb": false,
+   "widths": [
+    480,
+    640
+   ]
+  },
+  {
+   "id": "03-living-room",
+   "alt": "Living room with hardwood floors and large windows",
+   "w": 600,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480,
+    600
+   ]
+  },
+  {
+   "id": "04-kitchen-dining",
+   "alt": "Kitchen door with a bistro table and stools",
+   "w": 600,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480,
+    600
+   ]
+  },
+  {
+   "id": "05-kitchen",
+   "alt": "Kitchen with wood cabinets and black appliances",
+   "w": 600,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480,
+    600
+   ]
+  },
+  {
+   "id": "06-bedroom",
+   "alt": "Bedroom with hardwood floor and dresser",
+   "w": 600,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480,
+    600
+   ]
+  },
+  {
+   "id": "07-entry",
+   "alt": "Hallway with a stacked washer and dryer",
+   "w": 600,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480,
+    600
+   ]
+  },
+  {
+   "id": "08-bathroom",
+   "alt": "Bathroom with vanity and window",
+   "w": 480,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480
+   ]
+  },
+  {
+   "id": "09-living-room-windows",
+   "alt": "Bright living room with a band of windows",
+   "w": 460,
+   "h": 608,
+   "thumb": false,
+   "widths": [
+    460
+   ]
+  },
+  {
+   "id": "10-living-room-office",
+   "alt": "Room with hardwood floors and a dresser",
+   "w": 446,
+   "h": 602,
+   "thumb": false,
+   "widths": [
+    446
+   ]
+  },
+  {
+   "id": "11-living-room-2",
+   "alt": "Living room with sofa and television",
+   "w": 463,
+   "h": 612,
+   "thumb": false,
+   "widths": [
+    463
+   ]
+  },
+  {
+   "id": "12-french-doors",
+   "alt": "French doors opening onto a bedroom",
+   "w": 433,
+   "h": 592,
+   "thumb": false,
+   "widths": [
+    433
+   ]
+  },
+  {
+   "id": "13-bedroom-french-doors",
+   "alt": "Bedroom seen through glass French doors",
+   "w": 462,
+   "h": 614,
+   "thumb": false,
+   "widths": [
+    462
+   ]
+  },
+  {
+   "id": "14-bedroom-2",
+   "alt": "Bedroom with sloped ceiling and ceiling fan",
+   "w": 455,
+   "h": 603,
+   "thumb": false,
+   "widths": [
+    455
+   ]
+  },
+  {
+   "id": "15-bedroom-3",
+   "alt": "Bedroom with rug and dormer window",
+   "w": 459,
+   "h": 610,
+   "thumb": false,
+   "widths": [
+    459
+   ]
+  },
+  {
+   "id": "16-kitchen-2",
+   "alt": "Kitchen with grey cabinets and white range",
+   "w": 448,
+   "h": 600,
+   "thumb": false,
+   "widths": [
+    448
+   ]
+  },
+  {
+   "id": "17-kitchen-laundry",
+   "alt": "Stacked washer and dryer beside the kitchen",
+   "w": 460,
+   "h": 610,
+   "thumb": false,
+   "widths": [
+    460
+   ]
+  },
+  {
+   "id": "18-bathroom-2",
+   "alt": "Bathroom with tub and shower",
+   "w": 435,
+   "h": 602,
+   "thumb": false,
+   "widths": [
+    435
+   ]
+  }
+ ],
+ "561-south-main-street": [
+  {
+   "id": "01-exterior",
+   "alt": "White Italianate house at 561 South Main Street, Geneva",
+   "w": 800,
+   "h": 974,
+   "thumb": false,
+   "widths": [
+    480,
+    800
+   ]
+  },
+  {
+   "id": "02-studio-living",
+   "alt": "Bedroom and sitting area under a pressed-tin ceiling",
+   "w": 2388,
+   "h": 1791,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "03-bedroom-tin-ceiling",
+   "alt": "Bedroom under a restored pressed-tin ceiling",
+   "w": 2044,
+   "h": 1533,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "04-bedroom",
+   "alt": "Bedroom with black and white bedding",
+   "w": 1321,
+   "h": 1761,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1321
+   ]
+  },
+  {
+   "id": "05-kitchen",
+   "alt": "Kitchen with white cabinets and wood floor",
+   "w": 1507,
+   "h": 2009,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1507
+   ]
+  },
+  {
+   "id": "06-gas-range",
+   "alt": "Stainless gas range and open shelving",
+   "w": 1653,
+   "h": 2204,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1653
+   ]
+  },
+  {
+   "id": "07-bedroom-mirror",
+   "alt": "Bedroom with arched mirror",
+   "w": 1831,
+   "h": 2441,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1831
+   ]
+  },
+  {
+   "id": "08-bathroom",
+   "alt": "Bathroom vanity with gold fixtures",
+   "w": 1977,
+   "h": 2636,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1977
+   ]
+  }
+ ],
+ "145-south-fitzhugh-street": [
+  {
+   "id": "01-exterior",
+   "alt": "Brick apartment buildings at 145 South Fitzhugh Street, Rochester",
+   "w": 1058,
+   "h": 1083,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1058
+   ]
+  },
+  {
+   "id": "02-living-room",
+   "alt": "Living room with dark wood floors",
+   "w": 1320,
+   "h": 1755,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1320
+   ]
+  },
+  {
+   "id": "03-kitchen",
+   "alt": "White kitchen with stainless range",
+   "w": 1320,
+   "h": 1749,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1320
+   ]
+  },
+  {
+   "id": "04-kitchen-2",
+   "alt": "Breakfast counter with stools, granite and a red refrigerator",
+   "w": 1320,
+   "h": 1755,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1320
+   ]
+  },
+  {
+   "id": "05-bedroom",
+   "alt": "Bedroom with window and grey bedding",
+   "w": 1320,
+   "h": 1756,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1320
+   ]
+  },
+  {
+   "id": "06-bathroom",
+   "alt": "Bathroom with tub",
+   "w": 1320,
+   "h": 1756,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1320
+   ]
+  },
+  {
+   "id": "07-living-room-2",
+   "alt": "Bright living room with dark hardwood floors",
+   "w": 2427,
+   "h": 2427,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "08-living-room-3",
+   "alt": "Living room with ceiling fan",
+   "w": 2992,
+   "h": 2992,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "09-kitchen-red-fridge",
+   "alt": "Kitchen with gas range and a red retro refrigerator",
+   "w": 2074,
+   "h": 2074,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "10-bathroom-2",
+   "alt": "Bathroom with tub, subway tile and black fixtures",
+   "w": 2158,
+   "h": 2158,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "11-hallway",
+   "alt": "Hallway with dark wood floors",
+   "w": 2363,
+   "h": 2363,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "12-hallway-2",
+   "alt": "Hall with a closet, leading to the kitchen",
+   "w": 2689,
+   "h": 2689,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "13-studio-living",
+   "alt": "Studio living area with desk and television",
+   "w": 1284,
+   "h": 1434,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "14-studio-kitchen",
+   "alt": "Studio kitchen with stainless range",
+   "w": 1284,
+   "h": 1696,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "15-studio-bedroom",
+   "alt": "Studio sleeping area with ceiling fan",
+   "w": 1284,
+   "h": 1502,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "16-studio-bedroom-2",
+   "alt": "Bed with a red door beyond",
+   "w": 1284,
+   "h": 1745,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "17-studio-bathroom",
+   "alt": "Bathroom with subway tile and black fixtures",
+   "w": 1284,
+   "h": 1690,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "18-studio-vanity",
+   "alt": "Corner with a wall sink and a desk",
+   "w": 1284,
+   "h": 1868,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1284
+   ]
+  },
+  {
+   "id": "19-studio-living-2",
+   "alt": "Studio with seating and kitchen beyond",
+   "w": 1260,
+   "h": 1681,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1260
+   ]
+  },
+  {
+   "id": "20-studio-living-3",
+   "alt": "Studio living and dining area",
+   "w": 1213,
+   "h": 1617,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1213
+   ]
+  },
+  {
+   "id": "21-studio-kitchen-2",
+   "alt": "Studio kitchen with red refrigerator",
+   "w": 1759,
+   "h": 2346,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1759
+   ]
+  },
+  {
+   "id": "22-studio-bedroom-3",
+   "alt": "Bed beneath two windows",
+   "w": 1348,
+   "h": 1797,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1348
+   ]
+  },
+  {
+   "id": "23-studio-bedroom-4",
+   "alt": "Bed with dark headboard",
+   "w": 1473,
+   "h": 1965,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1473
+   ]
+  },
+  {
+   "id": "24-studio-bathroom-2",
+   "alt": "Bathroom with pedestal sink",
+   "w": 1486,
+   "h": 1982,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1486
+   ]
+  },
+  {
+   "id": "25-studio-shower",
+   "alt": "Tiled shower with black fixtures",
+   "w": 1609,
+   "h": 2145,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1609
+   ]
+  }
+ ],
+ "31-genesee-street": [
+  {
+   "id": "01-exterior",
+   "alt": "Slate-grey two-storey house with front porch at 31 Genesee Street, Geneva",
+   "w": 439,
+   "h": 412,
+   "thumb": false,
+   "widths": [
+    439
+   ]
+  }
+ ],
+ "water-street": [
+  {
+   "id": "01-exterior",
+   "alt": "Red-brick apartment building on North Water Street, Rochester",
+   "w": 960,
+   "h": 640,
+   "thumb": false,
+   "widths": [
+    480,
+    960
+   ]
+  },
+  {
+   "id": "02-loft-studio",
+   "alt": "Loft studio with high ceilings",
+   "w": 1922,
+   "h": 2563,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1922
+   ]
+  },
+  {
+   "id": "03-loft-mezzanine",
+   "alt": "Loft with a sleeping mezzanine",
+   "w": 1739,
+   "h": 2318,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1739
+   ]
+  },
+  {
+   "id": "04-loft-studio-2",
+   "alt": "Loft studio with tall window",
+   "w": 2371,
+   "h": 3161,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "05-loft-studio-3",
+   "alt": "Loft studio with dark wood floors",
+   "w": 1948,
+   "h": 2598,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1948
+   ]
+  },
+  {
+   "id": "06-bathroom",
+   "alt": "Bathroom with shower and window",
+   "w": 1538,
+   "h": 2051,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1538
+   ]
+  },
+  {
+   "id": "07-lobby",
+   "alt": "Building entrance with terracotta tile floor",
+   "w": 2316,
+   "h": 1544,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "08-elevator-lobby",
+   "alt": "Elevator lobby",
+   "w": 3206,
+   "h": 2137,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "09-laundry-room",
+   "alt": "On-site laundry room",
+   "w": 2643,
+   "h": 1762,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "10-bathroom-2",
+   "alt": "Bathroom with wood vanity",
+   "w": 3874,
+   "h": 2582,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  }
+ ],
+ "biltmore": [
+  {
+   "id": "01-lobby",
+   "alt": "The Biltmore lobby: herringbone mosaic floor, crystal chandelier and a black staircase",
+   "w": 1086,
+   "h": 1448,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1086
+   ]
+  },
+  {
+   "id": "02-exterior",
+   "alt": "The Biltmore, a yellow-brick apartment building at 357 Alexander Street, Rochester",
+   "w": 1200,
+   "h": 1600,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1200
+   ]
+  },
+  {
+   "id": "03-entrance",
+   "alt": "Front entrance of the Biltmore with columns and planters",
+   "w": 1065,
+   "h": 1421,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1065
+   ]
+  },
+  {
+   "id": "04-studio-living",
+   "alt": "Furnished studio with chandelier and marble coffee table",
+   "w": 1328,
+   "h": 1771,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1328
+   ]
+  },
+  {
+   "id": "05-bedroom-thumb",
+   "alt": "Furnished bedroom with gallery wall",
+   "w": 139,
+   "h": 185,
+   "thumb": true,
+   "widths": [
+    139
+   ]
+  },
+  {
+   "id": "06-dining-thumb",
+   "alt": "Dining corner",
+   "w": 159,
+   "h": 212,
+   "thumb": true,
+   "widths": [
+    159
+   ]
+  },
+  {
+   "id": "07-lobby-thumb",
+   "alt": "Lobby",
+   "w": 153,
+   "h": 204,
+   "thumb": true,
+   "widths": [
+    153
+   ]
+  },
+  {
+   "id": "08-bathroom-thumb",
+   "alt": "Bathroom",
+   "w": 167,
+   "h": 223,
+   "thumb": true,
+   "widths": [
+    167
+   ]
+  },
+  {
+   "id": "09-bedroom-2-thumb",
+   "alt": "Bedroom with navy wall",
+   "w": 136,
+   "h": 181,
+   "thumb": true,
+   "widths": [
+    136
+   ]
+  },
+  {
+   "id": "10-kitchen-thumb",
+   "alt": "White kitchen",
+   "w": 165,
+   "h": 220,
+   "thumb": true,
+   "widths": [
+    165
+   ]
+  }
+ ],
+ "379-south-main-street": [
+  {
+   "id": "01-aerial",
+   "alt": "Aerial view over South Main Street, Geneva, toward Seneca Lake",
+   "w": 768,
+   "h": 576,
+   "thumb": false,
+   "widths": [
+    480,
+    768
+   ]
+  },
+  {
+   "id": "02-living-room",
+   "alt": "Living room with fireplace and deep green walls",
+   "w": 720,
+   "h": 960,
+   "thumb": false,
+   "widths": [
+    480,
+    720
+   ]
+  },
+  {
+   "id": "03-living-kitchen",
+   "alt": "Kitchen and desk under a crystal ceiling light",
+   "w": 720,
+   "h": 960,
+   "thumb": false,
+   "widths": [
+    480,
+    720
+   ]
+  },
+  {
+   "id": "04-kitchen",
+   "alt": "Hall with marble-look floor and a floor mirror",
+   "w": 720,
+   "h": 960,
+   "thumb": false,
+   "widths": [
+    480,
+    720
+   ]
+  },
+  {
+   "id": "05-kitchen-2",
+   "alt": "Kitchen with white cabinets",
+   "w": 720,
+   "h": 960,
+   "thumb": false,
+   "widths": [
+    480,
+    720
+   ]
+  },
+  {
+   "id": "06-kitchen-3",
+   "alt": "Kitchen with stainless refrigerator",
+   "w": 960,
+   "h": 720,
+   "thumb": false,
+   "widths": [
+    480,
+    960
+   ]
+  },
+  {
+   "id": "07-bedroom-fireplace",
+   "alt": "Bedroom with a fireplace",
+   "w": 960,
+   "h": 720,
+   "thumb": false,
+   "widths": [
+    480,
+    960
+   ]
+  },
+  {
+   "id": "08-bedroom",
+   "alt": "Bedroom with a trundle bed and tall windows",
+   "w": 720,
+   "h": 960,
+   "thumb": false,
+   "widths": [
+    480,
+    720
+   ]
+  },
+  {
+   "id": "09-bedroom-green",
+   "alt": "Bedroom with dark green walls and chandelier",
+   "w": 720,
+   "h": 960,
+   "thumb": false,
+   "widths": [
+    480,
+    720
+   ]
+  },
+  {
+   "id": "10-sitting-room",
+   "alt": "Sitting room with daybed and chandelier",
+   "w": 960,
+   "h": 720,
+   "thumb": false,
+   "widths": [
+    480,
+    960
+   ]
+  }
+ ],
+ "181-st-paul-street": [
+  {
+   "id": "01-exterior",
+   "alt": "Seven-storey red-brick building with arched top-floor windows on St. Paul Street, downtown Rochester",
+   "w": 1024,
+   "h": 1216,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1024
+   ]
+  },
+  {
+   "id": "02-studio",
+   "alt": "Loft studio with tall windows, exposed pipes and plank floors",
+   "w": 1134,
+   "h": 850,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1134
+   ]
+  },
+  {
+   "id": "03-studio-brick",
+   "alt": "Long loft studio with a painted brick wall",
+   "w": 1426,
+   "h": 1070,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1426
+   ]
+  },
+  {
+   "id": "04-kitchen",
+   "alt": "Studio kitchen",
+   "w": 1660,
+   "h": 1245,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1660
+   ]
+  },
+  {
+   "id": "05-bathroom",
+   "alt": "Bathroom",
+   "w": 2870,
+   "h": 2152,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  }
+ ],
+ "charlotte-square": [
+  {
+   "id": "01-exterior-facade",
+   "alt": "Charlotte Square, a four-storey apartment building at 50 Charlotte Street in Rochester's East End",
+   "w": 2000,
+   "h": 1201,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "02-plaza",
+   "alt": "The plaza in front of Charlotte Square",
+   "w": 800,
+   "h": 800,
+   "thumb": false,
+   "widths": [
+    480,
+    800
+   ]
+  },
+  {
+   "id": "03-living-room",
+   "alt": "Living room at Charlotte Square",
+   "w": 975,
+   "h": 1300,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    975
+   ]
+  },
+  {
+   "id": "04-kitchen",
+   "alt": "Kitchen with granite counters and stainless appliances at Charlotte Square",
+   "w": 1800,
+   "h": 1112,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600,
+    1800
+   ]
+  },
+  {
+   "id": "05-lobby-lounge",
+   "alt": "Lobby lounge at Charlotte Square",
+   "w": 1600,
+   "h": 1067,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1600
+   ]
+  },
+  {
+   "id": "06-fitness",
+   "alt": "Fitness center at Charlotte Square",
+   "w": 533,
+   "h": 400,
+   "thumb": false,
+   "widths": [
+    480,
+    533
+   ]
+  },
+  {
+   "id": "07-terrace",
+   "alt": "Pergola on the Charlotte Square terrace",
+   "w": 1290,
+   "h": 1720,
+   "thumb": false,
+   "widths": [
+    480,
+    960,
+    1290
+   ]
+  },
+  {
+   "id": "08-exterior",
+   "alt": "Charlotte Square at 50 Charlotte Street",
+   "w": 800,
+   "h": 800,
+   "thumb": false,
+   "widths": [
+    480,
+    800
+   ]
+  },
+  {
+   "id": "09-lounge-thumb",
+   "alt": "Lounge",
+   "w": 177,
+   "h": 197,
+   "thumb": true,
+   "widths": [
+    177
+   ]
+  },
+  {
+   "id": "10-fitness-thumb",
+   "alt": "Fitness room",
+   "w": 164,
+   "h": 210,
+   "thumb": true,
+   "widths": [
+    164
+   ]
+  }
+ ]
+}

@@ -1,0 +1,442 @@
+{
+ "_about": "Facts about each building. Everything here was read off evolution24.net and its Rent Manager listings on 22 September 2026 unless a field says otherwise. 'desc_source' is 'site' when the words are the old site's own, 'written' when the old site had no description and one was written from the listing facts and photos only. Review every 'written' one.",
+ "units_as_of": "2026-09-22",
+ "properties": [
+  {
+   "slug": "301-central-avenue",
+   "pid": 1,
+   "name": "301 Central Avenue",
+   "street": "301 Central Avenue",
+   "city": "Rochester",
+   "zip": "14605",
+   "region": "rochester",
+   "area": "Downtown Rochester",
+   "type": "Multifamily",
+   "cover": "02-living-room",
+   "card": "10-bedroom-bay-window",
+   "desc": "Gorgeous, fully renovated apartments in the heart of downtown Rochester. Enjoy convenient living close to where you work and play. Choose from 1- or 2-bedroom apartments, furnished or unfurnished.",
+   "desc_source": "site",
+   "bedrooms": "1–2 bedrooms",
+   "amenities": [
+    "Dishwasher",
+    "Microwave",
+    "In-unit washer/dryer",
+    "Central air",
+    "Furnished or unfurnished"
+   ],
+   "units": [
+    {
+     "uid": 6,
+     "unit": "6",
+     "beds": 2,
+     "baths": 1,
+     "rent": 1900
+    }
+   ]
+  },
+  {
+   "slug": "145-south-fitzhugh-street",
+   "pid": 6,
+   "name": "145 South Fitzhugh",
+   "street": "145 South Fitzhugh Street",
+   "city": "Rochester",
+   "zip": "14608",
+   "region": "rochester",
+   "area": "Just outside downtown Rochester",
+   "type": "Multifamily",
+   "cover": "15-studio-bedroom",
+   "card": "01-exterior",
+   "desc": "Modern studio and 1-bedroom apartments on a quiet street just outside downtown Rochester. Perfect for singles or couples, and close to shopping, dining, schools and hospitals.",
+   "desc_source": "site",
+   "bedrooms": "Studios and 1 bedrooms",
+   "amenities": [
+    "Off-street parking",
+    "Parking lot",
+    "On-site laundry",
+    "Extra storage available"
+   ],
+   "units": [
+    {
+     "uid": 34,
+     "unit": "1-1",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 650,
+     "rent": 1750
+    },
+    {
+     "uid": 36,
+     "unit": "1-3",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 650,
+     "rent": 1365
+    },
+    {
+     "uid": 39,
+     "unit": "2-2",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 450,
+     "rent": 1195
+    },
+    {
+     "uid": 48,
+     "unit": "4-2",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 450,
+     "rent": 1600
+    }
+   ]
+  },
+  {
+   "slug": "water-street",
+   "pid": 8,
+   "name": "Water Street",
+   "old_name": "Water Street",
+   "street": "168–176 North Water Street",
+   "city": "Rochester",
+   "zip": "14604",
+   "region": "rochester",
+   "area": "Downtown Rochester",
+   "type": "Apartment building",
+   "cover": "03-loft-mezzanine",
+   "card": "01-exterior",
+   "desc": "Gorgeous, fully updated loft apartments close to downtown Rochester, with plenty of space and elegant high ceilings. Both buildings offer studios as well as 1-, 2- and 3-bedroom homes. Enjoy modern conveniences and community-style living with a full on-site gym.",
+   "desc_source": "site",
+   "bedrooms": "Studios to 3 bedrooms",
+   "amenities": [
+    "High ceilings",
+    "On-site gym",
+    "On-site laundry",
+    "Elevator",
+    "Extra storage available",
+    "Garage parking available"
+   ],
+   "units": [
+    {
+     "uid": 62,
+     "unit": "103RV",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 348,
+     "rent": 1175
+    },
+    {
+     "uid": 64,
+     "unit": "105RV",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 483,
+     "rent": 1300
+    },
+    {
+     "uid": 73,
+     "unit": "302RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 619,
+     "rent": 1590
+    },
+    {
+     "uid": 85,
+     "unit": "502RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 619,
+     "rent": 1625
+    },
+    {
+     "uid": 87,
+     "unit": "504RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 505,
+     "rent": 1600
+    },
+    {
+     "uid": 90,
+     "unit": "601RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 597,
+     "rent": 1400
+    },
+    {
+     "uid": 94,
+     "unit": "605RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 807,
+     "rent": 1700
+    }
+   ]
+  },
+  {
+   "slug": "biltmore",
+   "pid": 9,
+   "name": "The Biltmore",
+   "old_name": "Biltmore",
+   "street": "357 Alexander Street",
+   "city": "Rochester",
+   "zip": "14607",
+   "region": "rochester",
+   "area": "East End, Rochester",
+   "type": "Apartment building",
+   "cover": "01-lobby",
+   "card": "03-entrance",
+   "desc": "A classic yellow-brick apartment building on Alexander Street, with a restored lobby of mosaic tile, crystal and black lacquer. Furnished studios come with WiFi and appliances included, and pets are welcome.",
+   "desc_source": "written",
+   "bedrooms": "Furnished studios",
+   "amenities": [
+    "Furnished",
+    "WiFi",
+    "Appliances included",
+    "Laundry facility",
+    "Pets allowed"
+   ],
+   "units": [
+    {
+     "uid": 128,
+     "unit": "10",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 365,
+     "rent": 1595,
+     "note": "Furnished"
+    }
+   ]
+  },
+  {
+   "slug": "181-st-paul-street",
+   "pid": 11,
+   "name": "181 St. Paul",
+   "old_name": "179-189 St Paul",
+   "street": "181 St. Paul Street",
+   "city": "Rochester",
+   "zip": "14604",
+   "region": "rochester",
+   "area": "Downtown Rochester",
+   "type": "Apartment building",
+   "cover": "02-studio",
+   "card": "01-exterior",
+   "desc": "Loft studios in a seven-storey brick building on St. Paul Street, downtown. Tall windows, plank floors and painted brick, a short walk from the river and the heart of the city.",
+   "desc_source": "written",
+   "bedrooms": "Loft studios",
+   "amenities": [
+    "Tall windows",
+    "Exposed brick"
+   ],
+   "units": [
+    {
+     "uid": 172,
+     "unit": "4E",
+     "beds": 0,
+     "sqft": 470,
+     "rent": 1195
+    },
+    {
+     "uid": 185,
+     "unit": "6E",
+     "beds": 0,
+     "sqft": 520,
+     "rent": 1200
+    }
+   ]
+  },
+  {
+   "slug": "charlotte-square",
+   "pid": 12,
+   "name": "Charlotte Square",
+   "street": "50 Charlotte Street",
+   "city": "Rochester",
+   "zip": "14607",
+   "region": "rochester",
+   "area": "East End, Rochester",
+   "type": "Apartment community",
+   "cover": "01-exterior-facade",
+   "card": "01-exterior-facade",
+   "desc": "Seventy-two luxury apartments at the heart of Rochester's East End. Built in 2016 and LEED-designed, with granite, stainless and private outdoor space in every home, and a space in the secure garage included.",
+   "desc_source": "charlottesquareroc.com",
+   "bedrooms": "1–3 bedrooms",
+   "amenities": [
+    "Private terrace or balcony",
+    "In-unit washer/dryer",
+    "Dishwasher",
+    "Central air",
+    "Garage space included",
+    "Fitness center",
+    "Community room",
+    "Terrace with pergola and grills",
+    "EV charging",
+    "Bike storage"
+   ],
+   "external": "https://www.charlottesquareroc.com/",
+   "rent_range": [
+    1750,
+    3695
+   ],
+   "rent_as_of": "2026-09-21",
+   "leasing": {
+    "name": "Vicki Barone",
+    "phone": "(585) 748-5588",
+    "hours": "Monday to Friday, 8 am – 4 pm"
+   },
+   "units": []
+  },
+  {
+   "slug": "2215-james-street",
+   "pid": 2,
+   "name": "2215 James Street",
+   "street": "2215 James Street",
+   "city": "Syracuse",
+   "zip": "13206",
+   "region": "syracuse",
+   "area": "Near downtown Syracuse",
+   "type": "Multifamily",
+   "cover": "01-exterior",
+   "card": "01-exterior",
+   "desc": "Close to downtown Syracuse, this historic property has been updated and is ready for you to call it home. Shopping, dining and recreation are a short walk away. Rent includes all utilities, with laundry on site and a large driveway.",
+   "desc_source": "site",
+   "amenities": [
+    "All utilities included",
+    "On-site laundry",
+    "Off-street parking",
+    "Parking lot",
+    "Garage parking available"
+   ],
+   "units": []
+  },
+  {
+   "slug": "121-park-drive",
+   "pid": 3,
+   "name": "121 Park Drive",
+   "street": "121 Park Drive",
+   "city": "Manlius",
+   "zip": "13104",
+   "region": "syracuse",
+   "area": "Manlius, near Syracuse",
+   "type": "Multifamily",
+   "cover": "01-exterior",
+   "card": "01-exterior",
+   "desc": "A beautifully restored Victorian mansion on a quiet, scenic street in Manlius that is still close to all the action. Shopping, dining and the outdoors are within walking distance, or stay close to home and enjoy a tranquil afternoon in the large backyard.",
+   "desc_source": "site",
+   "bedrooms": "1–2 bedrooms",
+   "amenities": [
+    "Large backyard",
+    "Covered porch",
+    "Off-street parking",
+    "Parking lot",
+    "On-site laundry"
+   ],
+   "units": [
+    {
+     "uid": 26,
+     "unit": "4",
+     "beds": 1,
+     "baths": 1,
+     "rent": 1695
+    },
+    {
+     "uid": 27,
+     "unit": "5",
+     "beds": 2,
+     "rent": 1895
+    }
+   ]
+  },
+  {
+   "slug": "379-south-main-street",
+   "pid": 10,
+   "name": "379 South Main",
+   "street": "379 South Main Street",
+   "city": "Geneva",
+   "zip": "14456",
+   "region": "geneva",
+   "area": "South Main Street, Geneva",
+   "type": "Multifamily",
+   "cover": "02-living-room",
+   "card": "02-living-room",
+   "desc": "A generous home on South Main Street in Geneva, a few blocks above Seneca Lake. Original fireplaces, tall windows and chandeliers, with a dishwasher, central air and a washer and dryer in the unit.",
+   "desc_source": "written",
+   "bedrooms": "3 bedrooms",
+   "amenities": [
+    "Dishwasher",
+    "In-unit washer/dryer",
+    "Central air",
+    "On-site laundry",
+    "Fireplaces"
+   ],
+   "units": [
+    {
+     "uid": 152,
+     "unit": "2",
+     "beds": 3,
+     "baths": 1,
+     "rent": 3300
+    }
+   ]
+  },
+  {
+   "slug": "561-south-main-street",
+   "pid": 5,
+   "name": "561 South Main",
+   "street": "561 South Main Street",
+   "city": "Geneva",
+   "zip": "14456",
+   "region": "geneva",
+   "area": "South Main Street, Geneva",
+   "type": "Multifamily",
+   "cover": "03-bedroom-tin-ceiling",
+   "card": "01-exterior",
+   "desc": "Apartments in a white Italianate house on South Main Street in Geneva, renovated under their original pressed-tin ceilings, with a gas range and new baths.",
+   "desc_source": "written",
+   "bedrooms": "2 bedrooms",
+   "amenities": [
+    "Pressed-tin ceilings",
+    "Gas range"
+   ],
+   "units": [
+    {
+     "uid": 55,
+     "unit": "5",
+     "beds": 2,
+     "baths": 1,
+     "rent": 1425
+    }
+   ]
+  },
+  {
+   "slug": "31-genesee-street",
+   "pid": 7,
+   "name": "31 Genesee Street",
+   "street": "31 Genesee Street",
+   "city": "Geneva",
+   "zip": "14456",
+   "region": "geneva",
+   "area": "Geneva",
+   "type": "Multifamily",
+   "cover": "01-exterior",
+   "card": "01-exterior",
+   "desc": "A two-storey house with a deep front porch on Genesee Street in Geneva.",
+   "desc_source": "written",
+   "amenities": [],
+   "units": []
+  }
+ ],
+ "regions": {
+  "rochester": {
+   "name": "Rochester",
+   "blurb": "Downtown lofts, East End classics and a new-build community, from studios to three bedrooms."
+  },
+  "syracuse": {
+   "name": "Syracuse & Manlius",
+   "blurb": "A historic home near downtown Syracuse and a restored Victorian in the village of Manlius."
+  },
+  "geneva": {
+   "name": "Geneva",
+   "blurb": "Houses on South Main and Genesee Street, above Seneca Lake in the Finger Lakes."
+  }
+ }
+}

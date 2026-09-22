@@ -1,0 +1,49 @@
+# Evolution24 Properties
+
+> Family-owned property management company, founded 2024, with apartments in Rochester, Syracuse, Manlius and Geneva, New York.
+
+## Contact
+- Office: 176 N Water Street, Rochester, NY 14604
+- Phone: 585-245-3071
+- Email: tesacoleman9@gmail.com
+- Residents pay rent and request maintenance at https://evolution.twa.rentmanager.com/
+- Pets: up to two per apartment; $300 non-refundable deposit and $45 a month per pet.
+- Rent is paid by check, money order or online. Cash is not accepted.
+
+## Properties (11)
+- [301 Central Avenue](https://evolution24.net/properties/301-central-avenue/): 301 Central Avenue, Rochester, NY 14605. 1–2 bedrooms. 1 available, from $1,900/mo.
+- [145 South Fitzhugh](https://evolution24.net/properties/145-south-fitzhugh-street/): 145 South Fitzhugh Street, Rochester, NY 14608. Studios and 1 bedrooms. 4 available, from $1,195/mo.
+- [Water Street](https://evolution24.net/properties/water-street/): 168–176 North Water Street, Rochester, NY 14604. Studios to 3 bedrooms. 7 available, from $1,175/mo.
+- [The Biltmore](https://evolution24.net/properties/biltmore/): 357 Alexander Street, Rochester, NY 14607. Furnished studios. 1 available, from $1,595/mo.
+- [181 St. Paul](https://evolution24.net/properties/181-st-paul-street/): 181 St. Paul Street, Rochester, NY 14604. Loft studios. 2 available, from $1,195/mo.
+- [Charlotte Square](https://evolution24.net/properties/charlotte-square/): 50 Charlotte Street, Rochester, NY 14607. 1–3 bedrooms. see https://www.charlottesquareroc.com/.
+- [2215 James Street](https://evolution24.net/properties/2215-james-street/): 2215 James Street, Syracuse, NY 13206. Multifamily. fully leased.
+- [121 Park Drive](https://evolution24.net/properties/121-park-drive/): 121 Park Drive, Manlius, NY 13104. 1–2 bedrooms. 2 available, from $1,695/mo.
+- [379 South Main](https://evolution24.net/properties/379-south-main-street/): 379 South Main Street, Geneva, NY 14456. 3 bedrooms. 1 available, from $3,300/mo.
+- [561 South Main](https://evolution24.net/properties/561-south-main-street/): 561 South Main Street, Geneva, NY 14456. 2 bedrooms. 1 available, from $1,425/mo.
+- [31 Genesee Street](https://evolution24.net/properties/31-genesee-street/): 31 Genesee Street, Geneva, NY 14456. Multifamily. fully leased.
+
+## Available apartments (as of 22 September 2026)
+- Water Street, Rochester: unit 103RV, Studio · 1 bath, 348 sq ft, $1,175/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=62
+- 145 South Fitzhugh, Rochester: unit 2-2, Studio · 1 bath, 450 sq ft, $1,195/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=39
+- 181 St. Paul, Rochester: unit 4E, Studio, 470 sq ft, $1,195/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=172
+- 181 St. Paul, Rochester: unit 6E, Studio, 520 sq ft, $1,200/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=185
+- Water Street, Rochester: unit 105RV, Studio · 1 bath, 483 sq ft, $1,300/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=64
+- 145 South Fitzhugh, Rochester: unit 1-3, 1 bed · 1 bath, 650 sq ft, $1,365/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=36
+- Water Street, Rochester: unit 601RV, 1 bed · 1 bath, 597 sq ft, $1,400/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=90
+- 561 South Main, Geneva: unit 5, 2 bed · 1 bath, $1,425/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=55
+- Water Street, Rochester: unit 302RV, 1 bed · 1 bath, 619 sq ft, $1,590/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=73
+- The Biltmore, Rochester: unit 10, Studio · 1 bath, 365 sq ft, $1,595/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=128
+- 145 South Fitzhugh, Rochester: unit 4-2, Studio · 1 bath, 450 sq ft, $1,600/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=48
+- Water Street, Rochester: unit 504RV, 1 bed · 1 bath, 505 sq ft, $1,600/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=87
+- Water Street, Rochester: unit 502RV, 1 bed · 1 bath, 619 sq ft, $1,625/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=85
+- 121 Park Drive, Manlius: unit 4, 1 bed · 1 bath, $1,695/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=26
+- Water Street, Rochester: unit 605RV, 1 bed · 1 bath, 807 sq ft, $1,700/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=94
+- 145 South Fitzhugh, Rochester: unit 1-1, 1 bed · 1 bath, 650 sq ft, $1,750/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=34
+- 121 Park Drive, Manlius: unit 5, 2 bed, $1,895/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=27
+- 301 Central Avenue, Rochester: unit 6, 2 bed · 1 bath, $1,900/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=6
+- 379 South Main, Geneva: unit 2, 3 bed · 1 bath, $3,300/mo. Apply: https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID=152
+
+## Notes
+- Availability changes daily; the application confirms the current rent and move-in date.
+- Charlotte Square (50 Charlotte Street) has its own site at https://www.charlottesquareroc.com/ with leasing by Vicki Barone, (585) 748-5588.

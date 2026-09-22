@@ -1,0 +1,20 @@
+{
+ "name": "Evolution24 Properties",
+ "short_name": "Evolution24",
+ "start_url": "/",
+ "display": "standalone",
+ "background_color": "#151613",
+ "theme_color": "#151613",
+ "icons": [
+  {
+   "src": "/assets/img/logo-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "/assets/img/logo-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}

@@ -1,0 +1,4 @@
+Contact: https://evolution24.net/contact-us/
+Expires: 2027-09-22T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://evolution24.net/.well-known/security.txt

@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Disallow: /property-detail/
+Disallow: /unit-detail/
+
+# Assistants that answer 'apartments near me' are a referral channel.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://evolution24.net/sitemap.xml
