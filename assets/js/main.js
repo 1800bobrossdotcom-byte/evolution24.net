@@ -45,9 +45,9 @@
     $$('.drawer a').forEach(a => a.addEventListener('click', () => set(false)));
   }
 
-  /* ---- Scroll reveals */
+  /* ---- Scroll reveals (under reduced motion the CSS turns them into plain fades) */
   const revealables = $$('[data-reveal], .route');
-  if ('IntersectionObserver' in window && !calm) {
+  if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver(entries => entries.forEach(e => {
       if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
     }), { rootMargin: '0px 0px -8% 0px', threshold: .12 });
@@ -106,7 +106,7 @@
       const hits = items.map(it => want === 'all' || it.dataset.tags.split(' ').includes(want));
       const shown = hits.filter(Boolean).length;
       const apply = () => items.forEach((it, n) => it.classList.toggle('is-filtered-out', !hits[n]));
-      if (document.startViewTransition && !calm) document.startViewTransition(apply); else apply();
+      if (document.startViewTransition) document.startViewTransition(apply); else apply();
       if (empty) empty.hidden = shown > 0;
       if (window.e24track) window.e24track('filter', { value: want });
     }));

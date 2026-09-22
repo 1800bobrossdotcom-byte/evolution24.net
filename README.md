@@ -67,11 +67,16 @@ own path. That is what makes it animate:
   so the intro never delays content.
 - **Header.** The bars rebuild on every page load and ripple on hover.
 - **Everything else.** Masked headline rises, a Ken Burns hero slideshow, scroll reveals and
-  image wipes, count-up stats, a marquee of building names, photo rows that drift with the
+  image wipes, count-up stats, an index of every building under the hero (names rise in turn;
+  hovering one inks it tan and shows its city and how many homes are open), photo rows that drift with the
   scroll (CSS scroll timelines, where supported), filter transitions and cross-page
   transitions (View Transitions API, where supported).
 
-Every animation respects reduced motion: everything simply lands in place.
+**Reduced motion is reduced, not removed.** When a visitor's device asks for less motion
+(Windows "Animation effects" off, macOS/iOS "Reduce motion", Android "Remove animations"),
+nothing slides, zooms, scrolls or auto-advances, but pages still fade in and hovers still
+change colour. The intro is skipped and the slideshow waits for a click. Test both: Chrome
+DevTools → Rendering → "Emulate CSS media feature prefers-reduced-motion".
 
 Logo files: `assets/img/logo.svg` (for dark backgrounds, as supplied), `logo-on-light.svg`
 (the cream swapped for ink, so it reads on white), `mark.svg`, `favicon.svg`,

@@ -200,14 +200,31 @@ body.menu-open { overflow: hidden; }
   .hero-caption, .hero-dots { display: none; }
 }
 
-/* ---------- Marquee ---------- */
-.marquee { overflow: hidden; border-block: 1px solid var(--line); background: var(--paper); padding: 22px 0; }
-.marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; }
-.marquee:hover .marquee-track { animation-play-state: paused; }
-.marquee a { display: inline-flex; align-items: center; gap: 28px; padding-right: 28px; font: italic 400 clamp(26px, 3vw, 40px)/1 var(--serif); text-decoration: none; white-space: nowrap; }
-.marquee a::after { content: ""; width: 12px; height: 12px; background: var(--tan); clip-path: polygon(0 100%, 0 30%, 50% 0, 100% 30%, 100% 100%); }
-.marquee a:hover { color: var(--accent); }
-@keyframes marquee { to { transform: translateX(-50%); } }
+/* ---------- Building index (home, under the hero) ----------
+   Every building, one click away, in balanced lines inside the page gutter. Light motion:
+   names fade up as the band scrolls in; hovering one inks it tan, draws its underline, dims
+   the rest and shows where it is and what is open. */
+.index { background: var(--paper); border-bottom: 1px solid var(--line); padding: clamp(40px, 5.5vw, 72px) 0 clamp(44px, 6vw, 80px); }
+.index .label { margin-bottom: clamp(18px, 2.4vw, 28px); }
+/* Each name carries the house mark in front of it. The list is pulled left by exactly one
+   mark's width and .index-clip trims that strip, so the mark that would start a line is
+   hidden and marks only ever sit between two names. The clip is open above for the tag. */
+.index-clip { clip-path: inset(-4em -2em -3em -6px); }
+.index-list { list-style: none; margin: 0 0 0 -.915em; padding: 0; font: italic 400 clamp(24px, 3.1vw, 44px)/1.5 var(--serif); letter-spacing: -.005em; text-wrap: balance; }
+.index-list li { display: inline-block; white-space: nowrap; }
+.index-list li::before { content: ""; display: inline-block; width: .24em; height: .24em; margin: 0 .455em 0 .22em; vertical-align: .22em; background: var(--tan); clip-path: polygon(0 100%, 0 30%, 50% 0, 100% 30%, 100% 100%); transition: transform .5s var(--ease), background-color .35s var(--ease); }
+.index-list a { position: relative; color: var(--text); text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 94% / 0 1px no-repeat; transition: color .35s var(--ease), opacity .35s var(--ease), background-size .55s var(--ease); }
+.index-list:has(a:hover) a:not(:hover), .index-list:has(a:focus-visible) a:not(:focus-visible) { opacity: .34; }
+.index-list a:hover, .index-list a:focus-visible { color: var(--accent); background-size: 100% 1px; outline-offset: 4px; }
+.index-list li:has(a:hover)::before, .index-list li:has(a:focus-visible)::before { background: var(--accent); }
+/* The tag is generated content, so the link's text stays the building's name for search
+   engines, and '/ ""' gives it empty alt text so screen readers skip it too. */
+.index-list a::after { content: attr(data-tip); content: attr(data-tip) / ""; position: absolute; left: 0; bottom: calc(100% - .1em); padding: 7px 11px 6px; border-radius: 999px; background: var(--ink); color: var(--cream); box-shadow: 0 0 0 1px rgba(229, 230, 211, .2); font: 700 10.5px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .3s var(--ease), transform .45s var(--ease); }
+.index-list a:hover::after, .index-list a:focus-visible::after { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .index-list li:has(a:hover)::before, .index-list li:has(a:focus-visible)::before { transform: translateY(-.14em) rotate(-8deg); }
+}
+@media (hover: none) { .index-list a::after { display: none; } }
 
 /* ---------- Sections ---------- */
 .section { padding: clamp(80px, 11vw, 150px) 0; }
@@ -499,13 +516,26 @@ body.lb-open { overflow: hidden; }
 @keyframes vt-in { from { opacity: 0; transform: translateY(16px); } }
 .site-header { view-transition-name: header; }
 
-/* ---------- Reduced motion: everything lands in place ---------- */
+/* ---------- Reduced motion: reduced, not removed ----------
+   Nothing slides, scales, zooms or scrolls on its own. Colour and opacity may still change,
+   so pages fade in and hovers still answer. (Windows "Animation effects: off", macOS and iOS
+   "Reduce motion" and Android "Remove animations" all set this.) */
+@keyframes fade-out { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-  .js [data-reveal], .js [data-reveal="clip"] { opacity: 1; transform: none; clip-path: none; }
-  .js [data-reveal="clip"] img { transform: none; }
-  .marquee-track { animation: none; flex-wrap: wrap; width: auto; }
-  .marquee-track [aria-hidden] { display: none; }
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-property: color, background-color, border-color, opacity, box-shadow, fill !important; }
+  .brand .lg-piece, .brand .lg-word, [data-rise], .lb-stage img, .faq details[open] .ans { animation-name: fade; }
+  .brand:hover .lg-piece, .hero-slide.is-active img, .p-hero > img, .avail::before { animation: none; }
+  .hero-slide img, .p-hero > img { transform: none; }
+  .hero-dots button.is-active::after { animation: none; transform: none; }
+  .js [data-reveal] { transform: none; }
+  .js [data-reveal="clip"] { clip-path: none; opacity: 0; transition: opacity 1s var(--ease); }
+  .js [data-reveal="clip"].is-in { opacity: 1; }
+  .js [data-reveal="clip"] img, .card:hover .card-media img, .gallery button:hover img { transform: none; }
+  .js .route::before { transform: none; }
+  .region-list a:hover { padding-left: 0; }
+  ::view-transition-old(root) { animation: fade-out .25s both; }
+  ::view-transition-new(root) { animation: fade .4s both; }
 }
 @media print { .site-header, .intro, .drawer, .hero-media, .lightbox { display: none !important; } }
 

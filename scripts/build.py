@@ -457,6 +457,16 @@ def emph(t):
     return re.sub(r"[*](.+?)[*]", r"<em>\1</em>", t)
 
 
+def building_index():
+    """Every building as one balanced, clickable line under the home hero."""
+    items = []
+    for i, p in enumerate(PROPS):
+        n = len(p["units"])
+        status = f"{n} open" if n else ("Own site" if p.get("external") else "Waitlist")
+        items.append(f'<li data-reveal class="i{i}"><a href="{prop_url(p)}" data-tip="{esc(p["city"])} · {status}">{esc(p["name"])}</a></li>')
+    return "\n      ".join(items)
+
+
 def cta_block(title="Find your *place*.", text=None):
     text = text or f"Call the office, send us a note, or start an application online. We are a small team and we answer."
     return f"""<section class="section cta ink">
@@ -547,7 +557,14 @@ def home():
     </div>
   </div>
 </section>
-<div class="marquee" aria-label="Our properties"><div class="marquee-track">{''.join(f'<a href="{prop_url(p)}">{esc(p["name"])}</a>' for p in PROPS)}<span aria-hidden="true">{''.join(f'<a href="{prop_url(p)}" tabindex="-1">{esc(p["name"])}</a>' for p in PROPS)}</span></div></div>
+<nav class="index" aria-label="Our buildings">
+  <div class="wrap">
+    <p class="label" data-reveal>Our buildings</p>
+    <div class="index-clip"><ul class="index-list" role="list">
+      {building_index()}
+    </ul></div>
+  </div>
+</nav>
 
 <section class="section" id="regions">
   <div class="wrap">
