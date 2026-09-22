@@ -45,13 +45,23 @@
     $$('.drawer a').forEach(a => a.addEventListener('click', () => set(false)));
   }
 
-  /* ---- Scroll reveals (under reduced motion the CSS turns them into plain fades) */
+  /* ---- Scroll reveals (under reduced motion the CSS turns them into plain fades)
+     A clip reveal starts fully clipped, and Chrome's IntersectionObserver never reports a fully
+     clipped element as visible, so those are triggered by their parent, which is never clipped. */
   const revealables = $$('[data-reveal], .route');
+  const reveals = new Map(); // watched element → the elements it reveals
+  revealables.forEach(el => {
+    const watch = el.dataset.reveal === 'clip' ? el.parentElement : el;
+    if (!reveals.has(watch)) reveals.set(watch, []);
+    reveals.get(watch).push(el);
+  });
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver(entries => entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-    }), { rootMargin: '0px 0px -8% 0px', threshold: .12 });
-    revealables.forEach(el => io.observe(el));
+      if (!e.isIntersecting) return;
+      reveals.get(e.target).forEach(el => el.classList.add('is-in'));
+      io.unobserve(e.target);
+    }), { rootMargin: '0px 0px -10% 0px', threshold: 0 });
+    reveals.forEach((_, watch) => io.observe(watch));
   } else revealables.forEach(el => el.classList.add('is-in'));
 
   /* ---- Count-up stats */
