@@ -1,0 +1,9 @@
+# Deployed on Vercel from the repo root. These are sources and tooling, not the site:
+# keep them out of the deployment so they are not served.
+source/
+scripts/
+data/
+README.md
+_headers
+_redirects
+.nojekyll
