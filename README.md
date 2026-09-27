@@ -168,6 +168,100 @@ project's primary domain and `www.evolution24.net` as a redirect to it, then poi
 Vercel as its domain settings instruct. `vercel.json` also redirects `www` itself, as a
 second line of defence.
 
+## Enquiries: email and the lead sheet
+
+Built on what Charlotte Square does, adapted for Vercel and for a site with no
+database: **the lead sheet is the record, and the email is the alert.**
+
+The contact form posts to `/api/inquiry/` (`api/inquiry.js`, a Vercel function).
+In order:
+
+1. The enquiry goes to the **lead sheet** in the Evolution24 Google Workspace, onto
+   the tab for the property it is about, or **General** when none was picked.
+2. The leasing team gets an **email**, to every address in `LEAD_TO`: which
+   property, everything from the form, and whether step 1 worked. Reply-To is the
+   prospect, so pressing reply answers them.
+
+The visitor is told it worked if either one landed. Only when both fail are they
+asked to call, because only then is nothing written down. When the sheet fails the
+email says why; when both fail, Vercel's function logs do (Project → Logs).
+
+**Charlotte Square is left out** of the form, the endpoint and the sheet: it has its
+own site, form and lead sheet. The form's property menu skips it and points to
+charlottesquareroc.com instead.
+
+**What the form asks:** name, email, phone, property, what they are interested in,
+bedrooms, when they are moving, how they heard about us, and a message. The choices
+are `LEAD_OPTIONS` in `scripts/build.py`. They feed the form, `api/leads-config.json`
+(what the endpoint accepts) and the generated block in the sheet script, so the three
+cannot drift apart. *Join the waitlist* on a fully leased building opens the form with
+that property and *Joining the waitlist* already picked.
+
+**Came via.** Once per visit the site notes the campaign tag (`utm_source`,
+`utm_medium`, `utm_campaign`) or the outside site that brought the visitor, and the
+first page they opened. It is kept in `sessionStorage`, not a cookie, sent only with
+the form, and shows in the email and in the sheet's *Came via* column. The privacy
+page says so.
+
+**Protection.** A honeypot field people never see; a same-origin check; five sends
+per connection per ten minutes (held in memory, so a speed bump rather than a wall);
+every field capped and stripped of control characters; menus that accept only their
+own choices; and the sheet script stores anything starting with `=`, `+`, `-` or `@`
+as plain text, so a "name" can never run as a formula.
+
+Without JavaScript the form still posts, and the endpoint sends the browser back to
+`/contact-us/#sent` or `#not-sent`, where CSS `:target` shows the notice.
+
+### Setup, once
+
+**1. The lead sheet.** Follow the steps at the top of `tools/lead-sheet/Code.gs`: a
+new Google Sheet in the Workspace, paste the script, run `setup`, deploy it as a web
+app (*Execute as: Me*, *Who has access: Anyone*). You get the tabs (Overview, General,
+one per property, Lists), the dropdowns, the colours and the logo, plus a web-app
+address and a token. Share it with the leasing team as Editors.
+
+**2. Email.** The Resend account Charlotte Square already uses will do: make a key
+there (API Keys → Create, sending access). Sending to anyone other than the account's
+own address needs a domain verified in that account, with `LEAD_FROM` on it. If
+`evolution24.net` is not verified there yet: Resend → Domains → Add, then add the
+records it lists at the evolution24.net DNS host. They are separate from Google
+Workspace's mail records (a DKIM key under `resend._domainkey`, and SPF and MX on a
+`send` subdomain), so Workspace mail is untouched.
+
+**3. Environment variables.** Vercel → the evolution24-net project → Settings →
+Environment Variables, for Production (and Preview if you test there). Then
+Deployments → ⋯ → **Redeploy**: a deployment never sees variables added after it was
+built.
+
+| Variable | Value |
+| --- | --- |
+| `LEAD_TO` | The leasing inboxes, separated by commas. Every address gets every enquiry |
+| `LEAD_FROM` | `Evolution24 Properties <leasing@…>`, on a domain verified in Resend |
+| `RESEND_API_KEY` | The key from step 2 |
+| `LEADS_SHEET_URL` | The web-app address from step 1 (ends `/exec`) |
+| `LEADS_SHEET_TOKEN` | The token from step 1 (Evolution24 menu → Show the connection token) |
+| `LEADS_SHEET_LINK` | Optional: the sheet's own address, linked from every email |
+
+The inbox addresses live only in Vercel, never in this repository or the page source,
+because a published address is the first thing a harvester finds.
+
+**4. Test it.** Send the form on the live site. Both inboxes get the email, and the row
+appears on the right tab with the Overview counting it.
+
+### When it does not work
+
+| What you see | What to change |
+| --- | --- |
+| The form says it is *not connected yet* | No variables set, or not redeployed since |
+| Email arrives saying *Not added to the lead sheet: Wrong token* | Copy the token again into `LEADS_SHEET_TOKEN`, redeploy |
+| Email says *Google asked for a sign-in* | Redeploy the script with *Who has access: Anyone*; or the Workspace admin blocks public web apps |
+| Row in the sheet, no email | Vercel → Logs. `403 … your own email address`: no verified domain, or `LEAD_FROM` not on it. `401`: the key |
+| A new property on the site has no tab | Nothing: the first enquiry for it makes its tab. Run `setup` after updating the script to tidy the order |
+
+**Not carried over from Charlotte Square (yet):** the `/admin/` dashboard, analytics,
+the visitor's branded confirmation email and Claude's summaries, which all run on
+Charlotte's Cloudflare database. Here the lead sheet is the dashboard.
+
 ## Things to check before launch
 
 **Rents and availability are a snapshot.** The 19 available units, with their rents, were
@@ -207,10 +301,8 @@ photos from the Charlotte repo instead.
 **About copy.** The old site said "six multifamily rental properties"; the listing shows
 eleven. The new copy says eleven.
 
-**Contact form.** It opens the visitor's email app with the message filled in, addressed
-to the Gmail address the old site published. To receive enquiries without a mail client,
-port Charlotte Square's `functions/api/inquiry.js` (Cloudflare Pages Function + D1) and
-point the form at it.
+**Contact form.** It posts to `/api/inquiry/`, which emails the leasing team and fills
+the lead sheet. It does nothing until the setup in *Enquiries* above is done.
 
 ## Structure
 
@@ -224,6 +316,8 @@ data/properties.json     facts (edit)          data/photos.json    generated by 
 source/photos/           original photos, untouched, with manifest.json (alt text, source URL)
 source/logo/             the PSD and its traced vectors
 scripts/                 photos.py, build.py, render-icons.cjs
+api/inquiry.js           the contact form's endpoint (Vercel function); api/leads-config.json is generated
+tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and logo are generated
 sitemap.xml robots.txt llms.txt site.webmanifest .well-known/security.txt
 vercel.json .vercelignore       Vercel: headers, redirects, what not to deploy
 _headers _redirects             the same headers and redirects for Cloudflare Pages / Netlify

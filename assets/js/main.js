@@ -7,6 +7,20 @@
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---- Where this visit started: the campaign tag or outside site, and the first
+     page. Kept in sessionStorage (not a cookie) for this visit only, and sent
+     only with the contact form, so the team can see which ads and sites work. */
+  const SOURCE_KEY = 'e24-source';
+  try {
+    if (!sessionStorage.getItem(SOURCE_KEY)) {
+      const q = new URLSearchParams(location.search), src = { landing: location.pathname };
+      ['utm_source', 'utm_medium', 'utm_campaign'].forEach(k => { if (q.get(k)) src[k] = q.get(k).slice(0, 120); });
+      try { const r = document.referrer && new URL(document.referrer); if (r && r.host !== location.host) src.ref = r.host; } catch { /* no referrer */ }
+      sessionStorage.setItem(SOURCE_KEY, JSON.stringify(src));
+    }
+  } catch { /* storage blocked: the form still works, just without this */ }
+  const visitSource = () => { try { return JSON.parse(sessionStorage.getItem(SOURCE_KEY) || '{}'); } catch { return {}; } };
+
   /* ---- Intro: runs once per visit (the head script decides). Click or any key skips it. */
   const intro = $('.intro');
   if (intro && doc.classList.contains('is-intro')) {
@@ -172,29 +186,43 @@
     });
   });
 
-  /* ---- Contact form: composes an email in the visitor's own mail app.
-     No server sees it and nothing is stored. Swap for a POST once an endpoint exists. */
+  /* ---- Contact form: posts to /api/inquiry/, which puts it on the lead sheet and
+     emails the leasing team. Without JavaScript the same form posts natively and
+     the endpoint sends the browser back to #sent or #not-sent. */
   const form = $('#contact-form');
   if (form) {
     const msg = $('#c-message', form), count = $('.count', form), status = $('.form-status', form);
     const upd = () => { count.textContent = `${msg.value.length} / ${msg.maxLength}`; };
     msg.addEventListener('input', upd); upd();
-    const pre = new URLSearchParams(location.search).get('property');
-    if (pre) { const opt = $(`option[value="${CSS.escape(pre)}"]`, form); if (opt) opt.selected = true; }
-    form.addEventListener('submit', e => {
+    // ?property=water-street&interest=waitlist, from the property pages
+    const q = new URLSearchParams(location.search);
+    ['property', 'interest'].forEach(k => {
+      const v = q.get(k), opt = v && $(`[name="${k}"] option[value="${CSS.escape(v)}"]`, form);
+      if (opt) opt.selected = true;
+    });
+    const src = visitSource();
+    Object.keys(src).forEach(k => { if (form.elements[k]) form.elements[k].value = src[k]; });
+    const fail = text => { status.textContent = text; status.classList.add('is-error'); };
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       if (!form.reportValidity()) return;
-      const v = id => $(id, form).value.trim();
-      const subject = `Enquiry${v('#c-property') ? ' — ' + v('#c-property') : ''} from ${v('#c-first')} ${v('#c-last')}`;
-      const body = [
-        v('#c-message'), '',
-        `Name: ${v('#c-first')} ${v('#c-last')}`,
-        `Email: ${v('#c-email')}`,
-        v('#c-phone') && `Phone: ${v('#c-phone')}`,
-        v('#c-property') && `Property: ${v('#c-property')}`,
-      ].filter(x => x !== false && x !== '').join('\n');
-      location.href = `mailto:${form.dataset.to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      status.textContent = 'Your email app should open with the message ready to send. If it does not, call us on 585-245-3071.';
+      const data = Object.fromEntries(new FormData(form));
+      form.classList.add('is-sending'); status.classList.remove('is-error'); status.textContent = 'Sending…';
+      try {
+        const res = await fetch(form.action, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data) });
+        const out = await res.json().catch(() => ({}));
+        if (res.ok && out.ok) {
+          const sent = $('#sent');
+          $('.flash-name', sent).textContent = data.first_name ? `, ${data.first_name}` : '';
+          form.reset(); upd(); status.textContent = '';
+          location.hash = 'sent';
+          sent.focus();
+        } else fail(out.error || 'Sorry, your message did not go through. Please call us on 585-245-3071.');
+      } catch {
+        fail('Sorry, your message did not go through. Please check your connection, or call us on 585-245-3071.');
+      } finally {
+        form.classList.remove('is-sending');
+      }
     });
   }
 })();

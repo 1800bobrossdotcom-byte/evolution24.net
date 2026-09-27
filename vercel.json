@@ -1,6 +1,11 @@
 {
  "$schema": "https://openapi.vercel.sh/vercel.json",
  "trailingSlash": true,
+ "functions": {
+  "api/inquiry.js": {
+   "maxDuration": 30
+  }
+ },
  "redirects": [
   {
    "source": "/(.*)",

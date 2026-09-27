@@ -1,6 +1,7 @@
 // Renders the raster icons and the social share card from the SVG logo.
 //   node scripts/render-icons.cjs   (needs Playwright; run after build.py)
-// Writes assets/img/{logo-192,logo-512,apple-touch-icon,og}.png and favicon-32.png.
+// Writes assets/img/{logo-192,logo-512,apple-touch-icon,og}.png and favicon-32.png, and
+// source/logo/sheet-logo.png, the logo on the lead sheet's banner (build.py embeds it in Code.gs).
 const path = require('path');
 const fs = require('fs');
 let pw;
@@ -33,5 +34,11 @@ body{margin:0;width:1200px;height:630px;background:#151613;color:#e5e6d3;display
   await shot(square(180, 24), 180, 180, 'assets/img/apple-touch-icon.png');
   await shot(square(64, 6), 64, 64, 'assets/img/favicon-64.png');
   await shot(og, 1200, 630, 'assets/img/og.png');
+  // The lead sheet's banner logo: transparent, twice the size it is shown at.
+  const lockup = fs.readFileSync(path.join(root, 'source/logo/lockup.svg'), 'utf8');
+  const lp = await b.newPage({ viewport: { width: 500, height: 123 } });
+  await lp.setContent(`<html><body style="margin:0;background:transparent">${lockup.replace('<svg ', '<svg style="width:500px;height:auto;display:block" ')}</body></html>`);
+  await lp.screenshot({ path: path.join(root, 'source/logo/sheet-logo.png'), omitBackground: true, clip: { x: 0, y: 0, width: 500, height: 123 } });
+  await lp.close();
   await b.close();
 })();
