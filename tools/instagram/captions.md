@@ -7,7 +7,7 @@ There are no prices or availability counts, because those go out of date.
 README asks for them to be confirmed before the site launches:
 
 - 181 St. Paul is a seven-story building (post 03).
-- 379 South Main has original fireplaces and sits a few blocks above Seneca Lake (post 01).
+- 379 South Main has original fireplaces and sits a few blocks above Seneca Lake (post 02).
 - The Biltmore's furnished studios, WiFi, included appliances and pets policy apply to the whole building, not just unit 10 (post 09).
 
 ## Profile
@@ -36,21 +36,35 @@ Evolution24 Properties is an Equal Housing Opportunity provider.
 
 ## How to post the grid
 
-The nine posts make one picture: a house with nine lit windows. Instagram puts the newest post at the top left, so you build the house from the bottom up.
+The nine posts make one picture: six photo windows, above and below a cream band that runs straight across the middle three posts. Instagram puts the newest post at the top left, so you build the grid from the bottom up.
 
 1. **Post them in file order, 01 first and 09 last.** Post each one as a single photo, not a carousel.
 2. **Keep the whole picture.** The posts are 3:4 (1080 × 1440), the shape of the profile grid. Before you tap Next, check that the preview shows the whole post. If it shows a square, tap the crop button at the bottom left of the preview.
 3. **Add the details for each post:** the caption, the location, and the alt text. Alt text is under Advanced settings → Accessibility → Write alt text, and each one below fits Instagram's 100-character limit.
 4. **Check the grid after every third post.** Each row should line up. If a post lands in the wrong spot, tap and hold it, choose Reorder grid, and drag it into place.
-5. **Don't pin these posts.** Pinned posts stay at the top of the grid and would pull a window out of the house.
-6. **Plan for later posts.** New posts push the house down the grid. Post in threes to keep it whole, or use Reorder grid to put it back together.
+5. **Don't pin these posts.** Pinned posts stay at the top of the grid and would pull a post out of the picture.
+6. **Plan for later posts.** New posts push the picture down the grid. Post in threes to keep it whole, or use Reorder grid to put it back together.
 7. **Post these nine from the Instagram app.** Some scheduling tools crop 3:4 images to 4:5.
 
 Instagram now counts only five hashtags per post, so each caption has five or fewer.
 
 ---
 
-## 01 · bottom right · 379 South Main
+## 01 · bottom right · 561 South Main
+
+**Location:** Geneva, New York
+
+561 South Main, Geneva.
+
+Renovated apartments on South Main Street, finished under pressed-tin ceilings, with a gas range in the kitchen.
+
+Details and applications: link in bio.
+
+#GenevaNY #FingerLakes #GenevaApartments #TinCeiling
+
+**Alt text:** Bedroom at 561 South Main, Geneva, under a white pressed-tin ceiling
+
+## 02 · bottom middle · 379 South Main
 
 **Location:** Geneva, New York
 
@@ -63,22 +77,6 @@ Photos, details and applications: link in bio.
 #GenevaNY #FingerLakes #SenecaLake #GenevaApartments
 
 **Alt text:** Green-walled room at 379 South Main, Geneva, with a chandelier and a white fireplace
-
-## 02 · bottom middle · Let’s find your place
-
-**Location:** Rochester, New York
-
-Let’s find your place.
-
-Every Evolution24 home is on evolution24.net. See what’s available, book a tour and apply online, or call us on 585-245-3071. We’re a small, family-owned team, so a real person picks up.
-
-Link in bio.
-
-Evolution24 Properties is an Equal Housing Opportunity provider.
-
-#ApartmentHunting #RochesterNY #SyracuseNY #GenevaNY
-
-**Alt text:** Graphic: Let’s find your place. Tours and applications at evolution24.net, or call 585-245-3071
 
 ## 03 · bottom left · 181 St. Paul
 
@@ -94,33 +92,35 @@ Details and applications: link in bio.
 
 **Alt text:** 181 St. Paul in Rochester: a seven-story red-brick building with arched top-floor windows
 
-## 04 · middle right · Three cities, one family
-
-**Location:** none, or Upstate New York
-
-Three cities, one family.
-
-Evolution24 homes are in Rochester, in Syracuse and Manlius, and in Geneva: downtown lofts and East End classics, a historic home near downtown Syracuse, a restored Victorian in Manlius, and houses above Seneca Lake. Studios to three bedrooms.
-
-Which one’s yours? Browse them all through the link in bio.
-
-#RochesterNY #SyracuseNY #GenevaNY #FingerLakes #UpstateNY
-
-**Alt text:** Graphic: Three cities, one family. A map linking Rochester, Geneva, and Syracuse and Manlius
-
-## 05 · center · Water Street
+## 04 · middle right · Let’s find your place
 
 **Location:** Rochester, New York
 
-Water Street, downtown Rochester.
+Let’s find your place.
 
-Fully updated loft apartments with plenty of space and high ceilings, some with a mezzanine like this one. Studios to three bedrooms, with an on-site gym, laundry and an elevator.
+Every Evolution24 home is on evolution24.net. See what’s available, book a tour and apply online, or call us on 585-245-3071. We’re a small, family-owned team, so a real person picks up.
 
-Tours and applications: link in bio.
+Link in bio.
 
-#RochesterNY #ROC #LoftLiving #RochesterApartments
+Evolution24 Properties is an Equal Housing Opportunity provider.
 
-**Alt text:** Loft apartment at Water Street, Rochester, with a wooden mezzanine, a ladder and a tall window
+#ApartmentHunting #RochesterNY #SyracuseNY #GenevaNY
+
+**Alt text:** Graphic: Let’s find your place. Tours and applications at evolution24.net, or call 585-245-3071
+
+## 05 · center · Welcome home
+
+**Location:** Rochester, New York
+
+Welcome home.
+
+We’re Evolution24 Properties, a family-owned property management company with apartments across Rochester, Syracuse, Manlius and Geneva, New York. Downtown lofts, furnished studios, a restored Victorian and houses above Seneca Lake, renovated with care and looked after by people who pick up the phone.
+
+Follow along for homes, neighborhoods and what’s available.
+
+#Evolution24 #RochesterNY #SyracuseNY #GenevaNY #UpstateNY
+
+**Alt text:** Evolution24 Properties logo on a cream band, with Rochester, Syracuse and Geneva below
 
 ## 06 · middle left · Our story
 
@@ -150,19 +150,19 @@ One- and two-bedroom apartments. Link in bio.
 
 **Alt text:** 121 Park Drive in Manlius: a restored Victorian house with a wraparound porch
 
-## 08 · top middle · Welcome home
+## 08 · top middle · Water Street
 
 **Location:** Rochester, New York
 
-Welcome home.
+Water Street, downtown Rochester.
 
-We’re Evolution24 Properties, a family-owned property management company with apartments across Rochester, Syracuse, Manlius and Geneva, New York. Downtown lofts, furnished studios, a restored Victorian and houses above Seneca Lake, renovated with care and looked after by people who pick up the phone.
+Fully updated loft apartments with plenty of space and high ceilings, some with a mezzanine like this one. Studios to three bedrooms, with an on-site gym, laundry and an elevator.
 
-Follow along for homes, neighborhoods and what’s available.
+Tours and applications: link in bio.
 
-#Evolution24 #RochesterNY #SyracuseNY #GenevaNY #UpstateNY
+#RochesterNY #ROC #LoftLiving #RochesterApartments
 
-**Alt text:** Evolution24 Properties logo in a house-shaped window above the words Welcome home
+**Alt text:** Loft apartment at Water Street, Rochester, with a wooden mezzanine, a ladder and a tall window
 
 ## 09 · top left · The Biltmore
 

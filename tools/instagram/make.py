@@ -6,17 +6,17 @@
 Writes into out-dir/kit and zips it:
   profile-picture.png, profile-picture-paper.png   the building mark, 1080 x 1080
   posts/01-...jpg to posts/09-...jpg               nine 1080 x 1440 (3:4) posts, named in upload order
-  grid.jpg                                         the nine together: one house
+  grid.jpg                                         the nine together, as the profile shows them
   profile-preview.png                              how the profile looks, light and dark mode
   captions.md                                      bio, captions and alt text (copied from here)
 
-The grid is one 3240 x 4320 picture of the site's house glyph: a roof against a paper
-sky, nine windows and a front door. Each post is whole on its own (a window and its
-label), so it still reads in the feed. Needs Pillow and Playwright, like render-icons.cjs.
+The grid is drawn as one 3240 x 4320 picture and cut into nine. Six photo windows sit on
+ink, above and below a paper band that runs straight through the middle row, across
+all three posts, carrying the story, the logo and the way to get in touch. Each post is
+still whole on its own in the feed. Needs Pillow and Playwright, like render-icons.cjs.
 """
 import importlib.util
 import json
-import math
 import shutil
 import subprocess
 import sys
@@ -37,68 +37,39 @@ PROPS = {p["slug"]: p for p in build.PROPS}
 
 TW, TH = 1080, 1440                 # one post, 3:4, the shape of Instagram's profile grid
 CW, CH = TW * 3, TH * 3             # the whole grid
-APEX_Y, PITCH = 36, 0.22            # the roof: height of the peak, rise per pixel
-ROOF_GAP = 72                       # top-row windows sit this far under the roof
-WIN_X, WIN_W = 110, 860             # windows, in post coordinates
+WIN_X, WIN_W = 110, 860             # photo windows, in post coordinates
 WIN_Y, WIN_B = 130, 1150
-GROUND = CH - 44
+BAND_ROW, BAND_Y, BAND_B = 1, 200, 1240    # the paper band: its row, top and bottom in that row
+RULE_Y = 1050                               # the rule across the band, over each post's foot line
 
 ON_INK, ON_LIGHT = ("#debb92", "#e5e6d3"), ("#b88d5a", "#151613")
 
-# (row, column) -> what the window shows. Photos on the corners and in the middle, words
-# on the edges. "order" is the upload order: Instagram puts the newest post top left,
-# so the house is posted from the bottom right.
+# (row, column) -> what the post shows. "order" is the upload order: Instagram puts the
+# newest post top left, so the grid is posted from the bottom right.
 TILES = {
-    (0, 0): dict(order=9, kind="photo", slug="biltmore", file="01-lobby.png", focus=(0.5, 0.6),
+    (0, 0): dict(order=9, kind="photo", slug="biltmore", file="01-lobby.png", focus=(0.5, 0.55),
                  meta="Furnished studios · Rochester"),
-    (0, 1): dict(order=8, kind="logo", key="welcome-home", name="Welcome home.",
-                 meta=f"Family-owned · Founded {build.FOUNDED}"),
-    (0, 2): dict(order=7, kind="photo", slug="121-park-drive", file="01-exterior.jpg", focus=(0.5, 0.42),
-                 meta="A restored Victorian · Manlius"),
-    (1, 0): dict(order=6, kind="story", key="our-story", name="Real people, quick answers.",
-                 meta="Family-owned & operated"),
-    (1, 1): dict(order=5, kind="photo", slug="water-street", file="03-loft-mezzanine.jpg", focus=(0.5, 0.5),
+    (0, 1): dict(order=8, kind="photo", slug="water-street", file="03-loft-mezzanine.jpg", focus=(0.5, 0.5),
                  meta="Lofts · Downtown Rochester"),
-    (1, 2): dict(order=4, kind="where", key="three-cities", name="Studios to three bedrooms.",
-                 meta="Across upstate New York"),
+    (0, 2): dict(order=7, kind="photo", slug="121-park-drive", file="01-exterior.jpg", focus=(0.5, 0.4),
+                 meta="A restored Victorian · Manlius"),
+    (1, 0): dict(order=6, kind="story", key="our-story"),
+    (1, 1): dict(order=5, kind="logo", key="evolution24"),
+    (1, 2): dict(order=4, kind="cta", key="lets-find-your-place"),
     (2, 0): dict(order=3, kind="photo", slug="181-st-paul-street", file="01-exterior.jpg", focus=(0.5, 0.5),
                  meta="Loft studios · Rochester"),
-    (2, 1): dict(order=2, kind="door", key="lets-find-your-place"),
-    (2, 2): dict(order=1, kind="photo", slug="379-south-main-street", file="02-living-room.jpg", focus=(0.5, 0.45),
+    (2, 1): dict(order=2, kind="photo", slug="379-south-main-street", file="02-living-room.jpg", focus=(0.5, 0.45),
                  meta="Original fireplaces · Geneva"),
+    (2, 2): dict(order=1, kind="photo", slug="561-south-main-street", file="04-bedroom.jpg", focus=(0.5, 0.4),
+                 meta="Pressed-tin ceilings · Geneva"),
 }
 PLACE = {0: "top", 1: "middle", 2: "bottom"}
 SIDE = {0: "left", 1: "middle", 2: "right"}
 
-# Rochester, Geneva, and Syracuse & Manlius, where they really are (latitude, longitude).
-CITIES = [("Rochester", 43.1566, -77.6088, "above"), ("Geneva", 42.8687, -76.9774, "below"),
-          ("Syracuse & Manlius", 43.0250, -76.0620, "above")]
-
 
 # ---------------------------------------------------------------- pieces
-def roof_y(x):
-    return APEX_Y + abs(x - CW / 2) * PITCH
-
-
-def window_box(r, c):
-    """The window in post coordinates, and for the top row the roof-shaped clip."""
-    if r == 0:
-        x0 = c * TW + WIN_X
-        left, right = roof_y(x0) + ROOF_GAP, roof_y(x0 + WIN_W) + ROOF_GAP
-        if x0 < CW / 2 < x0 + WIN_W:                         # the gable window under the peak
-            top = roof_y(CW / 2) + ROOF_GAP
-            edge = [(0, left - top), (CW / 2 - x0, 0), (WIN_W, right - top)]
-        else:
-            top = min(left, right)
-            edge = [(0, left - top), (WIN_W, right - top)]
-        h = WIN_B - top
-        return dict(y=top, h=h, clip=edge + [(WIN_W, h), (0, h)])
-    bottom = GROUND - r * TH if TILES[(r, c)]["kind"] == "door" else WIN_B
-    return dict(y=WIN_Y, h=bottom - WIN_Y, clip=None)
-
-
 def grade(im, sat=0.92, con=1.04, warm=0.24):
-    """One light grade so five cameras sit together: a touch less colour, a touch more
+    """One light grade so six cameras sit together: a touch less colour, a touch more
     contrast, and a little of the site's tan in the mid-tones."""
     im = ImageEnhance.Contrast(ImageEnhance.Color(im).enhance(sat)).enhance(con)
     tan = Image.new("RGB", im.size, (222, 187, 146))
@@ -106,76 +77,49 @@ def grade(im, sat=0.92, con=1.04, warm=0.24):
     return Image.blend(im, Image.composite(tan, im, mids), warm)
 
 
-def photo(t, h):
+def photo(t):
     """The original, turned upright, cropped to the window at 2x and graded."""
     im = ImageOps.exif_transpose(Image.open(ROOT / "source/photos" / t["slug"] / t["file"])).convert("RGB")
-    im = grade(ImageOps.fit(im, (WIN_W * 2, round(h * 2)), Image.LANCZOS, centering=t["focus"]))
+    im = grade(ImageOps.fit(im, (WIN_W * 2, (WIN_B - WIN_Y) * 2), Image.LANCZOS, centering=t["focus"]))
     name = f"{t['slug']}-{Path(t['file']).stem}.jpg"
     im.save(WORK / name, quality=95, subsampling=0)
     return name
 
 
-def route():
-    """A small map: the three towns, joined by a dotted road, each marked with a house."""
-    w, padx, pady = 660, 30, 80
-    lon0, lon1 = CITIES[0][2], CITIES[-1][2]
-    cos = math.cos(math.radians(43))
-    k = w / ((lon1 - lon0) * cos)
-    top = max(c[1] for c in CITIES)
-    pts = [(n, (lon - lon0) * cos * k + padx, (top - lat) * k + pady, where) for n, lat, lon, where in CITIES]
-    (_, x0, y0, _), (_, x1, y1, _), (_, x2, y2, _) = pts
-    road = (f"M{x0:.1f} {y0:.1f} C{x0 + (x1 - x0) * .55:.1f} {y0 + 10:.1f} {x1 - (x1 - x0) * .4:.1f} {y1:.1f} {x1:.1f} {y1:.1f} "
-            f"S{x2 - (x2 - x1) * .5:.1f} {y2:.1f} {x2:.1f} {y2:.1f}")
-    out = f'<path d="{road}" class="road"/>'
-    for i, (n, x, y, where) in enumerate(pts):
-        out += f'<path d="M-15 0V-20L0 -32L15 -20V0Z" transform="translate({x:.1f} {y + 13:.1f})" class="pin"/>'
-        lx = x - 12 if i == 0 else (x + 12 if i == 2 else x)
-        ly = y - 44 if where == "above" else y + 64
-        out += f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="{("start", "middle", "end")[i]}">{build.esc(n)}</text>'
-    W, H = w + padx * 2, max(p[2] for p in pts) + 90
-    return f'<svg class="route" viewBox="0 0 {W:.0f} {H:.0f}" width="{W:.0f}" height="{H:.0f}">{out}</svg>'
-
-
-def inside(t, box):
+def on_band(t):
+    """The words each post carries on the band."""
     k = t["kind"]
-    if k == "photo":
-        return f'<img src="{photo(t, box["h"])}" alt="">'
-    if k == "logo":
-        return f'<div class="paper logo">{build.standalone_logo("full", ON_LIGHT)}</div>'
     if k == "story":
-        return ('<div class="paper text"><p class="lab">Our story</p><h2>An evolution<br>in <em>home.</em></h2>'
-                f'<p class="body">Founded in {build.FOUNDED} by a husband-and-wife duo with a passion for property management.</p></div>')
-    if k == "where":
-        return ('<div class="paper text"><p class="lab">Where we are</p><h2>Three cities,<br><em>one family.</em></h2>'
-                f'<div class="map">{route()}</div></div>')
-    if k == "door":
-        return ('<div class="paper text"><p class="lab">Tours &amp; applications</p><h2>Let’s find<br>your <em>place.</em></h2>'
-                '<p class="body">See what’s available,<br>book a tour and apply online.</p>'
+        return ('<p class="lab">Our story</p><h2>An evolution<br>in <em>home.</em></h2>'
+                f'<p class="body">Founded in {build.FOUNDED} by a husband-and-wife duo with a passion for property management.</p>'
+                '<div class="foot"><p class="line">Real people, quick answers.</p></div>')
+    if k == "logo":
+        return (f'<div class="logo">{build.standalone_logo("full", ON_LIGHT)}</div>'
+                '<div class="foot center"><p class="line">Rochester · Syracuse · Geneva</p></div>')
+    if k == "cta":
+        return ('<p class="lab">Tours &amp; applications</p><h2>Let’s find<br>your <em>place.</em></h2>'
                 '<p class="url">evolution24.net</p><p class="bio">Link in bio</p>'
-                f'<div class="foot"><p class="phone">{build.PHONE}</p><p class="eho">{build.EHO}Equal Housing Opportunity</p></div></div>')
+                f'<div class="foot"><p class="line">{build.PHONE}</p><p class="eho">{build.EHO}Equal Housing Opportunity</p></div>')
     raise ValueError(k)
 
 
 def post(r, c, t):
-    box = window_box(r, c)
-    clip = ("clip-path:polygon(" + ",".join(f"{x:.1f}px {y:.1f}px" for x, y in box["clip"]) + ");") if box["clip"] else ""
-    win = (f'<div class="win" style="left:{WIN_X}px;top:{box["y"]:.1f}px;width:{WIN_W}px;height:{box["h"]:.1f}px;{clip}">'
-           f"{inside(t, box)}</div>")
-    label = ""
-    if t["kind"] != "door":                                      # the door carries its own words
-        name = t.get("name") or PROPS[t["slug"]]["name"]
-        label = f'<div class="label"><p class="name">{build.esc(name)}</p><p class="meta">{build.esc(t["meta"])}</p></div>'
-    return f'<section class="post" style="left:{c * TW}px;top:{r * TH}px">{win}{label}</section>'
+    at = f'left:{c * TW}px;top:{r * TH}px'
+    if t["kind"] != "photo":
+        return (f'<section class="post" style="{at}"><div class="words k-{t["kind"]}" '
+                f'style="top:{BAND_Y}px;height:{BAND_B - BAND_Y}px">{on_band(t)}</div></section>')
+    name = PROPS[t["slug"]]["name"]
+    return (f'<section class="post" style="{at}"><div class="win"><img src="{photo(t)}" alt=""></div>'
+            f'<div class="label"><p class="name">{build.esc(name)}</p><p class="meta">{build.esc(t["meta"])}</p></div></section>')
 
 
-def house():
-    """The sky, the house, the roof trim and the ground line: the parts that run across posts."""
-    eave = roof_y(0)
-    return (f'<svg class="house" viewBox="0 0 {CW} {CH}" width="{CW}" height="{CH}">'
-            f'<rect width="{CW}" height="{CH}" class="sky"/>'
-            f'<polygon points="0,{eave:.1f} {CW / 2:.0f},{APEX_Y} {CW},{eave:.1f} {CW},{CH} 0,{CH}" class="walls"/>'
-            f'<path d="M0 {eave + 10:.1f} L{CW / 2:.0f} {APEX_Y + 10} L{CW} {eave + 10:.1f}" class="trim"/>'
-            f'<line x1="0" y1="{GROUND}" x2="{CW}" y2="{GROUND}" class="trim"/></svg>')
+def backdrop():
+    """The ink, and the paper band that runs across the three middle posts."""
+    y = BAND_ROW * TH
+    return (f'<svg class="backdrop" viewBox="0 0 {CW} {CH}" width="{CW}" height="{CH}">'
+            f'<rect width="{CW}" height="{CH}" class="ink"/>'
+            f'<rect y="{y + BAND_Y}" width="{CW}" height="{BAND_B - BAND_Y}" class="band"/>'
+            f'<line x1="{WIN_X}" x2="{CW - WIN_X}" y1="{y + RULE_Y}" y2="{y + RULE_Y}" class="rule"/></svg>')
 
 
 def fonts():
@@ -188,40 +132,37 @@ def fonts():
 CSS = """
 :root{--ink:#151613;--ink2:#1e201c;--paper:#f4f1ea;--tan:#debb92;--on-ink:#eeeadf;--accent:#8a6232;--text:#1b1c19;--muted:#5c5d55}
 *{box-sizing:border-box;margin:0}
-body{background:var(--paper)}
+body{background:var(--ink)}
 .canvas{position:relative;width:%(CW)dpx;height:%(CH)dpx;overflow:hidden}
-.house{position:absolute;inset:0}
-.sky{fill:var(--paper)} .walls{fill:var(--ink)} .trim{fill:none;stroke:var(--tan);stroke-width:5}
+.backdrop{position:absolute;inset:0}
+.ink{fill:var(--ink)} .band{fill:var(--paper)} .rule{stroke:rgba(138,98,50,.45);stroke-width:2}
 .post{position:absolute;width:%(TW)dpx;height:%(TH)dpx}
-.win{position:absolute;overflow:hidden;background:var(--ink2)}
+.win{position:absolute;left:%(WIN_X)dpx;top:%(WIN_Y)dpx;width:%(WIN_W)dpx;height:%(WIN_H)dpx;overflow:hidden;background:var(--ink2)}
 .win img{display:block;width:100%%;height:100%%;object-fit:cover}
-.paper{position:absolute;inset:0;background:var(--paper);color:var(--text)}
-.logo{display:flex;align-items:center;justify-content:center;padding-top:70px}
-.logo svg{width:740px;height:auto}
-.text{padding:92px 76px 76px}
+.label{position:absolute;left:%(WIN_X)dpx;right:%(WIN_X)dpx;top:%(LABEL)dpx}
+.name{font:400 76px/1 'Instrument Serif';color:var(--on-ink)}
+.meta{font:600 25px/1 Manrope;letter-spacing:.26em;text-transform:uppercase;color:var(--tan);margin-top:26px}
+.words{position:absolute;left:%(WIN_X)dpx;right:%(WIN_X)dpx;padding:92px 0 76px;color:var(--text)}
 .lab{font:700 24px/1 Manrope;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
 h2{font:400 148px/.94 'Instrument Serif';letter-spacing:-.01em;margin-top:44px;color:var(--ink)}
 h2 em{font-style:italic;color:var(--accent)}
 .body{font:500 34px/1.45 Manrope;color:var(--muted);margin-top:52px;max-width:680px}
-.url{font:400 76px/1 'Instrument Serif';color:var(--ink);margin-top:40px}
+.logo{position:absolute;left:0;right:0;top:0;height:%(LOGO_H)dpx;display:flex;align-items:center;justify-content:center}
+.logo svg{width:720px;height:auto}
+.url{font:400 76px/1 'Instrument Serif';color:var(--ink);margin-top:56px}
 .bio{font:700 22px/1 Manrope;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-top:22px}
-.map{margin:64px 0 0 -30px}
-.route .road{fill:none;stroke:var(--accent);stroke-width:4;stroke-dasharray:1 14;stroke-linecap:round}
-.route .pin{fill:var(--accent)}
-.route text{font:700 24px Manrope;letter-spacing:.2em;text-transform:uppercase;fill:var(--text)}
-.foot{position:absolute;left:76px;right:76px;bottom:70px;border-top:2px solid rgba(138,98,50,.35);padding-top:36px}
-.phone{font:400 64px/1 'Instrument Serif';color:var(--ink)}
-.eho{display:flex;align-items:center;gap:14px;margin-top:20px;font:700 21px/1 Manrope;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.foot{position:absolute;left:0;right:0;top:%(FOOT)dpx;display:flex;align-items:center;justify-content:space-between}
+.foot.center{justify-content:center}
+.line{font:400 60px/1 'Instrument Serif';color:var(--ink)}
+.eho{display:flex;align-items:center;gap:14px;font:700 21px/1 Manrope;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .eho svg{width:30px;height:30px}
-.label{position:absolute;left:%(WIN_X)dpx;right:%(RIGHT)dpx;top:%(LABEL)dpx}
-.name{font:400 76px/1 'Instrument Serif';color:var(--on-ink)}
-.meta{font:600 25px/1 Manrope;letter-spacing:.26em;text-transform:uppercase;color:var(--tan);margin-top:26px}
-""" % dict(CW=CW, CH=CH, TW=TW, TH=TH, WIN_X=WIN_X, RIGHT=TW - WIN_X - WIN_W, LABEL=WIN_B + 58)
+""" % dict(CW=CW, CH=CH, TW=TW, TH=TH, WIN_X=WIN_X, WIN_Y=WIN_Y, WIN_W=WIN_W, WIN_H=WIN_B - WIN_Y, LABEL=WIN_B + 58,
+           LOGO_H=RULE_Y - BAND_Y, FOOT=RULE_Y - BAND_Y + 44)
 
 
 def grid_page():
     posts = "".join(post(r, c, t) for (r, c), t in sorted(TILES.items()))
-    return f'<!doctype html><meta charset="utf-8"><style>{fonts()}{CSS}</style><div class="canvas">{house()}{posts}</div>'
+    return f'<!doctype html><meta charset="utf-8"><style>{fonts()}{CSS}</style><div class="canvas">{backdrop()}{posts}</div>'
 
 
 def avatar_page(bg, colors, width=0.6):
