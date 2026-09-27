@@ -6,7 +6,8 @@ try { pw = require('playwright'); } catch { pw = require(path.join(require('chil
 const [, , html, dir, ...times] = process.argv;
 (async () => {
   const b = await pw.chromium.launch();
-  const p = await b.newPage({ viewport: { width: 1080, height: 1920 } });
+  const size = JSON.parse(require('fs').readFileSync(html, 'utf8').match(/window\.STORY=(\{.*?\});<\/script>/s)[1]);
+  const p = await b.newPage({ viewport: { width: size.W, height: size.H } });
   const problems = [];
   p.on('console', (m) => { if (m.type() === 'error') problems.push(m.text()); });
   p.on('pageerror', (e) => problems.push(e.message));

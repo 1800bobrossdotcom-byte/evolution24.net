@@ -320,27 +320,38 @@ python3 tools/instagram/make.py        # writes tools/instagram/out/ (needs Pill
 Names, photos, the logo and the phone number come from the site. Which photo goes in
 which window, and the words on each post, are set at the top of `make.py`.
 
-**The Story.** `tools/instagram/story/story.py` makes a 20-second, 1080 × 1920 Story,
-cut to the beat. It opens on "An evolution in *home*." and dives through the full stop into
-six properties, each with its own transition. Then Charlotte Square, then "Let's find your
-place." The music brakes to a stop, the page folds into a line, and the logo's bars
-slam down onto it with a jingle.
+**The video.** `tools/instagram/story/story.py` makes a 20-second video, cut to the beat,
+in two shapes from the same timeline and soundtrack:
+
+- `evolution24-story.mp4`, 1080 × 1920, for Instagram and Facebook Stories.
+- `evolution24-landscape.mp4`, 1920 × 1080, for the Facebook feed.
+
+It opens on "An evolution in *home*." and dives through the full stop into six properties,
+each with its own transition. Then comes Charlotte Square, then "Let's find your place." The
+music brakes to a stop, the page folds into a line, and the logo's bars slam down onto it
+with a jingle. In the wide cut, tall photos sit beside their words and wide photos fill the
+frame. Facebook has no "link in bio", so the wide cut gives the phone number instead.
 
 ```bash
-python3 tools/instagram/story/story.py   # writes tools/instagram/out/story/ (Pillow, numpy, scipy, Playwright, ffmpeg)
+python3 tools/instagram/story/story.py               # both, into tools/instagram/out/story/
+python3 tools/instagram/story/story.py --format landscape
 ```
+
+Needs Pillow, numpy, scipy, Playwright and ffmpeg.
 
 - **Music:** "Day Trips" by HoliznaCC0, from the album *City Slacker*, dedicated to the
   public domain under [CC0 1.0](https://freemusicarchive.org/music/holiznacc0/city-slacker/day-trips/).
   The script downloads it once and checks its checksum. No credit is required.
 - **Jingle:** the riser, the impact and the chime are made in `audio.py` from sine
   waves and noise, so they are ours.
+- **Mastering:** the mix is set to −14 LUFS, with a limiter at −1.5 dBFS.
 - **Timing:** `story.js` places every moment on the track's beat grid (90 BPM, G major)
-  and can draw any frame on its own. Frames are drawn at 60 fps and blended in pairs
-  to 30 fps for motion blur.
-- **Loudness:** the audio is brought to −14 LUFS.
-- **Checking one moment:** `stills.cjs` draws single frames, which is quicker than a
-  full render.
+  and can draw any frame on its own. Frames are drawn at 60 fps and blended in pairs to
+  30 fps for motion blur.
+- **Where things are set:** the layouts for each shape are the `FORMATS` table at the top
+  of `story.py`.
+- **Checking a moment:** `stills.cjs` draws single frames, which is quicker than a full
+  render.
 
 ## Structure
 

@@ -36,9 +36,9 @@ const wob = (t, f, ph) => Math.sin(t * f * 6.2832 + ph) * 0.6 + Math.sin(t * f *
 // ---------------------------------------------------------------- intro
 let dot = null;   // centre of the full stop in "home.", measured once the font is in
 function measure() {
-  const sp = 176 * 0.25;                    // a word space at the title's size
-  $('t-evolution').setAttribute('x', (90 + $('t-an').getComputedTextLength() + sp).toFixed(1));
-  $('t-home').setAttribute('x', (90 + $('t-in').getComputedTextLength() + sp).toFixed(1));
+  const sp = S.fontSize * 0.25;             // a word space at the title's size
+  $('t-evolution').setAttribute('x', (S.titleX + $('t-an').getComputedTextLength() + sp).toFixed(1));
+  $('t-home').setAttribute('x', (S.titleX + $('t-in').getComputedTextLength() + sp).toFixed(1));
   $('t-hometan').setAttribute('x', $('t-home').getAttribute('x'));
   const home = $('t-home');
   const bb = home.getBBox();
@@ -78,7 +78,7 @@ function kenburns(img, t, a, b, kb) {
   img.style.transform = `translate(${px(kb[2] * p)}, ${px(kb[3] * p)}) scale(${k.toFixed(4)})`;
 }
 function diagPoly(c) {   // the part of the frame where x - y <= c, as a polygon
-  const pts = [[0, 0], [1080, 0], [1080, 1920], [0, 1920]];
+  const pts = [[0, 0], [S.W, 0], [S.W, S.H], [0, S.H]];
   const inside = (q) => q[0] - q[1] <= c;
   const out = [];
   for (let i = 0; i < 4; i++) {
@@ -107,21 +107,21 @@ function montage(t) {
     if (sh.trans === 'strips') {
       layer.querySelectorAll('.strip').forEach((st, k) => {
         const p = E.outExpo(inv(t, a - lead + k * 0.035, a - lead + k * 0.035 + 0.5));
-        st.style.transform = `translateY(${px((1 - p) * 1920)})`;
+        st.style.transform = `translateY(${px((1 - p) * S.H)})`;
       });
     } else if (sh.trans === 'whip') {
       const p = E.inOutCubic(inv(t, a - 0.14, a + 0.16));
-      layer.style.transform = `translateX(${px((1 - p) * 1080)})`;
+      layer.style.transform = `translateX(${px((1 - p) * S.W)})`;
     } else if (sh.trans === 'frame') {
       const pb = E.outExpo(inv(t, a - 0.1, a + 0.35));
       layer.querySelector('.bg').style.clipPath = `inset(${((1 - pb) * 100).toFixed(2)}% 0 0 0)`;
       const pw = E.outExpo(inv(t, a, a + 0.5));
-      layer.querySelector('.win').style.clipPath = `inset(${((1 - pw) * 50).toFixed(2)}% 0 ${((1 - pw) * 50).toFixed(2)}% 0)`;
+      layer.querySelector('.panel').style.clipPath = `inset(${((1 - pw) * 50).toFixed(2)}% 0 ${((1 - pw) * 50).toFixed(2)}% 0)`;
       const k = lerp(1.2, 1.0, E.outCubic(inv(t, a, b + 0.3)));
       img[0].style.transform = `scale(${k.toFixed(4)})`;
     } else if (sh.trans === 'diag') {
       const p = E.outExpo(inv(t, a - 0.1, a + 0.4));
-      const c = lerp(-1960, 1140, p);
+      const c = lerp(-S.H - 40, S.W + 60, p);
       layer.style.clipPath = diagPoly(c);
       const edge = $(`edge${i}`);
       show(edge, p > 0 && p < 1);
@@ -133,7 +133,7 @@ function montage(t) {
     // how it leaves: the next whip carries it off to the left
     if (next && next.trans === 'whip') {
       const p = E.inOutCubic(inv(t, b - 0.14, b + 0.16));
-      if (p > 0) layer.style.transform = `translateX(${px(-p * 1080)})`;
+      if (p > 0) layer.style.transform = `translateX(${px(-p * S.W)})`;
     }
   });
   // the whip's motion blur, strongest mid-swing
@@ -179,7 +179,7 @@ function flagship(t) {
   const card = S.card;
   const ins = [lerp(card.top, 0, po), lerp(card.side, 0, po), lerp(card.bottom, 0, po), lerp(card.side, 0, po)];
   L0.style.clipPath = `inset(${ins.map(px).join(' ')})`;
-  L0.style.transform = `translateY(${px((1 - pr) * 900)})`;
+  L0.style.transform = `translateY(${px((1 - pr) * S.H * 0.47)})`;
   kenburns(L0.querySelector('img'), t, FLAG - 0.14, f[2], [1.14, 1.02, 0, 0]);
   // two quick cuts inside, each punched in on its beat
   [[L1, f[2]], [L2, f[3]]].forEach(([L, a]) => {
@@ -204,6 +204,7 @@ function cta(t) {
   const c = [CTA, CTA + B, CTA + 2 * B, CTA + 3 * B];
   const on = t >= CTA - 0.14 && t < SLAM + 0.02;
   show($('cta'), on);
+  show($('cta-fold'), on);
   if (!on) return;
   const pw = E.outExpo(inv(t, CTA - 0.14, CTA + 0.32));
   $('cta-paper').style.clipPath = `inset(${((1 - pw) * 100).toFixed(2)}% 0 0 0)`;
@@ -218,7 +219,7 @@ function cta(t) {
   const pf = E.inCubic(inv(t, c[3], c[3] + 0.42));
   const ps = E.inOutCubic(inv(t, c[3] + 0.42, SLAM - 0.04));
   const fold = $('cta-fold');
-  fold.style.transformOrigin = `540px ${S.baseY}px`;
+  fold.style.transformOrigin = `${S.W / 2}px ${S.baseY}px`;
   fold.style.transform = `scaleY(${Math.max(0.0025, 1 - pf).toFixed(4)})`;
   fold.style.filter = pf > 0 ? `brightness(${lerp(1, 0.7, pf).toFixed(3)})` : 'none';
   show(fold, pf < 0.999);
@@ -226,8 +227,8 @@ function cta(t) {
   const lineOn = t >= c[3] + 0.36;
   if (lineOn && t < SLAM) {
     show(line, true);
-    const w = lerp(1080, S.logoW, ps);
-    line.style.width = px(w); line.style.left = px(540 - w / 2); line.style.height = '5px'; line.style.top = px(S.baseY - 2.5);
+    const w = lerp(S.W, S.logoW, ps);
+    line.style.width = px(w); line.style.left = px(S.W / 2 - w / 2); line.style.height = '5px'; line.style.top = px(S.baseY - 2.5);
     line.style.background = ps > 0.5 ? 'var(--tan)' : 'var(--paper)'; line.style.opacity = '1';
   }
 }
@@ -236,6 +237,7 @@ function cta(t) {
 function slam(t) {
   const on = t >= SLAM - 0.6;
   show($('logo'), on);
+  show($('ring'), false);
   if (!on) { return; }
   const pieces = document.querySelectorAll('#logo .lg-i');
   const n = pieces.length;
@@ -281,8 +283,8 @@ function slam(t) {
   if (t >= SLAM) {
     show(line, true);
     const pl = inv(dt, 0, 0.9);
-    const w = lerp(S.logoW, 1080, E.outExpo(inv(dt, 0, 0.35)));
-    line.style.width = px(w); line.style.left = px(540 - w / 2);
+    const w = lerp(S.logoW, S.W, E.outExpo(inv(dt, 0, 0.35)));
+    line.style.width = px(w); line.style.left = px(S.W / 2 - w / 2);
     const lh = lerp(10, 2, E.outCubic(pl));
     line.style.height = px(lh); line.style.top = px(S.baseY - lh / 2);
     line.style.background = 'var(--tan)';
@@ -299,11 +301,11 @@ function slam(t) {
   rise($('l-url'), t, SLAM + 1.5, 0.7, 16, 4);
 }
 
-window.render = function render(t) {
+window.render = function render(t) {   // every element is set from t alone, so frames can be drawn in any order
   $('cam').style.transform = 'none';
   $('flash').style.opacity = '0';
+  show($('ground'), false);
   intro(t); montage(t); flagship(t); cta(t); slam(t);
-  if (t < SLAM - 0.7) show($('ground'), false);
 };
 window.ready = async function ready() {
   await document.fonts.load("200px 'Instrument Serif'");
@@ -314,5 +316,5 @@ window.ready = async function ready() {
   const svgImgs = [...document.querySelectorAll('image')].map((im) => im.getAttribute('href'));
   await Promise.all(svgImgs.map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; })));
   measure();
-  return { frames: Math.round(S.end * S.fps), end: S.end, slam: SLAM, cta: CTA, flag: FLAG };
+  return { W: S.W, H: S.H, frames: Math.round(S.end * S.fps), end: S.end, slam: SLAM, cta: CTA, flag: FLAG };
 };

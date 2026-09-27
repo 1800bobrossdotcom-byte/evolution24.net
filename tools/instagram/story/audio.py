@@ -7,9 +7,12 @@ same beat grid as the pictures.
 """
 import json
 import subprocess
+import tempfile
+import wave
 
 import numpy as np
 from scipy import signal
+from scipy.ndimage import minimum_filter1d
 
 SR = 48000
 
@@ -103,7 +106,7 @@ def impact(seed=11):
     air = signal.lfilter(b, a, noise(n, seed + 3)) * env_exp(n, 0.55, 0.004) * 0.25
     b, a = signal.butter(2, 380, fs=SR)
     thud = signal.lfilter(b, a, noise(n, seed + 5)) * env_exp(n, 0.12, 0.001) * 2.2
-    x = 0.95 * boom + 0.8 * kick + 0.45 * crack + air + thud
+    x = 1.35 * boom + 0.9 * kick + 0.45 * crack + air + 1.3 * thud
     return reverb(x / np.abs(x).max(), seconds=2.6, damp=5000, wet=0.28)
 
 
@@ -159,7 +162,7 @@ def make(mp3, wav, ff, music, beat, drop, slam, end, shots):
     body[:int(0.03 * SR)] *= np.linspace(0, 1, int(0.03 * SR))[:, None]
     brake = tape_stop(m, stop_at, beat)
     track = np.concatenate([body, brake])
-    place(mix, track, 0, gain=1.0)
+    place(mix, track, 0, gain=0.8)
     # into the drop: a riser as the camera flies through the full stop
     place(mix, riser(0.5, 350, 7000, 1), drop - 0.5, gain=0.22)
     # the whip, left to right as the picture flies left
@@ -179,7 +182,7 @@ def make(mp3, wav, ff, music, beat, drop, slam, end, shots):
     place(mix, swish(0.4, 300, 3000, 42), cta - 0.16, gain=0.1)           # the page wiping up
     # the logo: a riser as the bars fall, the impact as it lands, then the chime
     place(mix, riser(0.62, 220, 9000, 3), slam - 0.62, gain=0.3)
-    place(mix, impact(), slam, gain=0.9)
+    place(mix, impact(), slam, gain=1.7)
     notes = [(587.33, 0.28, -0.35), (783.99, 0.44, -0.1), (987.77, 0.60, 0.15), (1174.66, 0.92, 0.35)]
     chime = np.zeros((int((end - slam + 3) * SR), 2))
     for f, at, pan in notes:
@@ -192,24 +195,44 @@ def make(mp3, wav, ff, music, beat, drop, slam, end, shots):
     place(mix, reverb(chime + echo, seconds=3.0, damp=7000, wet=0.4), slam, gain=1.0)
     place(mix, reverb(pad([98.0, 146.83, 196.0, 246.94, 293.66, 440.0], end - slam - 0.05, attack=0.35, release=1.3),
                       seconds=3.0, wet=0.5), slam + 0.1, gain=0.34)
-    # finish: a short fade, then a soft limiter
+    # finish: a short fade, then master to -14 LUFS with a limiter at -1.5 dBFS on top
     f = int(0.35 * SR)
     mix[-f:] *= np.linspace(1, 0, f)[:, None] ** 2
-    peak = np.abs(mix).max()
-    mix = np.tanh(mix / peak * 1.25) / np.tanh(1.25) * 0.95
-    import wave
-    pcm = (np.clip(mix, -1, 1) * 32767).astype("<i2")
-    with wave.open(str(wav), "wb") as w:
+    mix *= 10 ** ((-14.0 - loudness(mix, ff)) / 20)
+    mix = limiter(mix, 10 ** (-1.5 / 20))
+    mix *= 10 ** ((-14.0 - loudness(mix, ff)) / 20)          # the limiter took a little off; put it back
+    mix = limiter(mix, 10 ** (-1.5 / 20))
+    write(wav, mix)
+
+
+def write(path, x):
+    pcm = (np.clip(x, -1, 1) * 32767).astype("<i2")
+    with wave.open(str(path), "wb") as w:
         w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
 
 
+def loudness(x, ff):
+    """Integrated loudness (LUFS), measured by ffmpeg's EBU R128 meter."""
+    with tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
+        write(tmp.name, np.clip(x / max(1.0, np.abs(x).max()), -1, 1))
+        scale = 20 * np.log10(max(1.0, np.abs(x).max()))
+        out = subprocess.run([ff, "-hide_banner", "-i", tmp.name, "-af", "loudnorm=print_format=json", "-f", "null", "-"],
+                             capture_output=True, text=True).stderr
+    return float(json.loads(out[out.rindex("{"):out.rindex("}") + 1])["input_i"]) + scale
+
+
+def limiter(x, ceiling, hold=0.003, smooth=0.012):
+    """Look-ahead peak limiter: hold the gain down around each peak, then ease it back."""
+    g = np.minimum(1.0, ceiling / np.maximum(np.abs(x).max(axis=1), 1e-9))
+    k = int(smooth * SR)
+    g = minimum_filter1d(g, size=int(2 * hold * SR) + 2 * k + 1)
+    win = np.hanning(2 * k + 1)
+    g = np.convolve(g, win / win.sum(), mode="same")
+    return np.clip(x * g[:, None], -ceiling, ceiling)
+
+
 def mux(video, wav, out, ff):
-    """Video plus audio, the audio brought to -14 LUFS (two passes) as Instagram expects."""
-    probe = subprocess.run([ff, "-hide_banner", "-i", str(wav), "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
-                            "-f", "null", "-"], capture_output=True, text=True).stderr
-    j = json.loads(probe[probe.rindex("{"):probe.rindex("}") + 1])
-    ln = (f"loudnorm=I=-14:TP=-1.5:LRA=11:measured_I={j['input_i']}:measured_TP={j['input_tp']}:"
-          f"measured_LRA={j['input_lra']}:measured_thresh={j['input_thresh']}:offset={j['target_offset']}:linear=true")
+    """The frames and the mastered sound in one MP4, ready to upload."""
     subprocess.run([ff, "-y", "-loglevel", "error", "-i", str(video), "-i", str(wav), "-map", "0:v", "-map", "1:a",
-                    "-c:v", "copy", "-af", ln + ",aresample=48000", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
                     "-shortest", "-movflags", "+faststart", str(out)], check=True)
