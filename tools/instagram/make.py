@@ -10,10 +10,11 @@ Writes into out-dir/kit and zips it:
   profile-preview.png                              how the profile looks, light and dark mode
   captions.md                                      bio, captions and alt text (copied from here)
 
-The grid is drawn as one 3240 x 4320 picture and cut into nine. Six photo windows sit on
-ink, above and below a paper band that runs straight through the middle row, across
-all three posts, carrying the story, the logo and the way to get in touch. Each post is
-still whole on its own in the feed. Needs Pillow and Playwright, like render-icons.cjs.
+The grid is drawn as one 3240 x 4320 picture and cut into nine. Photo windows sit on ink
+above and below a paper band that runs straight across the middle row. The band carries
+the story on the left and tours and applications on the right, and passes behind
+Charlotte Square, the flagship, in the centre. Each post is still whole on its own in
+the feed. Needs Pillow and Playwright, like render-icons.cjs.
 """
 import importlib.util
 import json
@@ -39,8 +40,7 @@ TW, TH = 1080, 1440                 # one post, 3:4, the shape of Instagram's pr
 CW, CH = TW * 3, TH * 3             # the whole grid
 WIN_X, WIN_W = 110, 860             # photo windows, in post coordinates
 WIN_Y, WIN_B = 130, 1150
-BAND_ROW, BAND_Y, BAND_B = 1, 200, 1240    # the paper band: its row, top and bottom in that row
-RULE_Y = 1050                               # the rule across the band, over each post's foot line
+BAND_ROW = 1                        # the row the paper band runs across, at window height
 
 ON_INK, ON_LIGHT = ("#debb92", "#e5e6d3"), ("#b88d5a", "#151613")
 
@@ -53,9 +53,11 @@ TILES = {
                  meta="Lofts · Downtown Rochester"),
     (0, 2): dict(order=7, kind="photo", slug="121-park-drive", file="01-exterior.jpg", focus=(0.5, 0.4),
                  meta="A restored Victorian · Manlius"),
-    (1, 0): dict(order=6, kind="story", key="our-story"),
-    (1, 1): dict(order=5, kind="logo", key="evolution24"),
-    (1, 2): dict(order=4, kind="cta", key="lets-find-your-place"),
+    (1, 0): dict(order=6, kind="story", key="our-story", name="Real people, quick answers.",
+                 meta="Family-owned & operated"),
+    (1, 1): dict(order=5, kind="photo", slug="charlotte-square", file="01-exterior-facade.jpg", focus=(0.56, 0.5),
+                 meta="Our flagship · charlottesquareroc.com"),
+    (1, 2): dict(order=4, kind="cta", key="lets-find-your-place", name=build.PHONE, meta="Equal Housing Opportunity"),
     (2, 0): dict(order=3, kind="photo", slug="181-st-paul-street", file="01-exterior.jpg", focus=(0.5, 0.5),
                  meta="Loft studios · Rochester"),
     (2, 1): dict(order=2, kind="photo", slug="379-south-main-street", file="02-living-room.jpg", focus=(0.5, 0.45),
@@ -91,35 +93,32 @@ def on_band(t):
     k = t["kind"]
     if k == "story":
         return ('<p class="lab">Our story</p><h2>An evolution<br>in <em>home.</em></h2>'
-                f'<p class="body">Founded in {build.FOUNDED} by a husband-and-wife duo with a passion for property management.</p>'
-                '<div class="foot"><p class="line">Real people, quick answers.</p></div>')
-    if k == "logo":
-        return (f'<div class="logo">{build.standalone_logo("full", ON_LIGHT)}</div>'
-                '<div class="foot center"><p class="line">Rochester · Syracuse · Geneva</p></div>')
+                f'<p class="body">Founded in {build.FOUNDED} by a husband-and-wife duo with a passion for property management.</p>')
     if k == "cta":
         return ('<p class="lab">Tours &amp; applications</p><h2>Let’s find<br>your <em>place.</em></h2>'
-                '<p class="url">evolution24.net</p><p class="bio">Link in bio</p>'
-                f'<div class="foot"><p class="line">{build.PHONE}</p><p class="eho">{build.EHO}Equal Housing Opportunity</p></div>')
+                '<p class="body">See what’s available,<br>book a tour and apply online.</p>'
+                '<p class="url">evolution24.net</p><p class="bio">Link in bio</p>')
     raise ValueError(k)
 
 
 def post(r, c, t):
-    at = f'left:{c * TW}px;top:{r * TH}px'
-    if t["kind"] != "photo":
-        return (f'<section class="post" style="{at}"><div class="words k-{t["kind"]}" '
-                f'style="top:{BAND_Y}px;height:{BAND_B - BAND_Y}px">{on_band(t)}</div></section>')
-    name = PROPS[t["slug"]]["name"]
-    return (f'<section class="post" style="{at}"><div class="win"><img src="{photo(t)}" alt=""></div>'
-            f'<div class="label"><p class="name">{build.esc(name)}</p><p class="meta">{build.esc(t["meta"])}</p></div></section>')
+    """A window (a photo, or words on the band) with its label underneath."""
+    if t["kind"] == "photo":
+        inside, name = f'<div class="win"><img src="{photo(t)}" alt=""></div>', PROPS[t["slug"]]["name"]
+    else:
+        inside, name = f'<div class="win words">{on_band(t)}</div>', t["name"]
+    eho = build.EHO if t["meta"] == "Equal Housing Opportunity" else ""
+    return (f'<section class="post" style="left:{c * TW}px;top:{r * TH}px">{inside}'
+            f'<div class="label"><p class="name">{build.esc(name)}</p><p class="meta">{eho}{build.esc(t["meta"])}</p></div></section>')
 
 
 def backdrop():
-    """The ink, and the paper band that runs across the three middle posts."""
+    """The ink, and the paper band that runs across the three middle posts, behind the
+    flagship's photo in the centre."""
     y = BAND_ROW * TH
     return (f'<svg class="backdrop" viewBox="0 0 {CW} {CH}" width="{CW}" height="{CH}">'
             f'<rect width="{CW}" height="{CH}" class="ink"/>'
-            f'<rect y="{y + BAND_Y}" width="{CW}" height="{BAND_B - BAND_Y}" class="band"/>'
-            f'<line x1="{WIN_X}" x2="{CW - WIN_X}" y1="{y + RULE_Y}" y2="{y + RULE_Y}" class="rule"/></svg>')
+            f'<rect y="{y + WIN_Y}" width="{CW}" height="{WIN_B - WIN_Y}" class="band"/></svg>')
 
 
 def fonts():
@@ -135,29 +134,22 @@ CSS = """
 body{background:var(--ink)}
 .canvas{position:relative;width:%(CW)dpx;height:%(CH)dpx;overflow:hidden}
 .backdrop{position:absolute;inset:0}
-.ink{fill:var(--ink)} .band{fill:var(--paper)} .rule{stroke:rgba(138,98,50,.45);stroke-width:2}
+.ink{fill:var(--ink)} .band{fill:var(--paper)}
 .post{position:absolute;width:%(TW)dpx;height:%(TH)dpx}
 .win{position:absolute;left:%(WIN_X)dpx;top:%(WIN_Y)dpx;width:%(WIN_W)dpx;height:%(WIN_H)dpx;overflow:hidden;background:var(--ink2)}
 .win img{display:block;width:100%%;height:100%%;object-fit:cover}
 .label{position:absolute;left:%(WIN_X)dpx;right:%(WIN_X)dpx;top:%(LABEL)dpx}
 .name{font:400 76px/1 'Instrument Serif';color:var(--on-ink)}
-.meta{font:600 25px/1 Manrope;letter-spacing:.26em;text-transform:uppercase;color:var(--tan);margin-top:26px}
-.words{position:absolute;left:%(WIN_X)dpx;right:%(WIN_X)dpx;padding:92px 0 76px;color:var(--text)}
+.meta{font:600 25px/1 Manrope;letter-spacing:.26em;text-transform:uppercase;color:var(--tan);margin-top:26px;display:flex;align-items:center;gap:14px;white-space:nowrap}
+.meta svg{width:30px;height:30px;flex:none}
+.words{background:none;padding:92px 0 76px;color:var(--text)}
 .lab{font:700 24px/1 Manrope;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
 h2{font:400 148px/.94 'Instrument Serif';letter-spacing:-.01em;margin-top:44px;color:var(--ink)}
 h2 em{font-style:italic;color:var(--accent)}
 .body{font:500 34px/1.45 Manrope;color:var(--muted);margin-top:52px;max-width:680px}
-.logo{position:absolute;left:0;right:0;top:0;height:%(LOGO_H)dpx;display:flex;align-items:center;justify-content:center}
-.logo svg{width:720px;height:auto}
-.url{font:400 76px/1 'Instrument Serif';color:var(--ink);margin-top:56px}
+.url{font:400 76px/1 'Instrument Serif';color:var(--ink);margin-top:40px}
 .bio{font:700 22px/1 Manrope;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-top:22px}
-.foot{position:absolute;left:0;right:0;top:%(FOOT)dpx;display:flex;align-items:center;justify-content:space-between}
-.foot.center{justify-content:center}
-.line{font:400 60px/1 'Instrument Serif';color:var(--ink)}
-.eho{display:flex;align-items:center;gap:14px;font:700 21px/1 Manrope;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
-.eho svg{width:30px;height:30px}
-""" % dict(CW=CW, CH=CH, TW=TW, TH=TH, WIN_X=WIN_X, WIN_Y=WIN_Y, WIN_W=WIN_W, WIN_H=WIN_B - WIN_Y, LABEL=WIN_B + 58,
-           LOGO_H=RULE_Y - BAND_Y, FOOT=RULE_Y - BAND_Y + 44)
+""" % dict(CW=CW, CH=CH, TW=TW, TH=TH, WIN_X=WIN_X, WIN_Y=WIN_Y, WIN_W=WIN_W, WIN_H=WIN_B - WIN_Y, LABEL=WIN_B + 58)
 
 
 def grid_page():

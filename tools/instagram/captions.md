@@ -15,7 +15,7 @@ README asks for them to be confirmed before the site launches:
 - **Profile picture:** `profile-picture.png` (the building mark on ink). `profile-picture-paper.png` is the light alternative.
 - **Name:** Evolution24 Properties
 - **Category:** Property Management Company. If Instagram doesn't list it, use Real Estate.
-- **Link:** https://evolution24.net
+- **Links:** https://evolution24.net first. Instagram allows up to five, so add https://www.charlottesquareroc.com as the second, titled Charlotte Square.
 - **Contact buttons:** phone 585-245-3071, and the office at 176 N Water Street, Rochester, NY 14604 (this adds a Directions button).
 
 **Bio** (134 of Instagram's 150 characters; keep the line breaks):
@@ -36,7 +36,7 @@ Evolution24 Properties is an Equal Housing Opportunity provider.
 
 ## How to post the grid
 
-The nine posts make one picture: six photo windows, above and below a cream band that runs straight across the middle three posts. Instagram puts the newest post at the top left, so you build the grid from the bottom up.
+The nine posts make one picture: property photos above and below a cream band that runs straight across the middle row, with Charlotte Square, the flagship, at the center. Instagram puts the newest post at the top left, so you build the grid from the bottom up.
 
 1. **Post them in file order, 01 first and 09 last.** Post each one as a single photo, not a carousel.
 2. **Keep the whole picture.** The posts are 3:4 (1080 × 1440), the shape of the profile grid. Before you tap Next, check that the preview shows the whole post. If it shows a square, tap the crop button at the bottom left of the preview.
@@ -108,19 +108,19 @@ Evolution24 Properties is an Equal Housing Opportunity provider.
 
 **Alt text:** Graphic: Let’s find your place. Tours and applications at evolution24.net, or call 585-245-3071
 
-## 05 · center · Welcome home
+## 05 · center · Charlotte Square
 
-**Location:** Rochester, New York
+**Location:** Charlotte Square, or Rochester, New York
 
-Welcome home.
+Charlotte Square, our flagship.
 
-We’re Evolution24 Properties, a family-owned property management company with apartments across Rochester, Syracuse, Manlius and Geneva, New York. Downtown lofts, furnished studios, a restored Victorian and houses above Seneca Lake, renovated with care and looked after by people who pick up the phone.
+Seventy-two luxury apartments at the heart of Rochester’s East End. Built in 2016 and LEED-designed, with granite, stainless and private outdoor space in every home, and a space in the secure garage included. One to three bedrooms.
 
-Follow along for homes, neighborhoods and what’s available.
+Floor plans and tours: charlottesquareroc.com, or call leasing on (585) 748-5588.
 
-#Evolution24 #RochesterNY #SyracuseNY #GenevaNY #UpstateNY
+#RochesterNY #EastEndRochester #CharlotteSquare #LuxuryApartments #ROC
 
-**Alt text:** Evolution24 Properties logo on a cream band, with Rochester, Syracuse and Geneva below
+**Alt text:** Charlotte Square, a four-story red and gray apartment building on a corner in Rochester’s East End
 
 ## 06 · middle left · Our story
 

@@ -307,8 +307,9 @@ the lead sheet. It does nothing until the setup in *Enquiries* above is done.
 ## Instagram
 
 `tools/instagram/make.py` draws the Instagram launch kit in the site's look. It makes the
-profile picture and nine 3:4 posts that fill the profile grid as one picture: six photo
-windows on ink, and a cream band that runs straight across the middle three posts.
+profile picture and nine 3:4 posts that fill the profile grid as one picture: property
+photos on ink, and a cream band that runs straight across the middle row, behind
+Charlotte Square, the flagship, in the center.
 It also makes a preview of the profile in light and dark mode, and a zip with
 `captions.md`, which holds the bio, the captions, the alt text and how to post them.
 
