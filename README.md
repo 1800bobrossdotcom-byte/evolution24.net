@@ -320,6 +320,28 @@ python3 tools/instagram/make.py        # writes tools/instagram/out/ (needs Pill
 Names, photos, the logo and the phone number come from the site. Which photo goes in
 which window, and the words on each post, are set at the top of `make.py`.
 
+**The Story.** `tools/instagram/story/story.py` makes a 20-second, 1080 × 1920 Story,
+cut to the beat. It opens on "An evolution in *home*." and dives through the full stop into
+six properties, each with its own transition. Then Charlotte Square, then "Let's find your
+place." The music brakes to a stop, the page folds into a line, and the logo's bars
+slam down onto it with a jingle.
+
+```bash
+python3 tools/instagram/story/story.py   # writes tools/instagram/out/story/ (Pillow, numpy, scipy, Playwright, ffmpeg)
+```
+
+- **Music:** "Day Trips" by HoliznaCC0, from the album *City Slacker*, dedicated to the
+  public domain under [CC0 1.0](https://freemusicarchive.org/music/holiznacc0/city-slacker/day-trips/).
+  The script downloads it once and checks its checksum. No credit is required.
+- **Jingle:** the riser, the impact and the chime are made in `audio.py` from sine
+  waves and noise, so they are ours.
+- **Timing:** `story.js` places every moment on the track's beat grid (90 BPM, G major)
+  and can draw any frame on its own. Frames are drawn at 60 fps and blended in pairs
+  to 30 fps for motion blur.
+- **Loudness:** the audio is brought to −14 LUFS.
+- **Checking one moment:** `stills.cjs` draws single frames, which is quicker than a
+  full render.
+
 ## Structure
 
 ```
