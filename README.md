@@ -304,6 +304,20 @@ eleven. The new copy says eleven.
 **Contact form.** It posts to `/api/inquiry/`, which emails the leasing team and fills
 the lead sheet. It does nothing until the setup in *Enquiries* above is done.
 
+## Instagram
+
+`tools/instagram/make.py` draws the Instagram launch kit in the site's look. It makes the
+profile picture and nine 3:4 posts that fill the profile grid as one picture of a house.
+It also makes a preview of the profile in light and dark mode, and a zip with
+`captions.md`, which holds the bio, the captions, the alt text and how to post them.
+
+```bash
+python3 tools/instagram/make.py        # writes tools/instagram/out/ (needs Pillow and Playwright)
+```
+
+Names, photos, the logo and the phone number come from the site. Which photo goes in
+which window, and the words on each post, are set at the top of `make.py`.
+
 ## Structure
 
 ```
@@ -318,6 +332,7 @@ source/logo/             the PSD and its traced vectors
 scripts/                 photos.py, build.py, render-icons.cjs
 api/inquiry.js           the contact form's endpoint (Vercel function); api/leads-config.json is generated
 tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and logo are generated
+tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words
 sitemap.xml robots.txt llms.txt site.webmanifest .well-known/security.txt
 vercel.json .vercelignore       Vercel: headers, redirects, what not to deploy
 _headers _redirects             the same headers and redirects for Cloudflare Pages / Netlify
