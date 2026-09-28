@@ -184,6 +184,11 @@ body.menu-open { overflow: hidden; }
 .hero-slide:first-child img { transform: scale(1.04); }
 @keyframes kenburns { from { transform: scale(1.12) translate3d(0, 1%, 0); } to { transform: scale(1.02); } }
 .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(21, 22, 19, .88) 0%, rgba(21, 22, 19, .55) 45%, rgba(21, 22, 19, .1) 100%), linear-gradient(0deg, rgba(21, 22, 19, .9) 0%, transparent 45%); }
+/* A slow connection can pause the page halfway through a hero. The words are bottom-aligned, so
+   a half-arrived hero would paint low and then climb as the rest came in: a layout shift. So the
+   words wait, invisible but in place, until the section after the hero has started to arrive.
+   (A hero must never be the last thing on a page, or its words would stay hidden.) */
+.hero:not(:has(+ *)) .hero-inner, .p-hero:not(:has(+ *)) .wrap { visibility: hidden; }
 .hero-inner { position: relative; z-index: 2; padding: calc(var(--header-h) + 60px) 0 clamp(40px, 7vh, 80px); display: grid; gap: 40px; }
 .hero h1 { font-size: clamp(56px, 10.5vw, 168px); line-height: .9; letter-spacing: -.025em; }
 .hero h1 .line { display: block; overflow: hidden; padding-bottom: .06em; }

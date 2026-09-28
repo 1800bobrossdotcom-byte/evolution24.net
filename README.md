@@ -116,7 +116,11 @@ Here:
   (`size-adjust` and the ascent, descent and line-gap overrides), so nothing moves when
   they swap in: layout shift measures 0 on a throttled phone.
 - **CSS is inlined** into every page, minified, so the first paint waits on no request.
-  The CSP allows it by its hash.
+  The CSP allows it by its hash. Painting that early means a slow connection can show half
+  a hero, and the home and building heroes are bottom-aligned, so the rest arriving would
+  push their words up the screen. Their words therefore stay invisible, though in place,
+  until the section after the hero has started to arrive (`:has(+ *)` in `main.css`).
+  Layout shift on the home page went from 0.19 back to 0.
 - **Next pages are ready before the tap.** Speculation Rules (`speculation-rules.json`,
   sent in a `Speculation-Rules` header) let Chrome and Edge prerender a page while a
   visitor hovers over its link or starts to press it, so most navigations are instant. `/api/`, the redirect

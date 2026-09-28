@@ -59,18 +59,6 @@
    "permanent": true
   },
   {
-   "source": "/property-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
-     "value": "1"
-    }
-   ],
-   "destination": "/properties/301-central-avenue/",
-   "permanent": true
-  },
-  {
    "source": "/property-detail/",
    "has": [
     {
@@ -83,7 +71,7 @@
    "permanent": true
   },
   {
-   "source": "/property-detail",
+   "source": "/property-detail/",
    "has": [
     {
      "type": "query",
@@ -100,18 +88,6 @@
     {
      "type": "query",
      "key": "pid",
-     "value": "6"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
      "value": "8"
     }
    ],
@@ -120,18 +96,6 @@
   },
   {
    "source": "/property-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
-     "value": "8"
-    }
-   ],
-   "destination": "/properties/water-street/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
    "has": [
     {
      "type": "query",
@@ -148,18 +112,6 @@
     {
      "type": "query",
      "key": "pid",
-     "value": "9"
-    }
-   ],
-   "destination": "/properties/biltmore/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
      "value": "11"
     }
    ],
@@ -168,18 +120,6 @@
   },
   {
    "source": "/property-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
-     "value": "11"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
    "has": [
     {
      "type": "query",
@@ -196,18 +136,6 @@
     {
      "type": "query",
      "key": "pid",
-     "value": "12"
-    }
-   ],
-   "destination": "/properties/charlotte-square/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
      "value": "2"
     }
    ],
@@ -216,18 +144,6 @@
   },
   {
    "source": "/property-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
-     "value": "2"
-    }
-   ],
-   "destination": "/properties/2215-james-street/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
    "has": [
     {
      "type": "query",
@@ -244,18 +160,6 @@
     {
      "type": "query",
      "key": "pid",
-     "value": "3"
-    }
-   ],
-   "destination": "/properties/121-park-drive/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
      "value": "10"
     }
    ],
@@ -264,18 +168,6 @@
   },
   {
    "source": "/property-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
-     "value": "10"
-    }
-   ],
-   "destination": "/properties/379-south-main-street/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
    "has": [
     {
      "type": "query",
@@ -292,18 +184,6 @@
     {
      "type": "query",
      "key": "pid",
-     "value": "5"
-    }
-   ],
-   "destination": "/properties/561-south-main-street/",
-   "permanent": true
-  },
-  {
-   "source": "/property-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
      "value": "7"
     }
    ],
@@ -311,19 +191,7 @@
    "permanent": true
   },
   {
-   "source": "/property-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "pid",
-     "value": "7"
-    }
-   ],
-   "destination": "/properties/31-genesee-street/",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
+   "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
@@ -340,43 +208,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "6"
-    }
-   ],
-   "destination": "/properties/301-central-avenue/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "34"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "34"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "36"
     }
    ],
    "destination": "/properties/145-south-fitzhugh-street/#units",
@@ -395,36 +227,12 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "39"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
      "key": "uid",
      "value": "39"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "48"
     }
    ],
    "destination": "/properties/145-south-fitzhugh-street/#units",
@@ -443,36 +251,12 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "62"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
      "key": "uid",
      "value": "62"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "64"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -491,36 +275,12 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "73"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
      "key": "uid",
      "value": "73"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "85"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -539,36 +299,12 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "87"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
      "key": "uid",
      "value": "87"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "90"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -587,18 +323,6 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "94"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
@@ -611,7 +335,7 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
+   "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
@@ -628,43 +352,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "128"
-    }
-   ],
-   "destination": "/properties/biltmore/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "172"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "172"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "185"
     }
    ],
    "destination": "/properties/181-st-paul-street/#units",
@@ -683,36 +371,12 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "26"
-    }
-   ],
-   "destination": "/properties/121-park-drive/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
      "type": "query",
      "key": "uid",
      "value": "26"
-    }
-   ],
-   "destination": "/properties/121-park-drive/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "27"
     }
    ],
    "destination": "/properties/121-park-drive/#units",
@@ -731,18 +395,6 @@
    "permanent": true
   },
   {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "152"
-    }
-   ],
-   "destination": "/properties/379-south-main-street/#units",
-   "permanent": true
-  },
-  {
    "source": "/unit-detail/",
    "has": [
     {
@@ -752,18 +404,6 @@
     }
    ],
    "destination": "/properties/379-south-main-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "55"
-    }
-   ],
-   "destination": "/properties/561-south-main-street/#units",
    "permanent": true
   },
   {
@@ -795,7 +435,7 @@
    "headers": [
     {
      "key": "Content-Security-Policy",
-     "value": "default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self' mailto:; script-src 'self' 'sha256-A8fmJ1Vv9U60DryQIF4YgiTKcIp9b8s4QH44pgzFi+g='; style-src 'self' 'sha256-mGzV3w6WNHeHfk9IOBuyjpGRrtQhdd9qwZsmGdwtcjg='; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src https://www.google.com https://maps.google.com; manifest-src 'self'; upgrade-insecure-requests; frame-ancestors 'none'"
+     "value": "default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self' mailto:; script-src 'self' 'sha256-A8fmJ1Vv9U60DryQIF4YgiTKcIp9b8s4QH44pgzFi+g='; style-src 'self' 'sha256-upt+RQ/yMeUg1+D8WZAMF/YzuThcF0KeiVvHQD2kMw4='; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src https://www.google.com https://maps.google.com; manifest-src 'self'; upgrade-insecure-requests; frame-ancestors 'none'"
     },
     {
      "key": "X-Content-Type-Options",

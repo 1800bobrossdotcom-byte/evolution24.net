@@ -1335,12 +1335,13 @@ def vercel_json():
     for a, b in REDIRECTS:
         redirects += [{"source": a.rstrip("/"), "destination": b, "permanent": True},
                       {"source": a, "destination": b, "permanent": True}]
+    # The old building and unit URLs, matched on their query string. trailingSlash has already
+    # sent /property-detail?pid=8 to /property-detail/?pid=8 by the time these are checked.
     for key, table in (("pid", LEGACY_PIDS), ("uid", LEGACY_UIDS)):
-        base = "/property-detail" if key == "pid" else "/unit-detail"
+        source = "/property-detail/" if key == "pid" else "/unit-detail/"
         for old, new in table.items():
-            for source in (base, base + "/"):
-                redirects.append({"source": source, "has": [{"type": "query", "key": key, "value": old}],
-                                  "destination": new, "permanent": True})
+            redirects.append({"source": source, "has": [{"type": "query", "key": key, "value": old}],
+                              "destination": new, "permanent": True})
     redirects += [{"source": "/wp-admin/(.*)", "destination": "/", "permanent": True},
                   {"source": "/wp-login.php", "destination": "/", "permanent": True}]
     headers = [{"source": "/(.*)", "headers": [{"key": k, "value": v} for k, v in SECURITY_HEADERS]}]
