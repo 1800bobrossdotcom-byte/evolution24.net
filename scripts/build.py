@@ -403,7 +403,8 @@ def fit(text, *more, limit=158):
     return text
 
 
-def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None, page_type="WebPage", dark_header=True, extra_head=""):
+def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None, page_type="WebPage", dark_header=True, extra_head="",
+         contact="/contact-us/"):
     canonical = SITE + url
     og = og or og_for("site", f"{NAME}: apartments in Rochester, Syracuse and Geneva, NY") or \
         {"url": f"{SITE}/assets/img/og.png", "w": 1200, "h": 630, "alt": NAME}
@@ -424,8 +425,9 @@ def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None
                f'imagesizes="100vw" fetchpriority="high">')
     js_v = asset_version("assets/js/main.js")
     current = lambda u: ' aria-current="page"' if (u == url or (u != "/" and url.startswith(u) and "#" not in u)) else ""
-    nav = "".join(f'<a href="{u}"{current(u)}>{n}</a>' for n, u in NAV)
-    drawer = "".join(f'<a class="d-link i{i}" href="{u}">{n}</a>' for i, (n, u) in enumerate(NAV))
+    links = [(n, contact if u == "/contact-us/" else u) for n, u in NAV]
+    nav = "".join(f'<a href="{u}"{current(u)}>{n}</a>' for n, u in links)
+    drawer = "".join(f'<a class="d-link i{i}" href="{u}">{n}</a>' for i, (n, u) in enumerate(links))
     return f"""<!doctype html>
 <html lang="en-US">
 <head>
@@ -549,7 +551,7 @@ def card(p, i=0, sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1200p
 </a>"""
 
 
-def units_table(rows, show_prop=True, group="units"):
+def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
     trs = []
     for p, u in rows:
         prop_cell = (f'<td class="u-prop"><a href="{prop_url(p)}">{esc(p["name"])}</a><small>{esc(p["city"])}</small></td>'
@@ -566,7 +568,7 @@ def units_table(rows, show_prop=True, group="units"):
 <caption>Availability and rents as listed on {fmt_date(UNITS_AS_OF)}. Applications confirm the current rent and move-in date.</caption>
 <thead><tr>{head_prop}<th>Unit</th><th>Type</th><th>Size</th><th>Rent</th><th><span class="sr-only">Apply</span></th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
-<p class="lead" data-filter-empty="{group}" hidden>Nothing of that size is open right now. <a href="/contact-us/">Tell us what you are looking for</a> and we will be in touch.</p>"""
+<p class="lead" data-filter-empty="{group}" hidden>Nothing of that size is open right now. <a href="{contact}">Tell us what you are looking for</a> and we will be in touch.</p>"""
 
 
 def unit_filters(rows, group="units"):
@@ -594,8 +596,11 @@ def building_index():
     return "\n      ".join(items)
 
 
-def cta_block(title="Find your *place*.", text=None):
+def cta_block(title="Find your *place*.", text=None, contact="/contact-us/"):
+    """contact: where "Send a message" goes. A building's page passes its own
+    /contact-us/?property=<slug>, so the enquiry lands on that building's tab."""
     text = text or f"Call the office, send us a note, or start an application online. We are a small team and we answer."
+    external = contact.startswith("https://")
     return f"""<section class="section cta ink">
   {logo_mark()}
   <div class="wrap cta-inner">
@@ -604,7 +609,7 @@ def cta_block(title="Find your *place*.", text=None):
     <p class="lead" data-reveal>{text}</p>
     <div class="cta-row" data-reveal>
       <a class="big" href="tel:{PHONE_TEL}">{PHONE}</a>
-      <a class="btn btn--solid" href="/contact-us/">Send a message {icon('arrow')}</a>
+      <a class="btn btn--solid" href="{contact}"{' rel="noopener"' if external else ''}>Send a message {icon('ext' if external else 'arrow')}</a>
       <a class="btn" href="/properties/#available">See what’s available</a>
     </div>
   </div>
@@ -805,6 +810,9 @@ def property_page(p):
     n = len(p["units"])
     rf = prop_rent_from(p)
     region = REGIONS[p["region"]]["name"]
+    # Every "contact us" on this page names the building, so the enquiry lands on its own tab of the
+    # lead sheet instead of General. Charlotte Square's go to its own site, form and lead sheet.
+    contact = CHARLOTTE_CONTACT if p.get("external") else f"/contact-us/?property={slug}"
     trail = [("Home", "/"), ("Properties", "/properties/"), (region, city_url(p["region"])), (p["name"], url)]
     crumbs = "".join(f'<li><a href="{u}">{esc(nm)}</a></li>' if i < 3 else f'<li aria-current="page">{esc(nm)}</li>' for i, (nm, u) in enumerate(trail))
     pills = [f'<span>{esc(p["type"])}</span>', f'<span>{esc(p["area"])}</span>']
@@ -853,7 +861,7 @@ def property_page(p):
       <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{n} {'home' if n == 1 else 'homes'} at <em>{esc(p['name'])}.</em></h2></div>
       <p class="lead" data-reveal>Choose an apartment to start its application. Questions first? Call {PHONE}.</p>
     </div>
-    <div data-reveal>{units_table([(p, u) for u in sorted(p['units'], key=lambda u: u['rent'])], show_prop=False, group='p-units')}</div>
+    <div data-reveal>{units_table([(p, u) for u in sorted(p['units'], key=lambda u: u['rent'])], show_prop=False, group='p-units', contact=contact)}</div>
   </div>
 </section>"""
     elif p.get("external"):
@@ -932,7 +940,7 @@ def property_page(p):
   </div>
 </section>
 {mbar}
-{cta_block()}
+{cta_block(contact=contact)}
 <div class="lightbox" role="dialog" aria-modal="true" aria-label="Photos of {esc(p['name'])}" inert>
   <div class="lb-top"><span class="lb-count"></span><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
   <div class="lb-stage"><picture><source type="image/avif"><img alt=""></picture><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
@@ -978,7 +986,8 @@ def property_page(p):
     avail = f"{n} available now from {money(rf)} a month." if n else (f"Rents from {money(rf)} a month." if rf else "Fully leased; join the waitlist.")
     desc = fit(f"{where} {avail}", "Managed by Evolution24, a family-owned landlord.", "Photos, amenities and online applications.", "Apply online.")
     return page(url=url, title=title, desc=desc, body=body, graph=[node], crumbs=trail,
-                og=og_for(slug, f"{p['name']}, {full_addr(p)}"), preload=(slug, cover))
+                og=og_for(slug, f"{p['name']}, {full_addr(p)}"), preload=(slug, cover),
+                contact="/contact-us/" if p.get("external") else contact)
 
 
 def city_page(key):
