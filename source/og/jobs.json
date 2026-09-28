@@ -1,0 +1,118 @@
+[
+ {
+  "name": "site",
+  "photo": "assets/img/561-south-main-street/561-south-main-street-03-bedroom-tin-ceiling-1600.webp",
+  "kicker": "Rochester \u00b7 Syracuse \u00b7 Geneva",
+  "title": "An evolution in <em>home.</em>",
+  "sub": "Family-owned apartments with character in upstate New York"
+ },
+ {
+  "name": "301-central-avenue",
+  "photo": "assets/img/301-central-avenue/301-central-avenue-02-living-room-1600.webp",
+  "kicker": "Rochester, New York",
+  "title": "301 Central Avenue",
+  "sub": "1\u20132 bedrooms",
+  "tag": "1 available now"
+ },
+ {
+  "name": "145-south-fitzhugh-street",
+  "photo": "assets/img/145-south-fitzhugh-street/145-south-fitzhugh-street-15-studio-bedroom-1284.webp",
+  "kicker": "Rochester, New York",
+  "title": "145 South Fitzhugh",
+  "sub": "Studios and 1 bedrooms",
+  "tag": "4 available now"
+ },
+ {
+  "name": "water-street",
+  "photo": "assets/img/water-street/water-street-03-loft-mezzanine-1600.webp",
+  "kicker": "Rochester, New York",
+  "title": "Water Street",
+  "sub": "168\u2013176 North Water Street \u00b7 Studios to 3 bedrooms",
+  "tag": "7 available now"
+ },
+ {
+  "name": "biltmore",
+  "photo": "assets/img/biltmore/biltmore-01-lobby-1086.webp",
+  "kicker": "Rochester, New York",
+  "title": "The Biltmore",
+  "sub": "357 Alexander Street \u00b7 Furnished studios",
+  "tag": "1 available now"
+ },
+ {
+  "name": "181-st-paul-street",
+  "photo": "assets/img/181-st-paul-street/181-st-paul-street-02-studio-1134.webp",
+  "kicker": "Rochester, New York",
+  "title": "181 St. Paul",
+  "sub": "Loft studios",
+  "tag": "2 available now"
+ },
+ {
+  "name": "charlotte-square",
+  "photo": "assets/img/charlotte-square/charlotte-square-01-exterior-facade-1600.webp",
+  "kicker": "Rochester, New York",
+  "title": "Charlotte Square",
+  "sub": "50 Charlotte Street \u00b7 1\u20133 bedrooms",
+  "tag": "Our flagship"
+ },
+ {
+  "name": "2215-james-street",
+  "photo": "assets/img/2215-james-street/2215-james-street-01-exterior-640.webp",
+  "kicker": "Syracuse, New York",
+  "title": "2215 James Street",
+  "sub": "Close to downtown Syracuse, this historic property has been updated and is ready for you to call it home.",
+  "tag": "Join the waitlist"
+ },
+ {
+  "name": "121-park-drive",
+  "photo": "assets/img/121-park-drive/121-park-drive-01-exterior-1440.webp",
+  "kicker": "Manlius, New York",
+  "title": "121 Park Drive",
+  "sub": "1\u20132 bedrooms",
+  "tag": "2 available now"
+ },
+ {
+  "name": "379-south-main-street",
+  "photo": "assets/img/379-south-main-street/379-south-main-street-02-living-room-720.webp",
+  "kicker": "Geneva, New York",
+  "title": "379 South Main",
+  "sub": "3 bedrooms",
+  "tag": "1 available now"
+ },
+ {
+  "name": "561-south-main-street",
+  "photo": "assets/img/561-south-main-street/561-south-main-street-03-bedroom-tin-ceiling-1600.webp",
+  "kicker": "Geneva, New York",
+  "title": "561 South Main",
+  "sub": "2 bedrooms",
+  "tag": "1 available now"
+ },
+ {
+  "name": "31-genesee-street",
+  "photo": "assets/img/31-genesee-street/31-genesee-street-01-exterior-439.webp",
+  "kicker": "Geneva, New York",
+  "title": "31 Genesee Street",
+  "sub": "A two-storey house with a deep front porch on Genesee Street in Geneva.",
+  "tag": "Join the waitlist"
+ },
+ {
+  "name": "city-rochester",
+  "photo": "assets/img/181-st-paul-street/181-st-paul-street-03-studio-brick-1426.webp",
+  "kicker": "Evolution24 Properties",
+  "title": "Apartments in <em>Rochester</em>",
+  "sub": "Downtown lofts, East End classics and a new-build community, from studios to three bedrooms."
+ },
+ {
+  "name": "city-syracuse",
+  "photo": "assets/img/121-park-drive/121-park-drive-01-exterior-1440.webp",
+  "kicker": "Evolution24 Properties",
+  "title": "Apartments in <em>Syracuse &amp; Manlius</em>",
+  "sub": "A historic home near downtown Syracuse and a restored Victorian in the village of Manlius."
+ },
+ {
+  "name": "city-geneva",
+  "photo": "assets/img/561-south-main-street/561-south-main-street-02-studio-living-1600.webp",
+  "kicker": "Evolution24 Properties",
+  "title": "Apartments in <em>Geneva</em>",
+  "sub": "Houses on South Main and Genesee Street, above Seneca Lake in the Finger Lakes."
+ }
+]

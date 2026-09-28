@@ -26,6 +26,7 @@ PHONE = "585-245-3071"
 PHONE_TEL = "+15852453071"
 EMAIL = "tesacoleman9@gmail.com"          # the address the old site published
 OFFICE = {"street": "176 N Water Street", "city": "Rochester", "region": "NY", "zip": "14604"}
+OFFICE_GEO = (43.15981, -77.61129)        # from OpenStreetMap, matched to the house number
 PORTAL = "https://evolution.twa.rentmanager.com/"
 APPLY_PROPERTY = "https://evolution.twa.rentmanager.com/ApplyNow?locations=&propertyID={}"
 APPLY_UNIT = "https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID={}"
@@ -101,12 +102,12 @@ def gallery_photos(slug):
     return [p for p in PHOTOS[slug] if not p["thumb"]]
 
 
-def src(slug, p, w):
-    return f"/assets/img/{slug}/{slug}-{p['id']}-{w}.webp"
+def src(slug, p, w, ext="webp"):
+    return f"/assets/img/{slug}/{slug}-{p['id']}-{w}.{ext}"
 
 
-def srcset(slug, p):
-    return ", ".join(f"{src(slug, p, w)} {w}w" for w in p["widths"])
+def srcset(slug, p, ext="webp"):
+    return ", ".join(f"{src(slug, p, w, ext)} {w}w" for w in p["widths"])
 
 
 def img(slug, pid, sizes="100vw", cls="", eager=False, alt=None, fit=960):
@@ -119,7 +120,9 @@ def img(slug, pid, sizes="100vw", cls="", eager=False, alt=None, fit=960):
     attrs.append('decoding="async"')
     if cls:
         attrs.append(f'class="{cls}"')
-    return f"<img {' '.join(attrs)}>"
+    # AVIF is about a quarter smaller than WebP; browsers without it take the WebP <img>.
+    return (f'<picture><source type="image/avif" srcset="{srcset(slug, p, "avif")}" sizes="{sizes}">'
+            f"<img {' '.join(attrs)}></picture>")
 
 
 def beds_label(u):
@@ -153,6 +156,28 @@ def prop_rent_from(p):
 
 def prop_url(p):
     return f"/properties/{p['slug']}/"
+
+
+# One page per region, at the words people search for: "apartments rochester ny".
+CITY_SLUGS = {"rochester": "rochester-ny", "syracuse": "syracuse-ny", "geneva": "geneva-ny"}
+
+
+def city_url(region):
+    return f"/apartments/{CITY_SLUGS[region]}/"
+
+
+# The date each page last changed, for the sitemap and structured data. A page's date
+# moves only when what it says changes (a hash of its main content), not on every build.
+DATES_FILE = ROOT / "data" / "page-dates.json"
+DATES = json.loads(DATES_FILE.read_text()) if DATES_FILE.exists() else {}
+
+
+def stamp(url, body):
+    digest = hashlib.sha1(re.sub(r"\?v=[0-9a-f]{10}", "", body).encode()).hexdigest()[:16]
+    rec = DATES.get(url)
+    if not rec or rec["hash"] != digest:
+        DATES[url] = {"hash": digest, "date": BUILD_DATE}
+    return DATES[url]["date"]
 
 
 def full_addr(p):
@@ -288,8 +313,9 @@ def lead_sheet_code():
 
 # ---------------------------------------------------------------- page shell
 HEAD_SCRIPT = ("document.documentElement.classList.add('js');"
-               "try{if(!sessionStorage.getItem('e24-intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)"
-               "{document.documentElement.classList.add('is-intro');sessionStorage.setItem('e24-intro','1')}}catch(e){}")
+               "try{var s=sessionStorage;if(!s.getItem('e24-intro')){s.setItem('e24-intro','1');"
+               "if(location.pathname==='/'&&!matchMedia('(prefers-reduced-motion: reduce)').matches)"
+               "document.documentElement.classList.add('is-intro')}}catch(e){}")
 HEAD_HASH = "sha256-" + base64.b64encode(hashlib.sha256(HEAD_SCRIPT.encode()).digest()).decode()
 CSP_BASE = ("default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self' mailto:; "
             f"script-src 'self' '{HEAD_HASH}'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
@@ -310,7 +336,7 @@ def org_node():
         "@id": f"{SITE}/#organization",
         "name": NAME,
         "url": f"{SITE}/",
-        "logo": f"{SITE}/assets/img/logo-512.png",
+        "logo": {"@type": "ImageObject", "url": f"{SITE}/assets/img/logo-512.png", "width": 512, "height": 512},
         "image": f"{SITE}/assets/img/og.png",
         "telephone": PHONE_TEL.replace("+1", "+1-").replace("5852453071", "585-245-3071"),
         "email": EMAIL,
@@ -318,7 +344,12 @@ def org_node():
         "description": "Family-owned property management company with apartments in Rochester, Syracuse, Manlius and Geneva, New York.",
         "address": {"@type": "PostalAddress", "streetAddress": OFFICE["street"], "addressLocality": OFFICE["city"],
                     "addressRegion": OFFICE["region"], "postalCode": OFFICE["zip"], "addressCountry": "US"},
-        "areaServed": [{"@type": "City", "name": n} for n in ("Rochester", "Syracuse", "Manlius", "Geneva")],
+        "geo": {"@type": "GeoCoordinates", "latitude": OFFICE_GEO[0], "longitude": OFFICE_GEO[1]},
+        "contactPoint": {"@type": "ContactPoint", "telephone": "+1-585-245-3071", "contactType": "leasing",
+                         "areaServed": "US-NY", "availableLanguage": "English"},
+        "areaServed": [{"@type": "City", "name": n, "containedInPlace": {"@type": "State", "name": "New York"}}
+                       for n in ("Rochester", "Syracuse", "Manlius", "Geneva")],
+        "knowsAbout": ["Apartment rentals", "Property management", "Furnished apartments", "Loft apartments"],
         "sameAs": ["https://www.charlottesquareroc.com/"],
     }
 
@@ -333,22 +364,65 @@ def crumbs_node(url, trail):
     return {"@type": "BreadcrumbList", "@id": f"{SITE}{url}#breadcrumb", "itemListElement": items}
 
 
-def page(*, url, title, desc, body, graph=(), crumbs=None, og_image=None, preload=None, page_type="WebPage", dark_header=True, extra_head=""):
+def og_for(name, alt):
+    """The page's share card (1200 x 630, drawn by scripts/render-og.cjs), or the site's."""
+    if (ROOT / f"assets/img/og/{name}.jpg").exists():
+        return {"url": f"{SITE}/assets/img/og/{name}.jpg", "w": 1200, "h": 630, "alt": alt}
+    return None
+
+
+def og_jobs():
+    """What scripts/render-og.cjs draws: one share card per property and city, and the site's."""
+    def best(slug, pid):
+        ph = photo(slug, pid)
+        w = max([x for x in ph["widths"] if x <= 1600] or [ph["widths"][-1]])
+        return src(slug, ph, w).lstrip("/")
+    jobs = [{"name": "site", "photo": best("561-south-main-street", "03-bedroom-tin-ceiling"), "kicker": "Rochester · Syracuse · Geneva",
+             "title": "An evolution in <em>home.</em>", "sub": "Family-owned apartments with character in upstate New York"}]
+    for p in PROPS:
+        n = len(p["units"])
+        tag = f"{n} available now" if n else ("Our flagship" if p.get("external") else "Join the waitlist")
+        # "301 Central Avenue" is its own address; "Water Street" needs its street number
+        bits = ([] if p["name"][0].isdigit() else [p["street"]]) + ([p["bedrooms"]] if p.get("bedrooms") else [])
+        sub = " · ".join(bits) or p["desc"].split(". ")[0].rstrip(".") + "."
+        jobs.append({"name": p["slug"], "photo": best(p["slug"], p["cover"]), "kicker": f"{p['city']}, New York",
+                     "title": esc(p["name"]), "sub": esc(sub), "tag": tag})
+    for key, r in REGIONS.items():
+        lead = next(p for p in PROPS if p["region"] == key)
+        jobs.append({"name": f"city-{key}", "photo": best(*r.get("photo", (lead["slug"], lead["cover"]))), "kicker": "Evolution24 Properties",
+                     "title": f"Apartments in <em>{esc(r['name'])}</em>", "sub": esc(r["blurb"])})
+    return jobs
+
+
+def fit(text, *more, limit=158):
+    """A meta description: the first sentence, then each further one that still fits whole
+    (search results cut at about 160 characters, and a cut mid-word looks broken)."""
+    for m in more:
+        if len(text) + 1 + len(m) <= limit:
+            text += " " + m
+    return text
+
+
+def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None, page_type="WebPage", dark_header=True, extra_head=""):
     canonical = SITE + url
-    og = og_image or f"{SITE}/assets/img/og.png"
+    og = og or og_for("site", f"{NAME}: apartments in Rochester, Syracuse and Geneva, NY") or \
+        {"url": f"{SITE}/assets/img/og.png", "w": 1200, "h": 630, "alt": NAME}
     trail = crumbs or [("Home", "/")]
+    modified = stamp(url, body)
     nodes = [website_node(), org_node(),
              {"@type": page_type, "@id": canonical + "#webpage", "url": canonical, "name": title, "description": desc,
               "isPartOf": {"@id": f"{SITE}/#website"}, "about": {"@id": f"{SITE}/#organization"},
-              "breadcrumb": {"@id": canonical + "#breadcrumb"}, "inLanguage": "en-US", "dateModified": BUILD_DATE},
+              "primaryImageOfPage": {"@type": "ImageObject", "url": og["url"], "width": og["w"], "height": og["h"]},
+              "breadcrumb": {"@id": canonical + "#breadcrumb"}, "inLanguage": "en-US", "dateModified": modified},
              crumbs_node(url, trail), *graph]
     ld = json.dumps({"@context": "https://schema.org", "@graph": nodes}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     pre = ""
     if preload:
         slug, p = preload
-        pre = (f'<link rel="preload" as="image" href="{src(slug, p, 960)}" imagesrcset="{srcset(slug, p)}" '
+        # The same AVIF set the hero's <picture> will pick, so the preload is not a second download.
+        pre = (f'<link rel="preload" as="image" type="image/avif" imagesrcset="{srcset(slug, p, "avif")}" '
                f'imagesizes="100vw" fetchpriority="high">')
-    css_v, js_v = asset_version("assets/css/main.css"), asset_version("assets/js/main.js")
+    js_v = asset_version("assets/js/main.js")
     current = lambda u: ' aria-current="page"' if (u == url or (u != "/" and url.startswith(u) and "#" not in u)) else ""
     nav = "".join(f'<a href="{u}"{current(u)}>{n}</a>' for n, u in NAV)
     drawer = "".join(f'<a class="d-link i{i}" href="{u}">{n}</a>' for i, (n, u) in enumerate(NAV))
@@ -370,15 +444,20 @@ def page(*, url, title, desc, body, graph=(), crumbs=None, og_image=None, preloa
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{canonical}">
-<meta property="og:image" content="{og}">
+<meta property="og:image" content="{og['url']}">
+<meta property="og:image:width" content="{og['w']}">
+<meta property="og:image:height" content="{og['h']}">
+<meta property="og:image:alt" content="{esc(og['alt'])}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{og['url']}">
+<meta name="twitter:image:alt" content="{esc(og['alt'])}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
-{pre}<link rel="stylesheet" href="/assets/css/main.css?v={css_v}">
+{pre}<style>{INLINE_CSS}</style>
 <script src="/assets/js/main.js?v={js_v}" defer></script>
 {extra_head}<script type="application/ld+json">{ld}</script>
 </head>
@@ -417,7 +496,7 @@ def footer():
     by_region = ""
     for key, r in REGIONS.items():
         links = "".join(f'<li><a href="{prop_url(p)}">{esc(p["name"])}</a></li>' for p in PROPS if p["region"] == key)
-        by_region += f'<div><h2>{esc(r["name"])}</h2><ul>{links}</ul></div>'
+        by_region += f'<div><h2><a href="{city_url(key)}">{esc(r["name"])}</a></h2><ul>{links}</ul></div>'
     return f"""<footer class="site-footer">
   <div class="wrap">
     <div class="foot-grid">
@@ -447,7 +526,7 @@ def split_lines(text, i0=0):
 
 
 # ---------------------------------------------------------------- components
-def card(p, i=0, sizes="(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 33vw"):
+def card(p, i=0, sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1200px) calc(50vw - 40px), 420px"):
     n = len(p["units"])
     tags = [p["region"]] + (["available"] if n else []) + sorted({unit_tag(u) for u in p["units"]})
     badge = (f'<span class="badge badge--live">{n} available</span>' if n
@@ -573,7 +652,7 @@ def home():
         count = sum(1 for p in PROPS if p["region"] == key)
         regions += f"""<div class="region" data-reveal>
   <span class="region-num">0{ri + 1}</span>
-  <div class="region-text"><h3>{esc(r['name'])}</h3><p>{esc(r['blurb'])}</p><p><a class="link" href="/properties/?region={key}">{count} {'property' if count == 1 else 'properties'} {icon('arrow')}</a></p></div>
+  <div class="region-text"><h3><a href="{city_url(key)}">{esc(r['name'])}</a></h3><p>{esc(r['blurb'])}</p><p><a class="link" href="{city_url(key)}">{count} {'property' if count == 1 else 'properties'} {icon('arrow')}</a></p></div>
   <ul class="region-list">{items}</ul>
 </div>"""
 
@@ -583,7 +662,10 @@ def home():
     band_b = [("121-park-drive", "02-porch-view"), ("301-central-avenue", "08-bedroom-brick"), ("biltmore", "03-entrance"),
               ("379-south-main-street", "01-aerial"), ("145-south-fitzhugh-street", "09-kitchen-red-fridge"), ("561-south-main-street", "01-exterior"),
               ("181-st-paul-street", "01-exterior"), ("301-central-avenue", "12-shower-marble")]
-    band = lambda xs: "".join(img(s, pid, "(max-width: 700px) 60vw, 30vw", fit=960) for s, pid in xs)
+    def band_sizes(s, pid):   # the band's height is clamp(220px, 32vw, 440px); width follows each photo's shape
+        ar = photo(s, pid)["w"] / photo(s, pid)["h"]
+        return f"(max-width: 687px) {round(220 * ar)}px, (max-width: 1375px) {32 * ar:.1f}vw, {round(440 * ar)}px"
+    band = lambda xs: "".join(img(s, pid, band_sizes(s, pid), fit=960) for s, pid in xs)
 
     body = f"""<section class="hero on-ink" aria-label="Introduction">
   <div class="hero-media">{slide_html}</div>
@@ -679,8 +761,9 @@ def home():
     desc = (f"Family-owned apartments in Rochester, Syracuse, Manlius and Geneva, NY. Studios to 3 bedrooms, "
             f"{n_units} available now from {money(RENT_FROM)} a month.")
     faq_graph = []
+    italic = '<link rel="preload" href="/assets/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin>\n'
     return page(url="/", title="Apartments in Rochester, Syracuse & Geneva, NY | Evolution24", desc=desc, body=body,
-                preload=(slides[0][0], photo(*slides[0])), graph=faq_graph)
+                preload=(slides[0][0], photo(*slides[0])), graph=faq_graph, extra_head=italic)
 
 
 def properties_index():
@@ -692,7 +775,9 @@ def properties_index():
     body = f"""{page_hero('Properties', f'{len(PROPS)} places|to call *home*.', f'Every Evolution24 property in Rochester, Syracuse, Manlius and Geneva. {len(ALL_UNITS)} apartments are available now, from {money(RENT_FROM)} a month.', [('Home', '/'), ('Properties', '/properties/')])}
 <section class="section section--tight">
   <div class="wrap">
+    <h2 class="sr-only">All properties</h2>
     <div class="filters" data-filter-group="props" role="group" aria-label="Filter properties">{chip_html}</div>
+    <p class="by-city">By city: {' · '.join(f'<a href="{city_url(k)}">{esc(r["name"])}</a>' for k, r in REGIONS.items())}</p>
     <div class="cards" data-filter-items="props">{cards}</div>
   </div>
 </section>
@@ -719,8 +804,9 @@ def property_page(p):
     cover = photo(slug, p["cover"])
     n = len(p["units"])
     rf = prop_rent_from(p)
-    trail = [("Home", "/"), ("Properties", "/properties/"), (p["name"], url)]
-    crumbs = "".join(f'<li><a href="{u}">{esc(nm)}</a></li>' if i < 2 else f'<li aria-current="page">{esc(nm)}</li>' for i, (nm, u) in enumerate(trail))
+    region = REGIONS[p["region"]]["name"]
+    trail = [("Home", "/"), ("Properties", "/properties/"), (region, city_url(p["region"])), (p["name"], url)]
+    crumbs = "".join(f'<li><a href="{u}">{esc(nm)}</a></li>' if i < 3 else f'<li aria-current="page">{esc(nm)}</li>' for i, (nm, u) in enumerate(trail))
     pills = [f'<span>{esc(p["type"])}</span>', f'<span>{esc(p["area"])}</span>']
     if p.get("bedrooms"):
         pills.append(f'<span>{esc(p["bedrooms"])}</span>')
@@ -728,7 +814,7 @@ def property_page(p):
         pills.insert(0, f'<span class="live">{n} available now</span>')
     if p.get("external"):
         actions = (f'<a class="btn btn--solid" href="{p["external"]}" rel="noopener">Visit {esc(p["name"])} {icon("ext")}</a>'
-                   f'<a class="btn" href="tel:{re.sub(r"[^0-9]", "", p["leasing"]["phone"])}">Call leasing</a>')
+                   f'<a class="btn" href="tel:+1{re.sub(r"[^0-9]", "", p["leasing"]["phone"])}">Call leasing</a>')
     else:
         actions = (f'<a class="btn btn--solid" href="{APPLY_PROPERTY.format(p["pid"])}" rel="noopener">Apply now {icon("arrow")}</a>'
                    + (f'<a class="btn" href="#units">See {n} available</a>' if n else f'<a class="btn" href="/contact-us/?property={esc(slug)}&amp;interest=waitlist">Join the waitlist</a>'))
@@ -742,7 +828,8 @@ def property_page(p):
         more = f'<span class="more">+{len(photos) - 5} more</span>' if i == 4 and len(photos) > 5 else ""
         sizes = "(max-width: 700px) 100vw, 58vw" if i < 2 or layout[i] == "g-f" else "(max-width: 700px) 50vw, 34vw"
         tiles += f'<button type="button" data-index="{i}" aria-label="Open photo {i + 1} of {len(photos)}: {esc(ph["alt"])}" data-reveal="clip" class="{layout[i]} i{i % 4}">{img(slug, ph, sizes, alt="", fit=1600 if i < 2 else 960)}{more}</button>'
-    gdata = json.dumps([{"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "alt": ph["alt"], "w": ph["w"], "h": ph["h"]} for ph in photos]).replace("</", "<\\/")
+    gdata = json.dumps([{"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "avif": srcset(slug, ph, "avif"),
+                         "alt": ph["alt"], "w": ph["w"], "h": ph["h"]} for ph in photos]).replace("</", "<\\/")
 
     facts = [("Address", esc(full_addr(p))), ("Type", esc(p["type"]))]
     if p.get("bedrooms"):
@@ -783,6 +870,15 @@ def property_page(p):
   <div class="hero-actions" data-reveal><a class="btn btn--solid" href="/contact-us/?property={esc(slug)}&amp;interest=waitlist">Join the waitlist {icon('arrow')}</a><a class="btn" href="/properties/#available">See what’s available elsewhere</a></div>
 </div></section>"""
 
+    if p.get("external"):
+        main_act = f'<a class="btn btn--solid" href="{p["external"]}" rel="noopener">Visit site</a>'
+        call = "+1" + re.sub(r"[^0-9]", "", p["leasing"]["phone"])
+    else:
+        main_act = (f'<a class="btn btn--solid" href="#units">See {n} available</a>' if n else
+                    f'<a class="btn btn--solid" href="/contact-us/?property={esc(slug)}&amp;interest=waitlist">Join the waitlist</a>')
+        call = PHONE_TEL
+    mbar = (f'<div class="m-bar" data-mbar aria-label="Quick actions for {esc(p["name"])}" role="region" inert>'
+            f'<a class="btn" href="tel:{call}">{icon("phone")} Call</a>{main_act}</div>')
     others = [o for o in PROPS if o["region"] == p["region"] and o is not p][:3]
     if len(others) < 3:
         others += [o for o in PROPS if o["region"] != p["region"] and o["units"]][: 3 - len(others)]
@@ -830,14 +926,16 @@ def property_page(p):
 </section>
 <section class="section">
   <div class="wrap">
-    <div class="section-head"><div><p class="label" data-reveal>Keep looking</p><h2 data-reveal class="i1">More <em>nearby.</em></h2></div></div>
+    <div class="section-head"><div><p class="label" data-reveal>Keep looking</p><h2 data-reveal class="i1">More <em>nearby.</em></h2></div>
+    <p data-reveal><a class="link" href="{city_url(p['region'])}">All apartments in {esc(region)} {icon('arrow')}</a></p></div>
     <div class="cards">{''.join(card(o, i) for i, o in enumerate(others))}</div>
   </div>
 </section>
+{mbar}
 {cta_block()}
 <div class="lightbox" role="dialog" aria-modal="true" aria-label="Photos of {esc(p['name'])}" inert>
   <div class="lb-top"><span class="lb-count"></span><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
-  <div class="lb-stage"><img alt=""><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
+  <div class="lb-stage"><picture><source type="image/avif"><img alt=""></picture><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
   <p class="lb-cap"></p>
 </div>
 <script type="application/json" id="gallery-data">{gdata}</script>"""
@@ -853,8 +951,9 @@ def property_page(p):
                     "postalCode": p["zip"], "addressCountry": "US"},
         "image": [SITE + src(slug, ph, ph["widths"][-1]) for ph in photos[:6]],
         "hasMap": f"https://www.google.com/maps/search/?api=1&query={maps_q(p)}",
+        **({"geo": {"@type": "GeoCoordinates", "latitude": p["geo"][0], "longitude": p["geo"][1]}} if p.get("geo") else {}),
         "amenityFeature": [{"@type": "LocationFeatureSpecification", "name": a, "value": True} for a in p["amenities"]],
-        "containedInPlace": {"@type": "City", "name": f"{p['city']}, New York"},
+        "containedInPlace": {"@type": "City", "name": f"{p['city']}, New York", "url": SITE + city_url(p["region"])},
         "provider": {"@id": f"{SITE}/#organization"},
     }
     if p["type"] == "Apartment community":
@@ -873,13 +972,92 @@ def property_page(p):
     title_bits = f"{p['name']} Apartments, {p['city']} NY"
     title = f"{title_bits} | Evolution24" if len(title_bits) < 44 else title_bits
     what = p.get("bedrooms", "Apartments").replace("–", " to ")
-    avail = f"{n} available from {money(rf)}/mo." if n else ("Rents from " + money(rf) + "/mo." if rf else "Join the waitlist.")
-    desc = f"{what} at {p['street']}, {p['city']}, NY, managed by Evolution24. {avail}"
-    if len(desc) < 120:
-        desc += " Photos, amenities and online applications."
-    return page(url=url, title=title, desc=desc[:158], body=body, graph=[node], crumbs=trail,
-                og_image=SITE + src(slug, cover, 1600 if 1600 in cover["widths"] else cover["widths"][-1]),
-                preload=(slug, cover))
+    where = f"{what} at {p['street']}, {p['city']}, NY."
+    if not p["name"][0].isdigit():  # "Water Street: studios to 3 bedrooms at 168–176 North Water Street, …"
+        where = f"{p['name']}: {what[0].lower()}{what[1:]} at {p['street']}, {p['city']}, NY."
+    avail = f"{n} available now from {money(rf)} a month." if n else (f"Rents from {money(rf)} a month." if rf else "Fully leased; join the waitlist.")
+    desc = fit(f"{where} {avail}", "Managed by Evolution24, a family-owned landlord.", "Photos, amenities and online applications.", "Apply online.")
+    return page(url=url, title=title, desc=desc, body=body, graph=[node], crumbs=trail,
+                og=og_for(slug, f"{p['name']}, {full_addr(p)}"), preload=(slug, cover))
+
+
+def city_page(key):
+    r = REGIONS[key]
+    props = [p for p in PROPS if p["region"] == key]
+    rows = [(p, u) for p, u in ALL_UNITS if p["region"] == key]
+    url, name = city_url(key), r["name"]
+    towns = sorted(dict.fromkeys(p["city"] for p in props), key=lambda c: -sum(1 for p in props if p["city"] == c))
+    word = lambda n: ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")[n - 1] if n < 10 else str(n)
+    k, rf = len(rows), min((u["rent"] for _, u in rows), default=None)
+    where = " and ".join(towns)
+    lead = esc(f"{len(props)} Evolution24 {'property' if len(props) == 1 else 'properties'} in {where}, New York. "
+               + (f"{k} {'apartment is' if k == 1 else 'apartments are'} available now, from {money(rf)} a month." if k else "All are leased right now; join the waitlist and we will call you first."))
+    h1 = {"rochester": "Apartments in|*Rochester*, NY.", "syracuse": "Apartments in|*Syracuse* &amp; Manlius.",
+          "geneva": "Apartments in|*Geneva*, NY."}[key]
+    n = word(len(props)).capitalize()
+    h2 = {"rochester": f"{n} addresses, *one city.*", "syracuse": f"{n} houses, *{word(len(towns))} towns.*",
+          "geneva": f"{n} houses *by the lake.*"}[key]
+    places = "".join(f'<li><a href="{prop_url(p)}"><strong>{esc(p["name"])}</strong></a><span>{esc(p["street"])} · {esc(p["area"])}</span></li>' for p in props)
+    if rows:
+        avail = f"""<section class="section ink" id="available">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{k} {'home' if k == 1 else 'homes'} in <em>{esc(name)}.</em></h2></div>
+      <p class="lead" data-reveal>Sorted by rent. Every Apply button opens our secure application for that exact apartment.</p>
+    </div>
+    <div data-reveal>{unit_filters(rows, 'city-units')}{units_table(rows, group='city-units')}</div>
+  </div>
+</section>"""
+    else:
+        avail = f"""<section class="section ink" id="available"><div class="wrap">
+  <p class="label" data-reveal>Availability</p><h2 data-reveal class="i1">Fully leased, <em>for now.</em></h2>
+  <p class="lead" data-reveal>Nothing is open in {esc(name)} today. Tell us what you are looking for and we will let you know as soon as something comes up.</p>
+  <div class="hero-actions" data-reveal><a class="btn btn--solid" href="/contact-us/?interest=waitlist">Join the waitlist {icon('arrow')}</a><a class="btn" href="/properties/#available">See what’s available elsewhere</a></div>
+</div></section>"""
+    faqs = [(f"How many apartments are available in {name} right now?",
+             (f"{k}, as listed on {fmt_date(UNITS_AS_OF)}: " + "; ".join(f"{len([u for q, u in rows if q is p])} at {p['name']}" for p in props if any(q is p for q, _ in rows))
+              + ". Availability changes often, and every application confirms the current rent and move-in date.") if k else
+             f"None are listed as of {fmt_date(UNITS_AS_OF)}. Join the waitlist and we will let you know when something opens."),
+            (f"Where are Evolution24’s {name} apartments?",
+             "; ".join(f"{p['name']}, {p['street']}, {p['city']} ({p['area']})" for p in props) + "."),
+            ("Can I bring a pet?", f"Yes: up to two pets per home, with a ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet."),
+            ("How do I apply?", f"Choose an apartment and press Apply. It opens our secure online application for that exact home. Questions first? Call {PHONE}.")]
+    faq_html = "".join(f'<details data-reveal><summary>{esc(q)}<span class="pm" aria-hidden="true"></span></summary><div class="ans"><p>{esc(a)}</p></div></details>' for q, a in faqs)
+    body = f"""{page_hero(f"{esc(name)}, New York", h1, lead, [('Home', '/'), ('Properties', '/properties/'), (name, url)])}
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="label" data-reveal>Our buildings</p><h2 data-reveal class="i1">{emph(h2)}</h2></div>
+      <p class="lead" data-reveal>{esc(r['blurb'])}</p>
+    </div>
+    <div class="cards">{''.join(card(p, i) for i, p in enumerate(props))}</div>
+  </div>
+</section>
+{avail}
+<section class="section">
+  <div class="wrap p-intro">
+    <div>
+      <p class="label" data-reveal>Where they are</p>
+      <h2 data-reveal class="i1">Every address <em>in {esc(name)}.</em></h2>
+      <ul class="places" data-reveal>{places}</ul>
+    </div>
+    <div>
+      <p class="label" data-reveal>Questions</p>
+      <div class="faq">{faq_html}</div>
+    </div>
+  </div>
+</section>
+{cta_block(f"Find your place in *{esc(name)}*.")}"""
+    items = [{"@type": "ListItem", "position": i + 1, "url": SITE + prop_url(p), "name": p["name"]} for i, p in enumerate(props)]
+    graph = [{"@type": "ItemList", "@id": f"{SITE}{url}#list", "name": f"Evolution24 apartments in {name}", "numberOfItems": len(props), "itemListElement": items},
+             {"@type": "FAQPage", "@id": f"{SITE}{url}#faq", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faqs]}]
+    title = f"Apartments for Rent in {name}, NY | Evolution24"
+    desc = fit(f"{k} {'apartment' if k == 1 else 'apartments'} for rent in {name}, NY, from {money(rf)} a month." if k
+               else f"Apartments in {name}, NY, from a family-owned landlord.",
+               r["blurb"], " and ".join(f"{p['street']} in {p['city']}" for p in props) + ".", "Family-owned; apply online.")
+    return page(url=url, title=title, desc=desc, body=body, graph=graph, page_type="CollectionPage",
+                crumbs=[("Home", "/"), ("Properties", "/properties/"), (name, url)],
+                og=og_for(f"city-{key}", f"Evolution24 apartments in {name}, New York"), preload=None)
 
 
 def about():
@@ -933,6 +1111,7 @@ def faqs():
 </section>
 <section class="section section--tight ink">
   <div class="wrap">
+    <h2 class="sr-only">More help</h2>
     <div class="tiles">
       <a class="tile" href="{PORTAL}" rel="noopener">{icon('key')}<h3>Resident portal</h3><p>Pay rent and submit work orders in Tenant Web Access.</p></a>
       <a class="tile" href="tel:{PHONE_TEL}">{icon('phone')}<h3>{PHONE}</h3><p>Call the office.</p></a>
@@ -986,6 +1165,7 @@ def contact():
       </form>
     </div>
     <div class="contact-cards" data-reveal>
+      <h2 class="sr-only">Other ways to reach us</h2>
       <div><h3>Call</h3><a class="big" href="tel:{PHONE_TEL}">{PHONE}</a></div>
       <div><h3>Email</h3><p><a href="mailto:{EMAIL}">{EMAIL}</a></p></div>
       <div><h3>Office</h3><p>{OFFICE['street']}<br>{OFFICE['city']}, NY {OFFICE['zip']}</p></div>
@@ -1070,9 +1250,9 @@ def sitemap(urls):
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
     for u, imgs in urls:
-        out.append(f"  <url><loc>{SITE}{u}</loc><lastmod>{BUILD_DATE}</lastmod>")
-        for loc, cap in imgs:
-            out.append(f"    <image:image><image:loc>{SITE}{loc}</image:loc><image:caption>{html.escape(cap, quote=False)}</image:caption></image:image>")
+        out.append(f"  <url><loc>{SITE}{u}</loc><lastmod>{DATES.get(u, {}).get('date', BUILD_DATE)}</lastmod>")
+        for loc, _ in imgs:
+            out.append(f"    <image:image><image:loc>{SITE}{loc}</image:loc></image:image>")
         out.append("  </url>")
     out.append("</urlset>")
     return "\n".join(out) + "\n"
@@ -1088,7 +1268,8 @@ def llms():
              f"- Residents pay rent and request maintenance at {PORTAL}",
              f"- Pets: up to two per apartment; ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet.",
              "- Rent is paid by check, money order or online. Cash is not accepted.", "",
-             f"## Properties ({len(PROPS)})"]
+             "## By city"] + [f"- [Apartments in {r['name']}, NY]({SITE}{city_url(k)})" for k, r in REGIONS.items()] + [
+             "", f"## Properties ({len(PROPS)})"]
     for p in PROPS:
         n = len(p["units"])
         bit = f"{n} available, from {money(prop_rent_from(p))}/mo" if n else ("see " + p["external"] if p.get("external") else "fully leased")
@@ -1113,6 +1294,7 @@ SECURITY_HEADERS = [
     ("Permissions-Policy", "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), "
                            "gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"),
 ]
+SECURITY_HEADERS.append(("Speculation-Rules", '"/speculation-rules.json"'))
 YEAR = "public, max-age=31536000, immutable"   # CSS/JS carry ?v=<content hash>, so a change is a new URL
 CACHE_RULES = [("/assets/css/", YEAR), ("/assets/js/", YEAR), ("/assets/fonts/", YEAR), ("/assets/img/", "public, max-age=2592000")]
 VERCEL_HOST = "evolution24-net.vercel.app"     # Vercel's own alias for the production deployment
@@ -1128,10 +1310,18 @@ def leads_config():
     }, indent=1, ensure_ascii=False) + "\n"
 
 
+SPECULATION_RULES = {"prerender": [{"where": {"and": [
+    {"href_matches": "/*"},
+    {"not": {"href_matches": ["/api/*", "/property-detail/*", "/unit-detail/*", "/*.xml", "/*.txt", "/*.json"]}},
+    {"not": {"selector_matches": "[rel~=nofollow], [target=_blank], [download], [href^='#']"}}]},
+    "eagerness": "moderate"}]}
+
+
 def headers():
     out = ["# Cloudflare Pages / Netlify. Generated by scripts/build.py — edit the generator.", "/*"]
     out += [f"  {k}: {v}" for k, v in SECURITY_HEADERS]
     out.append("  Strict-Transport-Security: max-age=31536000; includeSubDomains")
+    out += ["", "/speculation-rules.json", "  Content-Type: application/speculationrules+json"]
     for prefix, value in CACHE_RULES:
         out += ["", f"{prefix}*", f"  Cache-Control: {value}"]
     return "\n".join(out) + "\n"
@@ -1145,10 +1335,17 @@ def vercel_json():
     for a, b in REDIRECTS:
         redirects += [{"source": a.rstrip("/"), "destination": b, "permanent": True},
                       {"source": a, "destination": b, "permanent": True}]
+    for key, table in (("pid", LEGACY_PIDS), ("uid", LEGACY_UIDS)):
+        base = "/property-detail" if key == "pid" else "/unit-detail"
+        for old, new in table.items():
+            for source in (base, base + "/"):
+                redirects.append({"source": source, "has": [{"type": "query", "key": key, "value": old}],
+                                  "destination": new, "permanent": True})
     redirects += [{"source": "/wp-admin/(.*)", "destination": "/", "permanent": True},
                   {"source": "/wp-login.php", "destination": "/", "permanent": True}]
     headers = [{"source": "/(.*)", "headers": [{"key": k, "value": v} for k, v in SECURITY_HEADERS]}]
     headers += [{"source": f"{prefix}(.*)", "headers": [{"key": "Cache-Control", "value": value}]} for prefix, value in CACHE_RULES]
+    headers.append({"source": "/speculation-rules.json", "headers": [{"key": "Content-Type", "value": "application/speculationrules+json"}]})
     # The vercel.app alias duplicates the real domain; keep it out of search results.
     headers.append({"source": "/(.*)", "has": [{"type": "host", "value": VERCEL_HOST}],
                     "headers": [{"key": "X-Robots-Tag", "value": "noindex"}]})
@@ -1170,6 +1367,30 @@ def redirects_file():
 
 
 # ---------------------------------------------------------------- write
+def minify_css(css):
+    """Comments out, whitespace down to what the syntax needs. Leaves strings, calc() and
+    selectors alone: only runs of whitespace, and spaces next to { } ; and , go."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    css = re.sub(r"\s+", " ", css)
+    css = re.sub(r"\s*([{};,])\s*", r"\1", css)
+    css = re.sub(r";}", "}", css)
+    return css.strip()
+
+
+INLINE_CSS = ""
+
+
+def inline_css():
+    """main.css as it goes into each page's <style>: minified, with the font URLs made
+    absolute (they were relative to /assets/css/), and the CSP hash that allows it."""
+    global INLINE_CSS, CSP_BASE, CSP_HEADER
+    INLINE_CSS = minify_css((ROOT / "assets/css/main.css").read_text()).replace("url('../fonts/", "url('/assets/fonts/")
+    digest = "sha256-" + base64.b64encode(hashlib.sha256(INLINE_CSS.encode()).digest()).decode()
+    CSP_BASE = re.sub(r"style-src 'self'[^;]*", f"style-src 'self' '{digest}'", CSP_BASE)
+    CSP_HEADER = CSP_BASE + "; frame-ancestors 'none'"
+    SECURITY_HEADERS[0] = ("Content-Security-Policy", CSP_HEADER)
+
+
 def write(rel, text):
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1189,11 +1410,14 @@ def main():
     main_css = ROOT / "assets/css/main.css"
     text = main_css.read_text().split("/* GENERATED by scripts/build.py")[0].rstrip() + "\n\n" + css_utilities()
     main_css.write_text(text)
+    inline_css()
 
     write("index.html", home())
     write("properties/index.html", properties_index())
     for p in PROPS:
         write(f"properties/{p['slug']}/index.html", property_page(p))
+    for key in REGIONS:
+        write(f"{city_url(key).strip('/')}/index.html", city_page(key))
     write("about-us/index.html", about())
     write("faqs/index.html", faqs())
     write("contact-us/index.html", contact())
@@ -1208,16 +1432,19 @@ def main():
     # crawl surface
     urls = [("/", [(src(s, photo(s, i), 1600 if 1600 in photo(s, i)["widths"] else photo(s, i)["widths"][-1]), photo(s, i)["alt"])
                    for s, i in (("561-south-main-street", "03-bedroom-tin-ceiling"), ("biltmore", "01-lobby"))]),
-            ("/properties/", [])]
+            ("/properties/", [])] + [(city_url(k), []) for k in REGIONS]
     for p in PROPS:
         urls.append((prop_url(p), [(src(p["slug"], ph, ph["widths"][-1]), ph["alt"]) for ph in gallery_photos(p["slug"])]))
     urls += [("/about-us/", []), ("/faqs/", []), ("/contact-us/", []), ("/privacy/", [])]
     write("sitemap.xml", sitemap(urls))
-    write("robots.txt", f"User-agent: *\nAllow: /\nDisallow: /property-detail/\nDisallow: /unit-detail/\n\n"
+    # The old /property-detail/ and /unit-detail/ URLs stay crawlable: search engines must see
+    # their redirects to move the old rankings onto the new pages.
+    write("robots.txt", "User-agent: *\nAllow: /\nDisallow: /api/\n\n"
                         "# Assistants that answer 'apartments near me' are a referral channel.\n"
-                        "User-agent: GPTBot\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\n"
-                        "User-agent: Google-Extended\nAllow: /\n\n"
+                        "User-agent: GPTBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\n"
+                        "User-agent: PerplexityBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\n"
                         f"Sitemap: {SITE}/sitemap.xml\n")
+    write("speculation-rules.json", json.dumps(SPECULATION_RULES, indent=1) + "\n")
     write("llms.txt", llms())
     write("_headers", headers())
     write("_redirects", redirects_file())
@@ -1232,6 +1459,8 @@ def main():
     expires = (dt.date.today() + dt.timedelta(days=365)).isoformat()
     write(".well-known/security.txt", f"Contact: {SITE}/contact-us/\nExpires: {expires}T00:00:00.000Z\nPreferred-Languages: en\nCanonical: {SITE}/.well-known/security.txt\n")
     write(".nojekyll", "")
+    write("source/og/jobs.json", json.dumps(og_jobs(), indent=1) + "\n")
+    DATES_FILE.write_text(json.dumps(dict(sorted(DATES.items())), indent=1) + "\n")
 
     # logo files
     write("favicon.svg", standalone_logo("mark", bg=None).replace('viewBox="310 0 380 290"', 'viewBox="300 -40 400 370"'))

@@ -32,6 +32,10 @@
      "baths": 1,
      "rent": 1900
     }
+   ],
+   "geo": [
+    43.1624,
+    -77.60901
    ]
   },
   {
@@ -88,6 +92,10 @@
      "sqft": 450,
      "rent": 1600
     }
+   ],
+   "geo": [
+    43.1498,
+    -77.61282
    ]
   },
   {
@@ -171,6 +179,10 @@
      "sqft": 807,
      "rent": 1700
     }
+   ],
+   "geo": [
+    43.15969,
+    -77.61107
    ]
   },
   {
@@ -206,6 +218,10 @@
      "rent": 1595,
      "note": "Furnished"
     }
+   ],
+   "geo": [
+    43.15708,
+    -77.5937
    ]
   },
   {
@@ -243,6 +259,10 @@
      "sqft": 520,
      "rent": 1200
     }
+   ],
+   "geo": [
+    43.16032,
+    -77.61054
    ]
   },
   {
@@ -283,7 +303,11 @@
     "phone": "(585) 748-5588",
     "hours": "Monday to Friday, 8 am – 4 pm"
    },
-   "units": []
+   "units": [],
+   "geo": [
+    43.15812,
+    -77.59766
+   ]
   },
   {
    "slug": "2215-james-street",
@@ -306,7 +330,11 @@
     "Parking lot",
     "Garage parking available"
    ],
-   "units": []
+   "units": [],
+   "geo": [
+    43.06845,
+    -76.11633
+   ]
   },
   {
    "slug": "121-park-drive",
@@ -344,6 +372,10 @@
      "beds": 2,
      "rent": 1895
     }
+   ],
+   "geo": [
+    43.00654,
+    -75.98291
    ]
   },
   {
@@ -376,6 +408,10 @@
      "baths": 1,
      "rent": 3300
     }
+   ],
+   "geo": [
+    42.8661,
+    -76.98465
    ]
   },
   {
@@ -405,6 +441,10 @@
      "baths": 1,
      "rent": 1425
     }
+   ],
+   "geo": [
+    42.86156,
+    -76.98276
    ]
   },
   {
@@ -422,21 +462,38 @@
    "desc": "A two-storey house with a deep front porch on Genesee Street in Geneva.",
    "desc_source": "written",
    "amenities": [],
-   "units": []
+   "units": [],
+   "geo": [
+    42.87453,
+    -76.98357
+   ]
   }
  ],
  "regions": {
   "rochester": {
    "name": "Rochester",
-   "blurb": "Downtown lofts, East End classics and a new-build community, from studios to three bedrooms."
+   "blurb": "Downtown lofts, East End classics and a new-build community, from studios to three bedrooms.",
+   "photo": [
+    "181-st-paul-street",
+    "03-studio-brick"
+   ]
   },
   "syracuse": {
    "name": "Syracuse & Manlius",
-   "blurb": "A historic home near downtown Syracuse and a restored Victorian in the village of Manlius."
+   "blurb": "A historic home near downtown Syracuse and a restored Victorian in the village of Manlius.",
+   "photo": [
+    "121-park-drive",
+    "01-exterior"
+   ]
   },
   "geneva": {
    "name": "Geneva",
-   "blurb": "Houses on South Main and Genesee Street, above Seneca Lake in the Finger Lakes."
+   "blurb": "Houses on South Main and Genesee Street, above Seneca Lake in the Finger Lakes.",
+   "photo": [
+    "561-south-main-street",
+    "02-studio-living"
+   ]
   }
- }
+ },
+ "_geo": "Building coordinates ('geo': [latitude, longitude]) were looked up from each street address in OpenStreetMap (Nominatim) on 28 September 2026, matched to the house number and ZIP code."
 }

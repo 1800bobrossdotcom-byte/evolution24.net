@@ -1,0 +1,31 @@
+{
+ "prerender": [
+  {
+   "where": {
+    "and": [
+     {
+      "href_matches": "/*"
+     },
+     {
+      "not": {
+       "href_matches": [
+        "/api/*",
+        "/property-detail/*",
+        "/unit-detail/*",
+        "/*.xml",
+        "/*.txt",
+        "/*.json"
+       ]
+      }
+     },
+     {
+      "not": {
+       "selector_matches": "[rel~=nofollow], [target=_blank], [download], [href^='#']"
+      }
+     }
+    ]
+   },
+   "eagerness": "moderate"
+  }
+ ]
+}

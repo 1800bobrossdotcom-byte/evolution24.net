@@ -1,10 +1,12 @@
 User-agent: *
 Allow: /
-Disallow: /property-detail/
-Disallow: /unit-detail/
+Disallow: /api/
 
 # Assistants that answer 'apartments near me' are a referral channel.
 User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: ClaudeBot

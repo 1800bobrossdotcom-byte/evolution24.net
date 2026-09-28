@@ -85,7 +85,7 @@
       if (!e.isIntersecting) return;
       io.unobserve(e.target);
       const el = e.target, end = +el.dataset.count, pre = el.dataset.pre || '', t0 = performance.now();
-      const delay = doc.classList.contains('is-intro') ? 2600 : 500;
+      const delay = doc.classList.contains('is-intro') ? (matchMedia('(max-width: 760px)').matches ? 1500 : 2600) : 500;
       const tick = t => {
         const p = Math.min(1, Math.max(0, (t - t0 - delay) / 1400));
         const v = Math.round(end * (1 - Math.pow(1 - p, 4)));
@@ -144,14 +144,20 @@
   const gallery = $('[data-gallery]');
   if (gallery) {
     const data = JSON.parse($('#gallery-data').textContent);
-    const lb = $('.lightbox'), img = $('.lb-stage img', lb), cap = $('.lb-cap', lb), count = $('.lb-count', lb);
+    const lb = $('.lightbox'), img = $('.lb-stage img', lb), avif = $('.lb-stage source', lb), cap = $('.lb-cap', lb), count = $('.lb-count', lb);
     let at = 0, opener = null;
+    // Fetches a photo the way the stage would show it (AVIF where the browser takes it), so the
+    // next swipe is instant. A detached <picture> loads like a detached new Image() does.
+    const warm = q => {
+      const pic = document.createElement('picture'), s = document.createElement('source'), im = new Image();
+      pic.append(s, im); s.type = 'image/avif'; s.srcset = q.avif; im.srcset = q.srcset;
+    };
     const render = () => {
       const p = data[at];
-      img.src = p.src; img.srcset = p.srcset; img.alt = p.alt; img.width = p.w; img.height = p.h;
+      avif.srcset = p.avif; img.src = p.src; img.srcset = p.srcset; img.alt = p.alt; img.width = p.w; img.height = p.h;
       img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
       cap.textContent = p.alt; count.textContent = `${at + 1} / ${data.length}`;
-      [at + 1, at - 1].forEach(n => { const q = data[(n + data.length) % data.length]; const pre = new Image(); pre.srcset = q.srcset; pre.sizes = '100vw'; });
+      [at + 1, at - 1].forEach(n => warm(data[(n + data.length) % data.length]));
     };
     const open = n => { opener = document.activeElement; at = n; render(); lb.classList.add('is-open'); lb.removeAttribute('inert'); document.body.classList.add('lb-open'); $('.lb-close', lb).focus(); };
     const close = () => { lb.classList.remove('is-open'); lb.setAttribute('inert', ''); document.body.classList.remove('lb-open'); opener && opener.focus(); };
@@ -174,6 +180,25 @@
     let x0 = null;
     $('.lb-stage', lb).addEventListener('pointerdown', e => { x0 = e.clientX; });
     $('.lb-stage', lb).addEventListener('pointerup', e => { if (x0 !== null && Math.abs(e.clientX - x0) > 50) step(e.clientX < x0 ? 1 : -1); x0 = null; });
+  }
+
+  /* ---- Quick bar (property pages, phones only): slides up once the hero's own buttons have
+     scrolled away, and back down over the closing call to action and the footer, which carry
+     the same buttons. Inert while hidden, so nobody tabs or swipes into a bar they cannot see. */
+  const mbar = $('[data-mbar]');
+  if (mbar && 'IntersectionObserver' in window) {
+    const acts = $('.p-hero .hero-actions') || $('.p-hero'), over = new Set();
+    let past = false;
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.target === acts) past = !e.isIntersecting && e.boundingClientRect.top < 0;
+        else if (e.isIntersecting) over.add(e.target); else over.delete(e.target);
+      });
+      const on = past && !over.size;
+      mbar.classList.toggle('is-on', on);
+      mbar.toggleAttribute('inert', !on);
+    });
+    [acts, ...$$('.cta, .site-footer')].forEach(el => el && io.observe(el));
   }
 
   /* ---- Map: nothing is fetched from Google until someone asks for the map. */
