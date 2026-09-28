@@ -113,14 +113,18 @@ Here:
   GPS location phones embed.
 - **Fonts** (Manrope, Instrument Serif) are self-hosted, subset and preloaded. Until they
   arrive, text is set in local fallback fonts resized to the same measurements
-  (`size-adjust` and the ascent, descent and line-gap overrides), so nothing moves when
-  they swap in: layout shift measures 0 on a throttled phone.
+  (`size-adjust` and the ascent, descent and line-gap overrides). That matches their
+  average width, not every line break, so Manrope is `font-display: optional`: being
+  preloaded, it is almost always ready for the first paint, and when it isn't, that one
+  page stays in the fallback instead of swapping. A swap once re-wrapped the home hero's
+  paragraph and buttons and moved the whole hero (Lighthouse: layout shift 0.19); now it is
+  0. The display serif keeps `swap`, because its headings are set line by line and can't
+  re-wrap.
 - **CSS is inlined** into every page, minified, so the first paint waits on no request.
   The CSP allows it by its hash. Painting that early means a slow connection can show half
   a hero, and the home and building heroes are bottom-aligned, so the rest arriving would
   push their words up the screen. Their words therefore stay invisible, though in place,
   until the section after the hero has started to arrive (`:has(+ *)` in `main.css`).
-  Layout shift on the home page went from 0.19 back to 0.
 - **Next pages are ready before the tap.** Speculation Rules (`speculation-rules.json`,
   sent in a `Speculation-Rules` header) let Chrome and Edge prerender a page while a
   visitor hovers over its link or starts to press it, so most navigations are instant. `/api/`, the redirect

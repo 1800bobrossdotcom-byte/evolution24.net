@@ -435,7 +435,7 @@
    "headers": [
     {
      "key": "Content-Security-Policy",
-     "value": "default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self' mailto:; script-src 'self' 'sha256-A8fmJ1Vv9U60DryQIF4YgiTKcIp9b8s4QH44pgzFi+g='; style-src 'self' 'sha256-upt+RQ/yMeUg1+D8WZAMF/YzuThcF0KeiVvHQD2kMw4='; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src https://www.google.com https://maps.google.com; manifest-src 'self'; upgrade-insecure-requests; frame-ancestors 'none'"
+     "value": "default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self' mailto:; script-src 'self' 'sha256-A8fmJ1Vv9U60DryQIF4YgiTKcIp9b8s4QH44pgzFi+g='; style-src 'self' 'sha256-m5v3dWpy+eeSuMUfEbrubgpQDYdNJPgzd36ca3eXI0Y='; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src https://www.google.com https://maps.google.com; manifest-src 'self'; upgrade-insecure-requests; frame-ancestors 'none'"
     },
     {
      "key": "X-Content-Type-Options",
