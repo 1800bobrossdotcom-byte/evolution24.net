@@ -149,7 +149,7 @@ html.is-intro .hero [data-rise] { animation-delay: calc(var(--i, 0) * 110ms + 2.
 @keyframes intro-bar { from { transform: scaleY(0); } to { transform: none; } }
 @keyframes intro-word { from { opacity: 0; transform: translateY(70%); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes intro-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes intro-out { to { clip-path: inset(0 0 100% 0); visibility: hidden; } }
+@keyframes intro-out { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 100% 0); visibility: hidden; } }
 
 /* ---------- Header ---------- */
 .site-header { position: fixed; inset: 0 0 auto; z-index: 100; height: var(--header-h); color: var(--on-ink); transition: background .4s var(--ease), box-shadow .4s var(--ease), transform .45s var(--ease); }
