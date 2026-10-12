@@ -407,6 +407,27 @@ from its API overview. It checks:
 | *Could not reach Rent Manager* | `RM_COMPANY` and the manifest's `urlFetchWhitelist` must name the same company |
 | *The hourly request limit is used up* | Run it again after the reset the message gives |
 
+## Pay logs
+
+`tools/pay-log/make.py` makes a pay log for each member of staff: an Excel file in the brand's colours
+and logo, to upload to Google Drive and save as a Google Sheet. There are two tabs:
+
+- **Pay log**: the person and their rate of pay (per hour or per week), a row per property per day
+  (date, property, hours, an optional note) with the pay worked out, and total hours and pay at the top.
+- **Monthly summary**: hours and pay for each property, month by month, with totals, and below
+  them each pay week's hours and pay (weeks run Saturday to Friday).
+
+On a weekly rate, each week's pay is shared across its properties by hours. New properties go in the
+empty rows of the summary and join the Pay log's list.
+
+```
+python3 tools/pay-log/make.py                              # a blank template in tools/pay-log/out/
+python3 tools/pay-log/make.py tools/pay-log/people.json    # one file per person, and the template
+python3 tools/pay-log/test.py                              # fills two logs, checks every total (needs LibreOffice Calc)
+```
+
+`people.json` holds names and rates of pay, so it is kept out of git; `people.example.json` shows its shape.
+
 ## Things to check before launch
 
 **Rents and availability are a snapshot.** The 19 available units, with their rents, were
@@ -517,6 +538,7 @@ tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and log
 tools/rent-manager/      the Rent Manager client and connection check (Apps Script); the check's building list is generated
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it
 tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words
+tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums
 sitemap.xml robots.txt llms.txt speculation-rules.json site.webmanifest .well-known/security.txt
 vercel.json .vercelignore       Vercel: headers, redirects, what not to deploy
 _headers _redirects             the same headers and redirects for Cloudflare Pages / Netlify

@@ -1,0 +1,7 @@
+{
+  "log_starts": "2026-10-10",
+  "people": [
+    {"name": "Alex Example", "rate": 20, "per": "hour"},
+    {"name": "Sam Example", "rate": 1000, "per": "week"}
+  ]
+}

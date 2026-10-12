@@ -2,3 +2,5 @@ __pycache__/
 .DS_Store
 tools/instagram/out/
 tools/after-effects/out/
+tools/pay-log/out/
+tools/pay-log/people.json
