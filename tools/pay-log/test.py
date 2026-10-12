@@ -4,10 +4,12 @@ calculate them, and checks every line's pay, each week's total, the grand total,
 and monthly summaries against the same sums worked out here in Python.
 
   python3 tools/pay-log/test.py
+  python3 tools/pay-log/test.py --fixture out.json   filled pay logs as JSON, for scripts/test-pay-report.cjs
 
 Needs LibreOffice Calc (soffice) on the PATH.
 """
 import datetime as dt
+import json
 import os
 import subprocess
 import sys
@@ -75,6 +77,26 @@ def recalc(path):
         run('macro:///Standard.Module1.Recalc', str(path))
 
 
+def filled(person, entries, path):
+    """A pay log for `person` with `entries` on its dated lines, calculated. Returns the layout and the lines used."""
+    weeks = make.layout(make.first_saturday(person))
+    free = defaultdict(list)                  # each day's lines, in order
+    for week in weeks:
+        for r, day, _ in week['lines']:
+            free[day].append(r)
+    placed = [free[d].pop(0) for d, _, _ in entries]
+    make.build(person, path)
+    wb = load_workbook(path)
+    ws = wb[make.LOG]
+    for r, (d, p, h) in zip(placed, entries):
+        ws[f'B{r}'], ws[f'C{r}'] = p or None, h
+        if p and p.startswith('='):
+            ws[f'B{r}'].data_type = 's'   # text that only looks like a formula
+    wb.save(path)
+    recalc(path)
+    return weeks, placed
+
+
 def check(person, keep=None):
     problems = []
 
@@ -82,26 +104,14 @@ def check(person, keep=None):
         if abs((value or 0) - want) > 0.005:
             problems.append(f"{person['name']}: {label}: sheet {value!r}, expected {want!r}")
 
-    weeks = make.layout(make.first_saturday(person))
-    if weeks[0]['sat'] != D(2026, 10, 10):
-        problems.append(f"first week starts {weeks[0]['sat']}, expected Sat 10/10/26")
-    free = defaultdict(list)                  # each day's lines, in order
-    for week in weeks:
-        for r, day, _ in week['lines']:
-            free[day].append(r)
-    placed = [free[d].pop(0) for d, _, _ in ENTRIES]
-
     with tempfile.TemporaryDirectory() as tmp:
-        path = make.build(person, Path(tmp) / 'test.xlsx')
-        wb = load_workbook(path)
-        ws = wb[make.LOG]
-        for r, (d, p, h) in zip(placed, ENTRIES):
-            ws[f'B{r}'], ws[f'C{r}'] = p or None, h
-        wb.save(path)
-        recalc(path)
+        path = Path(tmp) / 'test.xlsx'
+        weeks, placed = filled(person, ENTRIES, path)
         if keep:
             Path(keep).write_bytes(path.read_bytes())
         got = load_workbook(path, data_only=True)
+    if weeks[0]['sat'] != D(2026, 10, 10):
+        problems.append(f"first week starts {weeks[0]['sat']}, expected Sat 10/10/26")
 
     errors = [f'{s.title}!{c.coordinate}' for s in got.worksheets for row in s.iter_rows() for c in row
               if isinstance(c.value, str) and c.value.startswith('#')]
@@ -144,7 +154,38 @@ def check(person, keep=None):
     return problems
 
 
+# For the labor report's test: three people, as their pay logs read once calculated.
+FIXTURE = [
+    ({'name': 'Alex Test', 'rate': 21.5, 'per': 'hour', 'log_starts': '2026-10-10'}, ENTRIES),
+    ({'name': 'Sam Test', 'rate': 1000, 'per': 'week', 'log_starts': '2026-10-10'}, [
+        (D(2026, 10, 12), 'Water Street', 8), (D(2026, 10, 13), 'Charlotte Square', 6),
+        (D(2026, 10, 13), 'Water Street', 2), (D(2026, 10, 20), 'The Biltmore', 9), (D(2026, 11, 9), 'Office', 4)]),
+    ({'name': 'Jo Test', 'per': 'hour', 'log_starts': '2026-10-10'}, [   # no rate of pay set
+        (D(2026, 10, 14), 'Water Street', 3), (D(2026, 10, 15), '=HYPERLINK("http://example.com","x")', 1)]),
+]
+
+
+def fixture(out):
+    def plain(v):
+        if isinstance(v, dt.datetime):
+            return {'date': v.date().isoformat()}
+        return v
+    logs = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for person, entries in FIXTURE:
+            path = Path(tmp) / make.file_name(person)
+            filled(person, entries, path)
+            ws = load_workbook(path, data_only=True)[make.LOG]
+            rows = [[plain(c.value) for c in row] for row in ws.iter_rows(min_row=1, max_col=6)]
+            logs.append({'name': path.stem, 'rows': rows, 'entries': [[d.isoformat(), p, h] for d, p, h in entries],
+                         'rate': person.get('rate'), 'per': person.get('per')})
+    Path(out).write_text(json.dumps(logs))
+    print(f'{out}: {len(logs)} pay logs')
+
+
 def main():
+    if sys.argv[1:2] == ['--fixture']:
+        return fixture(sys.argv[2])
     problems = []
     for i, person in enumerate(PEOPLE):
         problems += check(person, keep=os.environ.get('KEEP') and f"{os.environ['KEEP']}-{i}.xlsx")

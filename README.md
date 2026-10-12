@@ -429,6 +429,20 @@ python3 tools/pay-log/test.py                              # fills two logs, che
 
 `people.json` holds names and rates of pay, so it is kept out of git; `people.example.json` shows its shape.
 
+**The labor report.** `tools/pay-log/Report.gs` is the master report: a separate Google Sheet that reads
+every pay log in its Drive folder (Google Sheets named "Evolution24 Pay Log - …", not the template)
+and breaks the labor cost down by property and by person, with charts. It only reads the pay logs.
+Setup is at the top of the file: a new Google Sheet in the pay logs' folder, the script pasted into
+Extensions > Apps Script, and `tools/pay-log/appsscript.json` as its manifest (read-only Drive). Then
+Evolution24 > Refresh report, or Refresh every hour. Tabs: Report (labor cost and hours by property
+and person, each person's total and pay log, a From/To period), By month, and Data (every line read).
+Each person keeps one chart colour in every chart; scripts/build.py fills in the logo.
+
+```
+node scripts/test-pay-report.cjs                  # the report against real, filled pay logs (Python and LibreOffice)
+PREVIEW=out node scripts/test-pay-report.cjs      # and a picture of each tab (Playwright)
+```
+
 ## Things to check before launch
 
 **Rents and availability are a snapshot.** The 19 available units, with their rents, were
@@ -539,7 +553,8 @@ tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and log
 tools/rent-manager/      the Rent Manager client and connection check (Apps Script); the check's building list is generated
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it
 tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words
-tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums
+tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums;
+                         Report.gs is the master labor report (Apps Script) that reads them all
 sitemap.xml robots.txt llms.txt speculation-rules.json site.webmanifest .well-known/security.txt
 vercel.json .vercelignore       Vercel: headers, redirects, what not to deploy
 _headers _redirects             the same headers and redirects for Cloudflare Pages / Netlify
