@@ -410,15 +410,16 @@ from its API overview. It checks:
 ## Pay logs
 
 `tools/pay-log/make.py` makes a pay log for each member of staff: an Excel file in the brand's colours
-and logo, to upload to Google Drive and save as a Google Sheet. There are two tabs:
+and logo, to upload to Google Drive and save as a Google Sheet. There are three tabs:
 
-- **Pay log**: the person and their rate of pay (per hour or per week), a row per property per day
-  (date, property, hours, an optional note) with the pay worked out, and total hours and pay at the top.
-- **Monthly summary**: hours and pay for each property, month by month, with totals, and below
-  them each pay week's hours and pay (weeks run Saturday to Friday).
+- **Pay log**: the person and their rate of pay (per hour or per week), then a block for each pay week
+  (Saturday to Friday) with the days already dated and three lines a day for property and hours; the
+  pay works itself out, each week has a total line, and the grand total sits at the top.
+- **Weekly summary**: hours and pay for each property, week by week, with totals.
+- **Monthly summary**: the same, month by month. New properties go in its empty rows and join the
+  Pay log's list.
 
-On a weekly rate, each week's pay is shared across its properties by hours. New properties go in the
-empty rows of the summary and join the Pay log's list.
+On a weekly rate, each week's pay is shared across its properties by hours.
 
 ```
 python3 tools/pay-log/make.py                              # a blank template in tools/pay-log/out/

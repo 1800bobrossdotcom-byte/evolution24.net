@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Fills two pay logs (one hourly, one on a weekly rate) with made-up rows, lets LibreOffice
-calculate them, and checks the totals, the monthly summary and the pay weeks against the same
-sums worked out here in Python.
+"""Fills two pay logs (one hourly, one on a weekly rate) with made-up lines, lets LibreOffice
+calculate them, and checks every line's pay, each week's total, the grand total, and the weekly
+and monthly summaries against the same sums worked out here in Python.
 
   python3 tools/pay-log/test.py
 
@@ -21,21 +21,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import make  # noqa: E402
 
 D = dt.date
-ROWS = [  # date, property, hours
+ENTRIES = [  # date, property, hours
     (D(2026, 10, 10), 'Water Street', 3),
     (D(2026, 10, 12), 'Water Street', 5.5),
-    (D(2026, 10, 12), '145 South Fitzhugh', 2.5),
+    (D(2026, 10, 12), '145 South Fitzhugh', 2.5),     # two properties on one day
+    (D(2026, 10, 12), 'Office', 0.75),                # and a third
     (D(2026, 10, 13), 'The Biltmore', 8),
     (D(2026, 10, 16), 'Office', 1.25),
     (D(2026, 10, 19), 'Charlotte Square', 9),
-    (D(2026, 10, 31), 'Water Street', 4),        # a Saturday: the next pay week, still October
+    (D(2026, 10, 31), 'Water Street', 4),             # a Saturday: the next pay week, still October
     (D(2026, 11, 2), 'Water Street', 6),
-    (D(2026, 11, 3), 'A garage on Main', 2),     # not on the list: counted under Other
-    (D(2026, 11, 4), '', 1),                      # no property: also Other
-    (D(2027, 9, 30), '379 South Main', 7),       # the twelfth month
+    (D(2026, 11, 3), 'A garage on Main', 2),          # not on the list: counted under Other
+    (D(2026, 11, 4), '', 1),                           # no property: also Other
+    (D(2027, 9, 30), '379 South Main', 7),            # the twelfth month
 ]
-PEOPLE = [{'name': 'Hourly Test', 'rate': 21.5, 'per': 'hour', 'log_starts': '2026-10-10'},
+PEOPLE = [{'name': 'Hourly Test', 'rate': 21.5, 'per': 'hour', 'log_starts': '2026-10-12'},   # a Monday: back to Sat 10/10
           {'name': 'Weekly Test', 'rate': 1000, 'per': 'week', 'log_starts': '2026-10-10'}]
+OTHER = 'Other or no property'
 
 
 def week_end(d):
@@ -44,20 +46,18 @@ def week_end(d):
 
 def expected(person):
     week_hours = defaultdict(float)
-    for d, _, h in ROWS:
+    for d, _, h in ENTRIES:
         week_hours[week_end(d)] += h
     pay = [person['rate'] * h if person['per'] == 'hour' else person['rate'] * h / week_hours[week_end(d)]
-           for d, _, h in ROWS]
-    month = defaultdict(lambda: [0.0, 0.0])
-    week = defaultdict(lambda: [0.0, 0.0])
-    for (d, p, h), money in zip(ROWS, pay):
-        key = p if p in make.PROPERTIES else 'Other or no property'
-        for k in ((key, d.year, d.month), ('Total', d.year, d.month)):
-            month[k][0] += h
-            month[k][1] += money
-        week[week_end(d)][0] += h
-        week[week_end(d)][1] += money
-    return pay, month, week
+           for d, _, h in ENTRIES]
+    by_week, by_month = defaultdict(float), defaultdict(float)   # (what, period, property) -> sum
+    for (d, p, h), money in zip(ENTRIES, pay):
+        prop = p if p in make.PROPERTIES else OTHER
+        for what, value in (('hours', h), ('pay', money)):
+            for key in (prop, 'Total'):
+                by_week[what, week_end(d), key] += value
+                by_month[what, (d.year, d.month), key] += value
+    return pay, by_week, by_month
 
 
 def recalc(path):
@@ -82,13 +82,21 @@ def check(person, keep=None):
         if abs((value or 0) - want) > 0.005:
             problems.append(f"{person['name']}: {label}: sheet {value!r}, expected {want!r}")
 
+    weeks = make.layout(make.first_saturday(person))
+    if weeks[0]['sat'] != D(2026, 10, 10):
+        problems.append(f"first week starts {weeks[0]['sat']}, expected Sat 10/10/26")
+    free = defaultdict(list)                  # each day's lines, in order
+    for week in weeks:
+        for r, day, _ in week['lines']:
+            free[day].append(r)
+    placed = [free[d].pop(0) for d, _, _ in ENTRIES]
+
     with tempfile.TemporaryDirectory() as tmp:
         path = make.build(person, Path(tmp) / 'test.xlsx')
         wb = load_workbook(path)
         ws = wb[make.LOG]
-        for i, (d, p, h) in enumerate(ROWS):
-            r = make.FIRST + i
-            ws[f'A{r}'], ws[f'B{r}'], ws[f'C{r}'] = d, p or None, h
+        for r, (d, p, h) in zip(placed, ENTRIES):
+            ws[f'B{r}'], ws[f'C{r}'] = p or None, h
         wb.save(path)
         recalc(path)
         if keep:
@@ -98,30 +106,41 @@ def check(person, keep=None):
     errors = [f'{s.title}!{c.coordinate}' for s in got.worksheets for row in s.iter_rows() for c in row
               if isinstance(c.value, str) and c.value.startswith('#')]
     problems += [f'formula error at {e}' for e in errors[:10]]
-    pay, month, week = expected(person)
-    log, summ = got[make.LOG], got[make.SUM]
-    for i, money in enumerate(pay):
-        same(f'row {make.FIRST + i} pay', log[f'D{make.FIRST + i}'].value, money)
-    same('total hours', log['C9'].value, sum(h for _, _, h in ROWS))
-    same('total pay', log['D9'].value, sum(pay))
-    for top, idx, label in ((8, 0, 'hours'), (33, 1, 'pay')):
-        months = [(summ.cell(top, c).value.year, summ.cell(top, c).value.month) for c in range(2, 14)]
-        for r in range(top + 1, top + 3 + make.SLOTS):
-            name = summ.cell(r, 1).value
+    pay, by_week, by_month = expected(person)
+    log, wk, mo = got[make.LOG], got[make.WEEK], got[make.MONTH]
+
+    for r, money in zip(placed, pay):
+        same(f'line {r} pay', log[f'D{r}'].value, money)
+    for week in weeks:
+        t = week['total']
+        same(f"week {week['fri']} total hours", log[f'C{t}'].value, by_week['hours', week['fri'], 'Total'])
+        same(f"week {week['fri']} total pay", log[f'D{t}'].value, by_week['pay', week['fri'], 'Total'])
+        r = week['lines'][0][0]
+        if log[f'A{r}'].value.date() != week['sat']:
+            problems.append(f'line {r} is dated {log[f"A{r}"].value}, expected {week["sat"]}')
+    same('grand total hours', log['C9'].value, sum(h for _, _, h in ENTRIES))
+    same('grand total pay', log['D9'].value, sum(pay))
+
+    for h, what in ((8, 'hours'), (63, 'pay')):
+        names = {c: wk.cell(h, c).value for c in range(2, 4 + make.SLOTS)}
+        names[2 + make.SLOTS] = OTHER
+        for i, week in enumerate(weeks):
+            r = h + 1 + i
+            if wk.cell(r, 1).value.date() != week['fri']:
+                problems.append(f'weekly summary row {r} is {wk.cell(r, 1).value}, expected {week["fri"]}')
+            for c, name in names.items():
+                if name:
+                    same(f"weekly {what} {week['fri']} {name}", wk.cell(r, c).value, by_week[what, week['fri'], name])
+    for h, what in ((8, 'hours'), (33, 'pay')):
+        months = [(mo.cell(h, c).value.year, mo.cell(h, c).value.month) for c in range(2, 2 + make.MONTHS)]
+        for r in range(h + 1, h + 3 + make.SLOTS):
+            name = mo.cell(r, 1).value
             if not name:
                 continue
-            for c, (y, m) in enumerate(months, start=2):
-                same(f'{label} {name} {y}-{m}', summ.cell(r, c).value, month.get((name, y, m), [0, 0])[idx])
-            same(f'{label} {name} total', summ.cell(r, 14).value,
-                 sum(v[idx] for (n, _, _), v in month.items() if n == name))
-    first_week = 59
-    for i in range(make.WEEKS):
-        r = first_week + i
-        w = summ[f'A{r}'].value.date()
-        same(f'week {w} hours', summ[f'B{r}'].value, week.get(w, [0, 0])[0])
-        same(f'week {w} pay', summ[f'C{r}'].value, week.get(w, [0, 0])[1])
-    if summ[f'A{first_week}'].value.date() != D(2026, 10, 2):
-        problems.append(f"first pay week ends {summ[f'A{first_week}'].value}, expected Fri 10/2/26")
+            for c, month in enumerate(months, start=2):
+                same(f'monthly {what} {name} {month}', mo.cell(r, c).value, by_month[what, month, name])
+            same(f'monthly {what} {name} total', mo.cell(r, 2 + make.MONTHS).value,
+                 sum(v for (w, m, n), v in by_month.items() if w == what and n == name and m in months))
     return problems
 
 
@@ -130,9 +149,9 @@ def main():
     for i, person in enumerate(PEOPLE):
         problems += check(person, keep=os.environ.get('KEEP') and f"{os.environ['KEEP']}-{i}.xlsx")
     if problems:
-        print('\n'.join(problems))
+        print('\n'.join(problems[:40]))
         sys.exit(f'{len(problems)} problems')
-    print(f'pay log: hourly and weekly rates, {len(ROWS)} rows: every total, month and pay week matches')
+    print(f'pay log: hourly and weekly rates, {len(ENTRIES)} lines: every line, week, month and total matches')
 
 
 if __name__ == '__main__':
