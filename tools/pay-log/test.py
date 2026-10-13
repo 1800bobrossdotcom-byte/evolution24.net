@@ -29,6 +29,12 @@ ENTRIES = [  # date, property, hours
     (D(2026, 10, 12), '145 South Fitzhugh', 2.5),     # two properties on one day
     (D(2026, 10, 12), 'Office', 0.75),                # and a third
     (D(2026, 10, 13), 'The Biltmore', 8),
+    (D(2026, 10, 15), '301 Central Avenue', 1),      # all six slots on one day
+    (D(2026, 10, 15), '181 St. Paul', 1),
+    (D(2026, 10, 15), '2215 James Street', 0.5),
+    (D(2026, 10, 15), '121 Park Drive', 0.5),
+    (D(2026, 10, 15), '31 Genesee Street', 1),
+    (D(2026, 10, 15), '561 South Main', 1.5),
     (D(2026, 10, 16), 'Office', 1.25),
     (D(2026, 10, 19), 'Charlotte Square', 9),
     (D(2026, 10, 31), 'Water Street', 4),             # a Saturday: the next pay week, still October
@@ -78,20 +84,20 @@ def recalc(path):
 
 
 def filled(person, entries, path):
-    """A pay log for `person` with `entries` on its dated lines, calculated. Returns the layout and the lines used."""
+    """A pay log for `person` with `entries` in its day rows' slots, calculated. Returns the layout and the slots used."""
     weeks = make.layout(make.first_saturday(person))
-    free = defaultdict(list)                  # each day's lines, in order
+    free = defaultdict(list)                  # each day's slots, in order: (row, slot)
     for week in weeks:
-        for r, day, _ in week['lines']:
-            free[day].append(r)
+        for r, day in week['days']:
+            free[day] += [(r, k) for k in range(make.PAIRS)]
     placed = [free[d].pop(0) for d, _, _ in entries]
     make.build(person, path)
     wb = load_workbook(path)
     ws = wb[make.LOG]
-    for r, (d, p, h) in zip(placed, entries):
-        ws[f'B{r}'], ws[f'C{r}'] = p or None, h
+    for (r, k), (d, p, h) in zip(placed, entries):
+        ws[f'{make.PROP[k]}{r}'], ws[f'{make.HRS[k]}{r}'] = p or None, h
         if p and p.startswith('='):
-            ws[f'B{r}'].data_type = 's'   # text that only looks like a formula
+            ws[f'{make.PROP[k]}{r}'].data_type = 's'   # text that only looks like a formula
     wb.save(path)
     recalc(path)
     return weeks, placed
@@ -119,17 +125,21 @@ def check(person, keep=None):
     pay, by_week, by_month = expected(person)
     log, wk, mo = got[make.LOG], got[make.WEEK], got[make.MONTH]
 
-    for r, money in zip(placed, pay):
-        same(f'line {r} pay', log[f'D{r}'].value, money)
+    day_pay = defaultdict(float)
+    for (r, k), money in zip(placed, pay):
+        same(f'row {r} slot {k + 1} pay', log[f'{make.SLOT_PAY[k]}{r}'].value, money)
+        day_pay[r] += money
+    for r, money in day_pay.items():
+        same(f'row {r} day pay', log[f'{make.DAY_PAY}{r}'].value, money)
     for week in weeks:
         t = week['total']
-        same(f"week {week['fri']} total hours", log[f'C{t}'].value, by_week['hours', week['fri'], 'Total'])
-        same(f"week {week['fri']} total pay", log[f'D{t}'].value, by_week['pay', week['fri'], 'Total'])
-        r = week['lines'][0][0]
-        if log[f'A{r}'].value.date() != week['sat']:
-            problems.append(f'line {r} is dated {log[f"A{r}"].value}, expected {week["sat"]}')
-    same('grand total hours', log['C9'].value, sum(h for _, _, h in ENTRIES))
-    same('grand total pay', log['D9'].value, sum(pay))
+        same(f"week {week['fri']} total hours", log[f'{make.DAY_HOURS}{t}'].value, by_week['hours', week['fri'], 'Total'])
+        same(f"week {week['fri']} total pay", log[f'{make.DAY_PAY}{t}'].value, by_week['pay', week['fri'], 'Total'])
+        for r, day in week['days']:
+            if log[f'A{r}'].value.date() != day:
+                problems.append(f'row {r} is dated {log[f"A{r}"].value}, expected {day}')
+    same('grand total hours', log[f'{make.DAY_HOURS}9'].value, sum(h for _, _, h in ENTRIES))
+    same('grand total pay', log[f'{make.DAY_PAY}9'].value, sum(pay))
 
     for h, what in ((8, 'hours'), (63, 'pay')):
         names = {c: wk.cell(h, c).value for c in range(2, 4 + make.SLOTS)}
@@ -178,7 +188,8 @@ def fixture(out):
             path = Path(tmp) / make.file_name(person)
             filled(person, entries, path)
             ws = load_workbook(path, data_only=True)[make.LOG]
-            rows = [[plain(c.value) for c in row] for row in ws.iter_rows(min_row=1, max_col=6)]
+            width = ws[f'{make.LAST_COL}1'].column
+            rows = [[plain(c.value) for c in row] for row in ws.iter_rows(min_row=1, max_col=width)]
             logs.append({'name': path.stem, 'person': person['name'], 'role': person.get('role'), 'rows': rows,
                          'entries': [[d.isoformat(), p, h] for d, p, h in entries],
                          'rate': person.get('rate'), 'per': person.get('per')})

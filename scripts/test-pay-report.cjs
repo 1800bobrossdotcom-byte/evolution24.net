@@ -167,7 +167,7 @@ class Book {
 
 /** A pay log as Sheets would hand it to the script: rows from the fixture, dates as Dates, blanks as ''. */
 function payLogBook(id, rows) {
-  const sheet = new Sheet('Pay log', rows.length, 6);
+  const sheet = new Sheet('Pay log', rows.length, Math.max(6, ...rows.map((r) => r.length)));
   rows.forEach((row, i) => row.forEach((v, j) => {
     if (v === null || v === undefined) return;
     sheet.cell(i + 1, j + 1).value = v && v.date ? new Date(`${v.date}T00:00:00Z`) : v;
@@ -175,7 +175,7 @@ function payLogBook(id, rows) {
   return new Book(id, [sheet, new Sheet('Weekly summary'), new Sheet('Monthly summary')]);
 }
 
-/** A small pay log written here, for people the fixture doesn't have. */
+/** A small pay log in the first layout (a line per property, the date in F), for people the fixture doesn't have. */
 function syntheticLog(name, lines) {
   const rows = Array.from({ length: 10 + lines.length }, () => Array(6).fill(null));
   rows[4] = ['Person', name, null, null, null, null];

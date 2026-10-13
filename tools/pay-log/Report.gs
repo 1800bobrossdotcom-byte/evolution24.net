@@ -26,8 +26,9 @@
  * above the report's own folder (the top of the shared drive, when the report is in Accounting) and
  * in every folder under it, so each person's pay log can sit in a private folder of its own. Each is
  * read as tools/pay-log/make.py lays it out, on its "Pay log" tab: the name in B5, the role (if any)
- * in B7, and lines from row 11 down with the property in B, hours in C, pay in D and the date in the
- * hidden column F. Someone with two roles keeps two pay logs under the same name; the report adds
+ * in B7, and from row 11 down a row per day: the date in A, six property and hours slots in B to M,
+ * and each slot's pay in the hidden columns R to W. (Pay logs from before the six slots, with one
+ * property per line, the date in the hidden column F and pay in D, are still read.) Someone with two roles keeps two pay logs under the same name; the report adds
  * them together and lists each role under By person. The report reads them as whoever refreshes it,
  * so that person needs access to every folder.
  *
@@ -40,6 +41,8 @@ const LOG_NAME = /pay\s*log/i;
 const MAX_DEPTH = 3;   // how many folders deep to look
 const LOG_TAB = 'Pay log';
 const LOG_FIRST_ROW = 11;
+const SLOTS = 6;            // property and hours slots in each day's row
+const SLOT_PAY_COL = 18;    // R: the first slot's pay (hidden)
 const TABS = { report: 'Report', month: 'By month', data: 'Data' };
 const NO_PROPERTY = '(no property)';
 
@@ -157,16 +160,26 @@ function readPayLogs_(ss) {
       if (text_(sheet.getRange('A7').getValue()) === 'Role') source.role = text_(sheet.getRange('B7').getValue());
       const last = sheet.getLastRow();
       if (last < LOG_FIRST_ROW) return source;
-      sheet.getRange(LOG_FIRST_ROW, 1, last - LOG_FIRST_ROW + 1, 6).getValues().forEach((row) => {
-        const hours = row[2];
-        if (!isDate_(row[5]) || typeof hours !== 'number' || !(hours > 0)) return;
-        const day = Utilities.formatDate(row[5], tz, 'yyyy-MM-dd');
-        const priced = typeof row[3] === 'number';
+      const add = (date, property, hours, pay) => {
+        if (!isDate_(date) || typeof hours !== 'number' || !(hours > 0)) return;
+        const day = Utilities.formatDate(date, tz, 'yyyy-MM-dd');
+        const priced = typeof pay === 'number';
         if (!priced) source.unpriced += hours;
-        lines.push({ person: source.person, role: source.role, day: day, property: text_(row[1]) || NO_PROPERTY,
-          hours: hours, pay: priced ? row[3] : 0, url: source.url });
+        lines.push({ person: source.person, role: source.role, day: day, property: text_(property) || NO_PROPERTY,
+          hours: hours, pay: priced ? pay : 0, url: source.url });
         if (day > source.last) source.last = day;
-      });
+      };
+      const rows = last - LOG_FIRST_ROW + 1;
+      if (text_(sheet.getRange('B8').getValue()) === 'Property 1') {
+        // A row per day: the date in A, then property and hours pairs, each pair's pay further along.
+        const width = Math.min(sheet.getMaxColumns(), SLOT_PAY_COL + SLOTS - 1);
+        sheet.getRange(LOG_FIRST_ROW, 1, rows, width).getValues().forEach((row) => {
+          for (let k = 0; k < SLOTS; k++) add(row[0], row[1 + 2 * k], row[2 + 2 * k], row[SLOT_PAY_COL - 1 + k]);
+        });
+      } else {
+        // The first layout: a line per property, the date in F.
+        sheet.getRange(LOG_FIRST_ROW, 1, rows, 6).getValues().forEach((row) => add(row[5], row[1], row[2], row[3]));
+      }
     } catch (e) {
       source.problem = 'Could not be read: ' + e.message;
     }

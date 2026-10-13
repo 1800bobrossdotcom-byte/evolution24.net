@@ -8,9 +8,10 @@ people.json holds names and rates of pay, so keep it out of the repository; peop
 shows its shape.
 
 Three tabs:
-  Pay log          the person, their rate of pay and (if they have two) their role, then a block for each pay week (Saturday to
-                   Friday): the days already dated, three lines a day for property and hours, the
-                   pay worked out, and a total for the week; the grand total at the top
+  Pay log          the person, their rate of pay and (if they have two) their role; then a block
+                   for each pay week (Saturday to Friday) with a row per day, already dated: six
+                   property and hours slots across it, the day's hours and pay worked out, and a
+                   note; a total for each week, and the grand total at the top
   Weekly summary   hours and pay for each property, week by week, with totals
   Monthly summary  the same, month by month; new properties are added here
 """
@@ -39,7 +40,8 @@ PROPERTIES = ['301 Central Avenue', '145 South Fitzhugh', 'Water Street', 'The B
               '300 Alexander', 'Office']
 SLOTS = 20                     # property rows on Monthly summary: the list above, and room to add more
 LOG, WEEK, MONTH = 'Pay log', 'Weekly summary', 'Monthly summary'
-WEEKS, LINES, MONTHS = 52, 3, 12
+WEEKS, MONTHS = 52, 12
+PAIRS = 6                      # property and hours slots in each day's row
 FIRST = 11                     # Pay log: the first row of the first week
 TOTAL = 'Week total'
 NAMES = f"'{MONTH}'!$A$9:$A${8 + SLOTS}"   # the property list
@@ -48,7 +50,14 @@ MONEY = '$#,##0.00;-$#,##0.00;"–"'
 HOURS = '0.0#;-0.0#;"–"'
 THIN = Side(style='thin', color=LINE)
 GRID = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
-DAY_TOP = Border(left=THIN, right=THIN, top=Side(style='thin', color=MUTED), bottom=THIN)
+
+# The Pay log's columns: A the date; then a property and its hours for each slot (B C, D E, ... L M);
+# the day's hours, pay and note; and, hidden, the pay per hour that day and each slot's pay.
+PROP = [get_column_letter(2 + 2 * k) for k in range(PAIRS)]
+HRS = [get_column_letter(3 + 2 * k) for k in range(PAIRS)]
+DAY_HOURS, DAY_PAY, NOTE, PER_HOUR = (get_column_letter(2 + 2 * PAIRS + i) for i in range(4))
+SLOT_PAY = [get_column_letter(6 + 2 * PAIRS + k) for k in range(PAIRS)]
+LAST_COL = SLOT_PAY[-1]
 
 
 def fill(color):
@@ -112,7 +121,7 @@ def first_saturday(person):
 
 
 def layout(saturday):
-    """Where everything sits on the Pay log: per week, its heading, its day lines and its total."""
+    """Where everything sits on the Pay log: per week, its heading, its day rows and its total."""
     weeks, r, month = [], FIRST, None
     for w in range(WEEKS):
         sat = saturday + dt.timedelta(days=7 * w)
@@ -123,51 +132,63 @@ def layout(saturday):
             week['month_row'] = r
             r += 1
         week['heading'] = r
-        r += 1
-        week['lines'] = []
-        for d in range(7):
-            for k in range(LINES):
-                week['lines'].append((r, sat + dt.timedelta(days=d), k == 0))
-                r += 1
-        week['total'] = r
+        week['days'] = [(r + 1 + d, sat + dt.timedelta(days=d)) for d in range(7)]
+        week['total'] = r + 8
         weeks.append(week)
-        r += 2   # the total, and a gap
+        r += 10   # heading, seven days, the total, and a gap
     return weeks
 
 
 def pay_log(ws, person, weeks):
-    band(ws, '="Pay log  ·  "&B5&IF(B7="","","  ·  "&B7)', 5)
-    for letter, width in zip('ABCDEF', (15, 26, 10, 13, 56, 12)):
-        ws.column_dimensions[letter].width = width
-    ws.column_dimensions['F'].hidden = True   # every line's date, for the summaries
+    shown = 2 + 2 * PAIRS + 2   # A to the note
+    band(ws, '="Pay log  ·  "&B5&IF(B7="","","  ·  "&B7)', shown)
+    ws.column_dimensions['A'].width = 13
+    for k in range(PAIRS):
+        ws.column_dimensions[PROP[k]].width = 17
+        ws.column_dimensions[HRS[k]].width = 6.5
+    ws.column_dimensions[DAY_HOURS].width = 9
+    ws.column_dimensions[DAY_PAY].width = 11
+    ws.column_dimensions[NOTE].width = 34
+    for c in [PER_HOUR] + SLOT_PAY:
+        ws.column_dimensions[c].hidden = True
 
     put(ws, 'A5', 'Person', align=Alignment(vertical='center'))
+    ws.merge_cells('B5:D5')
     put(ws, 'B5', person.get('name') or None, font(11, bold=True), INPUT, align=Alignment(vertical='center', indent=1),
         border=GRID)
     put(ws, 'A6', 'Rate of pay', align=Alignment(vertical='center'))
+    ws.merge_cells('B6:C6')
     put(ws, 'B6', person.get('rate'), font(11, bold=True), INPUT, MONEY, Alignment(vertical='center'), GRID)
-    put(ws, 'C6', 'per week' if person.get('per') == 'week' else 'per hour', font(bold=True), INPUT,
+    put(ws, 'D6', 'per week' if person.get('per') == 'week' else 'per hour', font(bold=True), INPUT,
         align=Alignment(horizontal='center', vertical='center'), border=GRID)
-    validate(ws, ['C6'], type='list', formula1='"per hour,per week"')
+    validate(ws, ['D6'], type='list', formula1='"per hour,per week"')
     validate(ws, ['B6'], type='decimal', operator='greaterThanOrEqual', formula1='0', error='An amount in dollars.')
     put(ws, 'A7', 'Role', align=Alignment(vertical='center'))
+    ws.merge_cells('B7:D7')
     put(ws, 'B7', person.get('role') or None, font(), INPUT, align=Alignment(vertical='center', indent=1), border=GRID)
-    ws.merge_cells('D5:E7')
-    put(ws, 'D5', 'Fill in your rate of pay, then the property and hours for each day you work: up to three properties '
-                  'a day, one per line. Pay works itself out. On a weekly rate, the week is shared across its properties '
-                  'by hours. Role is optional: for anyone with two roles at two rates, who keeps a pay log for each.',
+    for c in 'CD':
+        for r in (5, 7):
+            ws[f'{c}{r}'].fill, ws[f'{c}{r}'].border = fill(INPUT), GRID
+    ws['C6'].fill, ws['C6'].border = fill(INPUT), GRID
+    ws.merge_cells(f'F5:{NOTE}7')
+    put(ws, 'F5', 'Fill in your rate of pay. Then, for each day you work, the properties and the hours at each: up to '
+                  'six a day, across the row. The day\'s hours and pay work themselves out. On a weekly rate, the week is '
+                  'shared across its properties by hours. Role is optional: for anyone with two roles at two rates, who '
+                  'keeps a pay log for each.',
         font(9, MUTED, italic=True), align=Alignment(wrap_text=True, vertical='center', indent=1))
     ws.row_dimensions[5].height = ws.row_dimensions[6].height = ws.row_dimensions[7].height = 22
 
-    heading_row(ws, 8, [(c, t, None) for c, t in zip('ABCDE', ('Date', 'Property', 'Hours', 'Pay', 'Work done (optional)'))])
+    heading_row(ws, 8, [('A', 'Date', None), (DAY_HOURS, 'Day hours', None), (DAY_PAY, 'Pay', None),
+                        (NOTE, 'Work done (optional)', None)] +
+                [(PROP[k], f'Property {k + 1}', None) for k in range(PAIRS)] + [(HRS[k], 'Hrs', None) for k in range(PAIRS)])
     whole = lambda c: f'${c}${FIRST}:${c}${weeks[-1]["total"]}'
+    for c in range(1, shown + 1):
+        put(ws, f'{get_column_letter(c)}9', None, bg=CREAM, border=GRID)
     put(ws, 'A9', 'Total', font(11, bold=True), CREAM, align=Alignment(indent=1, vertical='center'), border=GRID)
-    put(ws, 'C9', f'=SUMIF({whole("A")},"{TOTAL}",{whole("C")})', font(11, bold=True), CREAM, HOURS,
+    put(ws, f'{DAY_HOURS}9', f'=SUMIF({whole("A")},"{TOTAL}",{whole(DAY_HOURS)})', font(11, bold=True), CREAM, HOURS,
         Alignment(vertical='center'), GRID)
-    put(ws, 'D9', f'=SUMIF({whole("A")},"{TOTAL}",{whole("D")})', font(11, bold=True), CREAM, MONEY,
+    put(ws, f'{DAY_PAY}9', f'=SUMIF({whole("A")},"{TOTAL}",{whole(DAY_PAY)})', font(11, bold=True), CREAM, MONEY,
         Alignment(vertical='center'), GRID)
-    for c in 'BE':
-        put(ws, f'{c}9', None, bg=CREAM, border=GRID)
     ws.row_dimensions[9].height = 22
 
     for week in weeks:
@@ -176,42 +197,55 @@ def pay_log(ws, person, weeks):
             ws.row_dimensions[r].height = 26
             put(ws, f'A{r}', week['fri'].strftime('%B %Y'), font(12, ACCENT, True), align=Alignment(vertical='bottom'))
         h, t = week['heading'], week['total']
-        for c in 'ABCDE':
-            put(ws, f'{c}{h}', None, bg=PAPER)
+        for c in range(1, shown + 1):
+            put(ws, f'{get_column_letter(c)}{h}', None, bg=PAPER)
         put(ws, f'A{h}', f"Week of {week['sat']:%a %-m/%-d} – {week['fri']:%a %-m/%-d/%Y}", font(bold=True), PAPER,
             align=Alignment(indent=1, vertical='center'))
         ws.row_dimensions[h].height = 20
-        first, last = week['lines'][0][0], week['lines'][-1][0]
-        for r, day, first_line in week['lines']:
-            edge = DAY_TOP if first_line else GRID
-            put(ws, f'A{r}', day if first_line else None, font(), WHITE, 'ddd m/d', Alignment(indent=1), edge)
-            put(ws, f'B{r}', None, font(), INPUT, align=Alignment(indent=1), border=edge)
-            put(ws, f'C{r}', None, font(), INPUT, HOURS, border=edge)
-            put(ws, f'D{r}', f'=IF(OR(C{r}="",$B$6=""),"",IF($C$6="per week",IFERROR($B$6*C{r}/C${t},""),$B$6*C{r}))',
-                font(), WHITE, MONEY, border=edge)
-            put(ws, f'E{r}', None, font(), INPUT, align=Alignment(indent=1), border=edge)
-            put(ws, f'F{r}', day, font(color=MUTED), fmt='m/d/yy')
+        first, last = week['days'][0][0], week['days'][-1][0]
+        for r, day in week['days']:
+            put(ws, f'A{r}', day, font(), WHITE, 'ddd m/d', Alignment(indent=1), GRID)
+            for k in range(PAIRS):
+                put(ws, f'{PROP[k]}{r}', None, font(), INPUT, align=Alignment(indent=1), border=GRID)
+                put(ws, f'{HRS[k]}{r}', None, font(), INPUT, HOURS, border=GRID)
+                put(ws, f'{SLOT_PAY[k]}{r}', f'=IF(OR({HRS[k]}{r}="",{PER_HOUR}{r}=""),"",{HRS[k]}{r}*{PER_HOUR}{r})',
+                    font(color=MUTED), fmt=MONEY)
+            put(ws, f'{DAY_HOURS}{r}', '=SUM(' + ','.join(f'{c}{r}' for c in HRS) + ')', font(), WHITE, HOURS, border=GRID)
+            put(ws, f'{DAY_PAY}{r}', f'=IF(OR({DAY_HOURS}{r}=0,{PER_HOUR}{r}=""),"",{DAY_HOURS}{r}*{PER_HOUR}{r})',
+                font(), WHITE, MONEY, border=GRID)
+            put(ws, f'{NOTE}{r}', None, font(), INPUT, align=Alignment(indent=1), border=GRID)
+            # Pay per hour this day: the rate, or on a weekly rate the week's pay over the week's hours.
+            put(ws, f'{PER_HOUR}{r}', f'=IF($B$6="","",IF($D$6="per week",IF({DAY_HOURS}${t}=0,"",$B$6/{DAY_HOURS}${t}),$B$6))',
+                font(color=MUTED), fmt=MONEY)
+        for c in range(1, shown + 1):
+            put(ws, f'{get_column_letter(c)}{t}', None, bg=CREAM, border=GRID)
         put(ws, f'A{t}', TOTAL, font(bold=True), CREAM, align=Alignment(indent=1), border=GRID)
-        put(ws, f'B{t}', None, bg=CREAM, border=GRID)
-        put(ws, f'C{t}', f'=SUM(C{first}:C{last})', font(bold=True), CREAM, HOURS, border=GRID)
-        put(ws, f'D{t}', f'=SUM(D{first}:D{last})', font(bold=True), CREAM, MONEY, border=GRID)
-        put(ws, f'E{t}', None, bg=CREAM, border=GRID)
+        put(ws, f'{DAY_HOURS}{t}', f'=SUM({DAY_HOURS}{first}:{DAY_HOURS}{last})', font(bold=True), CREAM, HOURS, border=GRID)
+        put(ws, f'{DAY_PAY}{t}', f'=SUM({DAY_PAY}{first}:{DAY_PAY}{last})', font(bold=True), CREAM, MONEY, border=GRID)
 
-    lines = [r for week in weeks for r, _, _ in week['lines']]
-    validate(ws, [f'B{r}' for r in lines], type='list', formula1=NAMES, errorStyle='warning',
+    days = [r for week in weeks for r, _ in week['days']]
+    validate(ws, [f'{PROP[k]}{r}' for r in days for k in range(PAIRS)], type='list', formula1=NAMES, errorStyle='warning',
              errorTitle='Property', error='Not on the property list (add new ones on Monthly summary). Keep it anyway?')
-    validate(ws, [f'C{r}' for r in lines], type='decimal', operator='between', formula1='0', formula2='24',
-             errorTitle='Hours', error='Hours as a number: 7.5 is seven and a half.')
-    ws.freeze_panes = 'A10'
+    validate(ws, [f'{HRS[k]}{r}' for r in days for k in range(PAIRS)], type='decimal', operator='between', formula1='0',
+             formula2='24', errorTitle='Hours', error='Hours as a number: 7.5 is seven and a half.')
+    ws.freeze_panes = 'B10'
     ws.print_title_rows = '8:8'
+    ws.page_setup.orientation = 'landscape'
 
 
 LOG_COL = lambda c, last: f"'{LOG}'!${c}${FIRST}:${c}${last}"
 
 
+def by_property(weeks, what, prop, span):
+    """Hours or pay at one property: the sum over the six slots of each day."""
+    last = weeks[-1]['total']
+    values = HRS if what == 'hours' else SLOT_PAY
+    return '+'.join(f'SUMIFS({LOG_COL(v, last)},{LOG_COL(p, last)},{prop},{span})' for v, p in zip(values, PROP))
+
+
 def weekly(ws, weeks):
     last = weeks[-1]['total']
-    hours, pay, props, dates = (LOG_COL(c, last) for c in 'CDBF')
+    dates = LOG_COL('A', last)
     cols = [get_column_letter(2 + i) for i in range(SLOTS)]
     other, total = get_column_letter(2 + SLOTS), get_column_letter(3 + SLOTS)
     band(ws, f"=\"Weekly summary  ·  \"&'{LOG}'!B5", 3 + SLOTS)
@@ -222,7 +256,8 @@ def weekly(ws, weeks):
     put(ws, 'A5', 'Each pay week runs Saturday to Friday. Properties come from the list on Monthly summary.',
         font(9, MUTED, italic=True))
 
-    def grid(top, heading, values, fmt):
+    def grid(top, heading, what, fmt):
+        day_total = LOG_COL(DAY_HOURS if what == 'hours' else DAY_PAY, last)
         put(ws, f'A{top}', heading, font(12, ACCENT, True))
         h = top + 1
         heading_row(ws, h, [('A', 'Week ending', None), (other, 'Other or none', None), (total, 'Total', None)] +
@@ -232,20 +267,21 @@ def weekly(ws, weeks):
             span = f'{dates},">="&($A{r}-6),{dates},"<="&$A{r}'
             put(ws, f'A{r}', week['fri'], font(), WHITE, 'ddd m/d/yy', Alignment(indent=1), GRID)
             for c in cols:
-                put(ws, f'{c}{r}', f'=IF({c}${h}="","",SUMIFS({values},{props},{c}${h},{span}))', font(), WHITE, fmt, border=GRID)
-            put(ws, f'{total}{r}', f'=SUMIFS({values},{span})', font(bold=True), CREAM, fmt, border=GRID)
+                put(ws, f'{c}{r}', f'=IF({c}${h}="","",{by_property(weeks, what, f"{c}${h}", span)})', font(), WHITE, fmt,
+                    border=GRID)
+            put(ws, f'{total}{r}', f'=SUMIFS({day_total},{span})', font(bold=True), CREAM, fmt, border=GRID)
             put(ws, f'{other}{r}', f'={total}{r}-SUM({cols[0]}{r}:{cols[-1]}{r})', font(color=MUTED, italic=True), WHITE, fmt,
                 border=GRID)
         return h + WEEKS
 
-    end = grid(7, 'Hours', hours, HOURS)
-    grid(end + 2, 'Pay', pay, MONEY)
+    end = grid(7, 'Hours', 'hours', HOURS)
+    grid(end + 2, 'Pay', 'pay', MONEY)
     ws.freeze_panes = 'B9'
 
 
 def monthly(ws, weeks):
     last = weeks[-1]['total']
-    hours, pay, props, dates = (LOG_COL(c, last) for c in 'CDBF')
+    dates = LOG_COL('A', last)
     band(ws, f"=\"Monthly summary  ·  \"&'{LOG}'!B5", 2 + MONTHS)
     ws.column_dimensions['A'].width = 26
     for c in range(2, 2 + MONTHS):
@@ -257,7 +293,8 @@ def monthly(ws, weeks):
     sat = weeks[0]['sat']
     months = [dt.date(sat.year + (sat.month - 1 + m) // 12, (sat.month - 1 + m) % 12 + 1, 1) for m in range(MONTHS)]
 
-    def grid(top, heading, values, fmt, names_from=None):
+    def grid(top, heading, what, fmt, names_from=None):
+        day_total = LOG_COL(DAY_HOURS if what == 'hours' else DAY_PAY, last)
         put(ws, f'A{top}', heading, font(12, ACCENT, True))
         h = top + 1
         heading_row(ws, h, [('A', 'Property', None), (end_col, 'Total', None)] +
@@ -277,8 +314,9 @@ def monthly(ws, weeks):
             c = get_column_letter(2 + m)
             span = f'{dates},">="&{c}${h},{dates},"<"&EDATE({c}${h},1)'
             for r in rows:
-                put(ws, f'{c}{r}', f'=IF($A{r}="","",SUMIFS({values},{props},$A{r},{span}))', font(), WHITE, fmt, border=GRID)
-            put(ws, f'{c}{total}', f'=SUMIFS({values},{span})', font(bold=True), CREAM, fmt, border=GRID)
+                put(ws, f'{c}{r}', f'=IF($A{r}="","",{by_property(weeks, what, f"$A{r}", span)})', font(), WHITE, fmt,
+                    border=GRID)
+            put(ws, f'{c}{total}', f'=SUMIFS({day_total},{span})', font(bold=True), CREAM, fmt, border=GRID)
             put(ws, f'{c}{other}', f'={c}{total}-SUM({c}{rows[0]}:{c}{rows[-1]})', font(color=MUTED, italic=True), WHITE, fmt,
                 border=GRID)
         for r in list(rows) + [other, total]:
@@ -286,8 +324,8 @@ def monthly(ws, weeks):
                 CREAM if r == total else WHITE, fmt, border=GRID)
         return rows[0], total
 
-    names, end = grid(7, 'Hours', hours, HOURS)
-    grid(end + 2, 'Pay', pay, MONEY, names_from=names)
+    names, end = grid(7, 'Hours', 'hours', HOURS)
+    grid(end + 2, 'Pay', 'pay', MONEY, names_from=names)
     ws.freeze_panes = 'B9'
 
 

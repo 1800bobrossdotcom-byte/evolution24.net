@@ -413,8 +413,8 @@ from its API overview. It checks:
 and logo, to upload to Google Drive and save as a Google Sheet. There are three tabs:
 
 - **Pay log**: the person and their rate of pay (per hour or per week), then a block for each pay week
-  (Saturday to Friday) with the days already dated and three lines a day for property and hours; the
-  pay works itself out, each week has a total line, and the grand total sits at the top.
+  (Saturday to Friday) with a row per day, already dated: six property and hours slots across it, the
+  day's hours and pay worked out, and a note. Each week has a total line; the grand total sits at the top.
 - **Weekly summary**: hours and pay for each property, week by week, with totals.
 - **Monthly summary**: the same, month by month. New properties go in its empty rows and join the
   Pay log's list.
