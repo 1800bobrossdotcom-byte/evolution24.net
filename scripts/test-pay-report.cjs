@@ -183,29 +183,51 @@ function syntheticLog(name, lines) {
   return rows;
 }
 
+/**
+ * Drive laid out like the Pay Logs shared drive: the report in Accounting, each pay log in a
+ * folder of its own (one two folders down), the template and odds and ends in another, and a pay
+ * log outside the drive that must not be read.
+ */
 function world(logs) {
   const report = new Book('report', [new Sheet('Sheet1')]);
   const books = { report };
-  const files = [{ id: 'report', name: 'Evolution24 Labor Report', mime: SHEETS_MIME }];
+  const folders = {};
+  const folder = (id, parent) => { folders[id] = { id, parent, files: [] }; return folders[id]; };
+  folder('drive', null);
+  folder('accounting', 'drive').files.push({ id: 'report', name: 'Evolution24 Labor Report', mime: SHEETS_MIME });
   logs.forEach((log, i) => {
     const id = `log${i}`;
     books[id] = payLogBook(id, log.rows);
-    files.push({ id, name: log.name, mime: SHEETS_MIME });
+    const home = i === 0 ? folder('nested', folder('person0', 'drive').id) : folder(`person${i}`, 'drive');
+    home.files.push({ id, name: log.name, mime: SHEETS_MIME });
   });
   books.template = payLogBook('template', syntheticLog('', []));
-  files.push({ id: 'template', name: 'Evolution24 Pay Log - Template', mime: SHEETS_MIME },
+  books.elsewhere = payLogBook('elsewhere', syntheticLog('Not Ours', [['2026-10-12', 'Water Street', 5, 100]]));
+  books.broken = new Book('broken', [new Sheet('Sheet1')]);
+  folder('misc', 'drive').files.push({ id: 'template', name: 'Evolution24 Pay Log - Template', mime: SHEETS_MIME },
     { id: 'xlsx', name: 'Evolution24 Pay Log - Alex Test.xlsx', mime: XLSX_MIME },
     { id: 'budget', name: 'Budget 2026', mime: SHEETS_MIME },
     { id: 'broken', name: 'Evolution24 Pay Log - Broken', mime: SHEETS_MIME });
-  books.broken = new Book('broken', [new Sheet('Sheet1')]);
+  folder('other-drive', null).files.push({ id: 'elsewhere', name: 'Evolution24 Pay Log - Not Ours', mime: SHEETS_MIME });
+  const files = new Proxy({}, { get: (_, id) => Object.values(folders).flatMap((f) => f.files.map((x) => ({ ...x, folder: f.id })))
+    .find((x) => x.id === id) });
   const opened = [];
   const props = {};
   const triggers = [];
   const menus = [];
   const iterator = (items) => { let i = 0; return strict({ hasNext: () => i < items.length, next: () => items[i++] }, 'Iterator'); };
+  const folderApi = (f) => strict({
+    getId: () => f.id,
+    getParents: () => iterator(f.parent ? [folderApi(folders[f.parent])] : []),
+    getFolders: () => iterator(Object.values(folders).filter((x) => x.parent === f.id).map(folderApi)),
+    getFilesByType: (mime) => iterator(f.files.filter((x) => x.mime === mime).map((x) => fileApi({ ...x, folder: f.id }))),
+  }, 'Folder');
   const fileApi = (f) => strict({ getId: () => f.id, getName: () => f.name, getUrl: () => `https://docs.google.com/spreadsheets/d/${f.id}/edit`,
-    getParents: () => iterator([folder]) }, 'File');
-  const folder = strict({ getFilesByType: (mime) => iterator(files.filter((f) => f.mime === mime).map(fileApi)) }, 'Folder');
+    getParents: () => iterator([folderApi(folders[f.folder])]) }, 'File');
+  const addLog = (id, name, rows, home) => {
+    books[id] = payLogBook(id, rows);
+    (folders[home] || folder(home, 'drive')).files.push({ id, name, mime: SHEETS_MIME });
+  };
   const pad = (n) => String(n).padStart(2, '0');
   const sandbox = {
     SpreadsheetApp: strict({
@@ -222,7 +244,7 @@ function world(logs) {
       },
       BorderStyle: { SOLID: 'SOLID' },
     }, 'SpreadsheetApp'),
-    DriveApp: strict({ getFileById: (id) => fileApi(files.find((f) => f.id === id)) }, 'DriveApp'),
+    DriveApp: strict({ getFileById: (id) => fileApi(files[id]) }, 'DriveApp'),
     MimeType: { GOOGLE_SHEETS: SHEETS_MIME },
     Charts: { ChartType: { BAR: 'BAR', COLUMN: 'COLUMN' } },
     Utilities: strict({
@@ -250,7 +272,7 @@ function world(logs) {
   };
   vm.createContext(sandbox);
   vm.runInContext(CODE, sandbox);
-  return { sandbox, report, books, files, opened, props, triggers, menus };
+  return { sandbox, report, books, addLog, opened, props, triggers, menus };
 }
 
 /* ---- what the report should say, from the entries alone -------------------------------- */
@@ -261,7 +283,7 @@ const monthLabel = (day) => `${MONTHS[Number(day.slice(5, 7)) - 1]} ${day.slice(
 function expectedLines(logs) {
   const out = [];
   logs.forEach((log) => {
-    const person = log.name.replace('Evolution24 Pay Log - ', '');
+    const person = log.person;
     const week = {};
     log.entries.forEach(([day, , h]) => { week[weekEnding(day)] = (week[weekEnding(day)] || 0) + h; });
     log.entries.forEach(([day, prop, h]) => {
@@ -318,27 +340,32 @@ function checkMatrix(sheet, heading, lines, rowKey, value) {
 }
 
 /* ---- the tests ------------------------------------------------------------------------- */
+const PALETTE = ['#2A78D6', '#EB6834', '#1BAF7A', '#EDA100', '#E87BA4', '#008300', '#6250D6', '#E34948'];
+const SERIES_OF = (map, person) => (map[person] >= 0 ? PALETTE[map[person]] : '#8C8A80');
 const ALL = expectedLines(LOGS);
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 let preview = null;
 
-test('reads the pay logs in its folder, skips the rest, and lays out its three tabs', () => {
+test('reads the pay logs in every folder of the drive, skips the rest, and lays out its three tabs', () => {
   const w = world(LOGS);
   w.sandbox.refreshReport();
   assert.deepStrictEqual(w.report.sheets.map((s) => s.name), ['Report', 'By month', 'Data'], 'tabs, and Sheet1 gone');
-  assert.deepStrictEqual(w.opened.sort(), ['broken', 'log0', 'log1', 'log2'], 'opens the pay logs only: not the template, the xlsx, the budget or itself');
+  assert.deepStrictEqual(w.opened.sort(), ['broken', 'log0', 'log1', 'log2', 'log3'],
+    'opens the pay logs in every folder of the drive (one two folders down), and nothing else: not the template, the xlsx, '
+    + 'the budget, itself, or a pay log in another drive');
   const data = w.report.sheets[2];
   const rows = [];
-  for (let r = 2; data.peek(r, 1) !== ''; r++) rows.push([1, 2, 3, 4, 5, 6, 7, 8].map((c) => data.peek(r, c)));
+  for (let r = 2; data.peek(r, 1) !== ''; r++) rows.push([1, 2, 3, 4, 5, 6, 7, 8, 9].map((c) => data.peek(r, c)));
   assert.strictEqual(rows.length, ALL.length, 'one Data row per line');
-  close(rows.reduce((a, r) => a + r[5], 0), ALL.reduce((a, l) => a + l.hours, 0), 'Data hours');
-  close(rows.reduce((a, r) => a + r[6], 0), ALL.reduce((a, l) => a + l.pay, 0), 'Data pay');
-  const injected = rows.find((r) => String(r[4]).startsWith('=HYPERLINK'));
+  close(rows.reduce((a, r) => a + r[6], 0), ALL.reduce((a, l) => a + l.hours, 0), 'Data hours');
+  close(rows.reduce((a, r) => a + r[7], 0), ALL.reduce((a, l) => a + l.pay, 0), 'Data pay');
+  assert.deepStrictEqual([...new Set(rows.filter((r) => r[0] === 'Alex Test').map((r) => r[1]))].sort(), ['Maintenance', 'Management'], 'roles');
+  const injected = rows.find((r) => String(r[5]).startsWith('=HYPERLINK'));
   assert(injected, 'the odd property name is there');
-  const cell = [...data.cells.values()].find((c) => c.value === injected[4]);
+  const cell = [...data.cells.values()].find((c) => c.value === injected[5]);
   assert(cell.text && !cell.formula, 'a property name that looks like a formula is kept as text');
-  rows.forEach((r) => assert.strictEqual(r[2].getDay(), 5, 'pay week ending is a Friday'));
+  rows.forEach((r) => assert.strictEqual(r[3].getDay(), 5, 'pay week ending is a Friday'));
   assert.strictEqual(w.report.sheets[0].images.length, 1, 'logo');
   preview = w;
 });
@@ -366,17 +393,22 @@ test('Report: each person, with a link to their pay log and a note when somethin
   const h = findRow(report, 'By person') + 1;
   const rows = {};
   for (let r = h + 1; report.peek(r, 1) !== ''; r++) rows[report.peek(r, 1)] = [2, 3, 4, 5, 6].map((c) => report.peek(r, c));
-  const pay = sums(ALL, (l) => l.person, 'pay');
-  const hours = sums(ALL, (l) => l.person, 'hours');
-  ['Alex Test', 'Sam Test', 'Jo Test'].forEach((p) => {
+  const label = (l) => (l.role ? `${l.person}  ·  ${l.role}` : l.person);
+  const lines = [];
+  LOGS.forEach((log) => expectedLines([log]).forEach((l) => lines.push({ ...l, role: log.role })));
+  const pay = sums(lines, label, 'pay');
+  const hours = sums(lines, label, 'hours');
+  assert.deepStrictEqual(Object.keys(rows).sort(), ['Alex Test  ·  Maintenance', 'Alex Test  ·  Management', 'Broken', 'Jo Test', 'Sam Test'],
+    'one row per pay log, each of Alex\'s roles on its own');
+  Object.keys(pay).forEach((p) => {
     close(rows[p][0], pay[p], `${p} labor cost`);
     close(rows[p][1], hours[p], `${p} hours`);
     assert(/^=HYPERLINK\("https:\/\/docs\.google\.com\/spreadsheets\/d\/log\d\/edit","Open"\)$/.test(rows[p][3]), rows[p][3]);
   });
   assert.strictEqual(rows['Jo Test'][4], 'No rate of pay set: 4 hours not priced.');
-  assert.strictEqual(rows['Alex Test'][4], '');
+  assert.strictEqual(rows['Alex Test  ·  Maintenance'][4], '');
   assert.strictEqual(rows.Broken[4], 'No "Pay log" tab, so it was skipped.');
-  assert.strictEqual(rows['Alex Test'][2].toISOString().slice(0, 10), '2027-09-30', 'last entry');
+  assert.strictEqual(rows['Alex Test  ·  Maintenance'][2].toISOString().slice(0, 10), '2027-09-30', 'last entry');
 });
 
 test('charts: stacked, drawn from the tables, one colour per person in every chart', () => {
@@ -447,29 +479,26 @@ test('refreshing again rebuilds in place: no doubled charts or logos', () => {
   assert.deepStrictEqual(w.report.sheets.map((s) => [s.charts.length, s.images.length]), [[2, 1], [1, 1], [0, 0]]);
 });
 
-test('colours stay with people as others join; the ninth on are grouped as Other people', () => {
-  const extra = (name, day) => ({ name: `Evolution24 Pay Log - ${name}`, rows: syntheticLog(name, [[day, 'Water Street', 2, 40]]),
-    entries: [[day, 'Water Street', 2]], rate: 20, per: 'hour' });
-  const logs = LOGS.slice();
-  const w = world(logs);
+test('colours stay with people as others join; past the eighth, people stay in the tables and go grey', () => {
+  const w = world(LOGS);
   w.sandbox.refreshReport();
   const before = JSON.parse(w.props.personColours);
   ['Aaron', 'Bea', 'Cal', 'Dee', 'Eli', 'Fay', 'Gus'].forEach((n, i) => {
-    const log = extra(n, `2026-10-${12 + i}`);
-    const id = `x${i}`;
-    w.books[id] = payLogBook(id, log.rows);
-    w.files.push({ id, name: log.name, mime: SHEETS_MIME });
+    w.addLog(`x${i}`, `Evolution24 Pay Log - ${n}`, syntheticLog(n, [[`2026-10-${12 + i}`, 'Water Street', 2, 40 + i]]), `folder-${n}`);
   });
   w.sandbox.refreshReport();
   const after = JSON.parse(w.props.personColours);
   Object.keys(before).forEach((p) => assert.strictEqual(after[p], before[p], `${p} kept its colour`));
   assert.deepStrictEqual(Object.values(after).filter((i) => i >= 0).sort(), [0, 1, 2, 3, 4, 5, 6, 7], 'eight colours in use');
-  assert.strictEqual(Object.values(after).filter((i) => i < 0).length, 2, 'two people without a colour');
+  assert.deepStrictEqual(Object.keys(after).filter((p) => after[p] < 0).sort(), ['Fay', 'Gus'], 'the last two to arrive have none');
   const cost = table(w.report.sheets[0], 'Labor cost by property and person');
-  assert.strictEqual(cost.columns[cost.columns.length - 2], 'Other people');
+  const people = cost.columns.slice(0, -1);
+  assert.strictEqual(people.length, 10, 'everyone has a column');
+  assert.deepStrictEqual(people.slice(-2), ['Gus', 'Fay'], 'the grey ones last, most paid first');
   const spec = w.report.sheets[0].charts[0].spec;
-  assert.strictEqual(spec.options.series[cost.columns.length - 2].color, '#8C8A80', 'Other people in grey');
-  close(cost.total[cost.columns.length - 2], 80, 'Other people: the two without a colour, $40 each');
+  assert.deepStrictEqual(people.map((_, i) => spec.options.series[i].color), people.map((p) => SERIES_OF(after, p)),
+    'each person in their own colour, Fay and Gus in grey');
+  close(cost.rows['Water Street'][people.indexOf('Fay')], 45, 'Fay has her own column');
 });
 
 test('menu, the hourly refresh, and an empty folder', () => {

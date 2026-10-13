@@ -1,11 +1,11 @@
 /**
- * Evolution24 labor report: a Google Sheet of its own that reads every pay log in its Drive folder
- * and breaks the labor cost down by property and by person, with charts. It only reads the pay
- * logs; it never writes to them.
+ * Evolution24 labor report: a Google Sheet of its own that reads every pay log in the shared drive
+ * it sits in and breaks the labor cost down by property and by person, with charts. It only reads
+ * the pay logs; it never writes to them.
  *
  * Set up, once:
- *  1. In the Drive folder that holds the pay logs (the Google Sheets copies), make a new Google
- *     Sheet and call it "Evolution24 Labor Report".
+ *  1. In the Pay Logs shared drive, in a folder only managers can open (Accounting), make a new
+ *     Google Sheet and call it "Evolution24 Labor Report".
  *  2. Extensions > Apps Script. Replace the code there with this file.
  *  3. Project Settings (the gear): tick "Show appsscript.json manifest file in editor". Back in the
  *     editor, replace appsscript.json with tools/pay-log/appsscript.json, so the report can read
@@ -22,21 +22,26 @@
  *  Data      every line read from the pay logs: person, date, property, hours, pay. Rewritten on
  *            each refresh; use it for your own pivot tables.
  *
- * Which files: every Google Sheet in the same folder whose name starts "Evolution24 Pay Log - ",
- * except the template. Each is read as tools/pay-log/make.py lays it out: the name in B5 of the
- * "Pay log" tab, and lines from row 11 down with the property in B, hours in C, pay in D and the
- * date in the hidden column F.
+ * Which files: every Google Sheet with "Pay Log" in its name, except the template, in the folder
+ * above the report's own folder (the top of the shared drive, when the report is in Accounting) and
+ * in every folder under it, so each person's pay log can sit in a private folder of its own. Each is
+ * read as tools/pay-log/make.py lays it out, on its "Pay log" tab: the name in B5, the role (if any)
+ * in B7, and lines from row 11 down with the property in B, hours in C, pay in D and the date in the
+ * hidden column F. Someone with two roles keeps two pay logs under the same name; the report adds
+ * them together and lists each role under By person. The report reads them as whoever refreshes it,
+ * so that person needs access to every folder.
  *
- * Each person keeps one chart colour for good, in every chart; the ninth person on is grouped as
- * "Other people".
+ * Each person keeps one chart colour for good, in every chart. Charts have eight colours, so from
+ * the ninth person on, people are drawn in grey (the tables name everyone).
  */
 
 const LOG_PREFIX = 'Evolution24 Pay Log - ';
+const LOG_NAME = /pay\s*log/i;
+const MAX_DEPTH = 3;   // how many folders deep to look
 const LOG_TAB = 'Pay log';
 const LOG_FIRST_ROW = 11;
 const TABS = { report: 'Report', month: 'By month', data: 'Data' };
 const NO_PROPERTY = '(no property)';
-const OTHER_PEOPLE = 'Other people';
 
 const INK = '#151613';
 const CREAM = '#E5E6D3';
@@ -104,29 +109,42 @@ function refreshReport() {
 
 /* ---- reading the pay logs -------------------------------------------------------------- */
 
+/** The pay logs: in the folder above the report's own folder, and in every folder under that. */
 function payLogFiles_(ss) {
-  const seen = {};
-  const files = [];
+  const tops = [];
   const parents = DriveApp.getFileById(ss.getId()).getParents();
   while (parents.hasNext()) {
-    const it = parents.next().getFilesByType(MimeType.GOOGLE_SHEETS);
+    const folder = parents.next();
+    const up = folder.getParents();
+    tops.push(up.hasNext() ? up.next() : folder);
+  }
+  const seen = {};
+  const files = [];
+  const visit = (folder, depth) => {
+    if (seen[folder.getId()]) return;
+    seen[folder.getId()] = true;
+    const it = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
     while (it.hasNext()) {
       const f = it.next();
       const name = f.getName();
-      if (seen[f.getId()] || f.getId() === ss.getId()) continue;
-      if (name.indexOf(LOG_PREFIX) !== 0 || /template/i.test(name.slice(LOG_PREFIX.length))) continue;
+      if (seen[f.getId()] || f.getId() === ss.getId() || !LOG_NAME.test(name) || /template/i.test(name)) continue;
       seen[f.getId()] = true;
       files.push(f);
     }
-  }
+    if (depth >= MAX_DEPTH) return;
+    const sub = folder.getFolders();
+    while (sub.hasNext()) visit(sub.next(), depth + 1);
+  };
+  tops.forEach((folder) => visit(folder, 0));
   return files.sort((a, b) => (a.getName() < b.getName() ? -1 : a.getName() > b.getName() ? 1 : 0));
 }
 
 function readPayLogs_(ss) {
   const lines = [];
   const sources = payLogFiles_(ss).map((file) => {
-    const source = { file: file.getName(), url: file.getUrl(), person: file.getName().slice(LOG_PREFIX.length),
-      unpriced: 0, last: '', problem: '' };
+    const name = file.getName();
+    const source = { file: name, url: file.getUrl(), role: '', unpriced: 0, last: '', problem: '',
+      person: name.indexOf(LOG_PREFIX) === 0 ? name.slice(LOG_PREFIX.length) : name };
     try {
       const book = SpreadsheetApp.openById(file.getId());
       const sheet = book.getSheetByName(LOG_TAB);
@@ -136,6 +154,7 @@ function readPayLogs_(ss) {
       }
       const tz = book.getSpreadsheetTimeZone();
       source.person = text_(sheet.getRange('B5').getValue()) || source.person;
+      if (text_(sheet.getRange('A7').getValue()) === 'Role') source.role = text_(sheet.getRange('B7').getValue());
       const last = sheet.getLastRow();
       if (last < LOG_FIRST_ROW) return source;
       sheet.getRange(LOG_FIRST_ROW, 1, last - LOG_FIRST_ROW + 1, 6).getValues().forEach((row) => {
@@ -144,8 +163,8 @@ function readPayLogs_(ss) {
         const day = Utilities.formatDate(row[5], tz, 'yyyy-MM-dd');
         const priced = typeof row[3] === 'number';
         if (!priced) source.unpriced += hours;
-        lines.push({ person: source.person, day: day, property: text_(row[1]) || NO_PROPERTY, hours: hours,
-          pay: priced ? row[3] : 0, url: source.url });
+        lines.push({ person: source.person, role: source.role, day: day, property: text_(row[1]) || NO_PROPERTY,
+          hours: hours, pay: priced ? row[3] : 0, url: source.url });
         if (day > source.last) source.last = day;
       });
     } catch (e) {
@@ -192,11 +211,11 @@ function writeReport_(sheet, lines, sources, period, colours, tz) {
   } else {
     const top = row + 1;
     row = matrix_(sheet, row, 'Labor cost by property and person', 'Property', properties, people,
-      (p, person) => cell_(lines, 'pay', (l) => l.property === p && inColumn_(l.person, person, people)), MONEY);
+      (p, person) => cell_(lines, 'pay', (l) => l.property === p && l.person === person), MONEY);
     row = chart_(sheet, row, sheet.getRange(top, 1, properties.length + 1, people.length + 1), Charts.ChartType.BAR,
       properties.length, 'Labor cost by property, split by person', people.map((p) => colourOf_(p, colours)), width);
     row = matrix_(sheet, row, 'Hours by property and person', 'Property', properties, people,
-      (p, person) => cell_(lines, 'hours', (l) => l.property === p && inColumn_(l.person, person, people)), HOURS);
+      (p, person) => cell_(lines, 'hours', (l) => l.property === p && l.person === person), HOURS);
   }
 
   // Each person: totals for the period, and their pay log.
@@ -206,7 +225,7 @@ function writeReport_(sheet, lines, sources, period, colours, tz) {
   const byPerson = sources.map((s) => {
     const mine = lines.filter((l) => l.url === s.url);
     const note = s.problem || (s.unpriced ? 'No rate of pay set: ' + number_(s.unpriced) + ' hours not priced.' : '');
-    return [safe_(s.person), sum_(mine, 'pay'), sum_(mine, 'hours'), s.last ? date_(s.last) : '',
+    return [safe_(s.person + (s.role ? '  ·  ' + s.role : '')), sum_(mine, 'pay'), sum_(mine, 'hours'), s.last ? date_(s.last) : '',
       '=HYPERLINK("' + s.url + '","Open")', note];
   }).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
   const first = row + 2;
@@ -243,7 +262,7 @@ function writeMonths_(sheet, lines, colours) {
     return;
   }
   let row = matrix_(sheet, 7, 'By person', 'Month', labels, people,
-    (m, person) => cell_(lines, 'pay', (l) => month_(l.day.slice(0, 7)) === m && inColumn_(l.person, person, people)), MONEY);
+    (m, person) => cell_(lines, 'pay', (l) => month_(l.day.slice(0, 7)) === m && l.person === person), MONEY);
   row = chart_(sheet, row, sheet.getRange(8, 1, months.length + 1, people.length + 1), Charts.ChartType.COLUMN,
     months.length, 'Labor cost by month, split by person', people.map((p) => colourOf_(p, colours)), width);
   matrix_(sheet, row, 'By property', 'Month', labels, properties,
@@ -253,10 +272,10 @@ function writeMonths_(sheet, lines, colours) {
 }
 
 function writeData_(sheet, lines) {
-  const head = ['Person', 'Date', 'Pay week ending', 'Month', 'Property', 'Hours', 'Labor cost', 'Pay log'];
+  const head = ['Person', 'Role', 'Date', 'Pay week ending', 'Month', 'Property', 'Hours', 'Labor cost', 'Pay log'];
   const rows = lines.slice().sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : a.person < b.person ? -1 : 1))
-    .map((l) => [safe_(l.person), date_(l.day), date_(weekEnding_(l.day)), month_(l.day.slice(0, 7)), safe_(l.property),
-      l.hours, l.pay, l.url]);
+    .map((l) => [safe_(l.person), safe_(l.role), date_(l.day), date_(weekEnding_(l.day)), month_(l.day.slice(0, 7)),
+      safe_(l.property), l.hours, l.pay, l.url]);
   const width = head.length;
   sheet.getCharts().forEach((c) => sheet.removeChart(c));
   ensure_(sheet, rows.length + 1, width);
@@ -266,11 +285,11 @@ function writeData_(sheet, lines) {
   header_(sheet, 1, head, width);
   if (rows.length) {
     sheet.getRange(2, 1, rows.length, width).setValues(rows);
-    sheet.getRange(2, 2, rows.length, 2).setNumberFormat('ddd m/d/yy');
-    sheet.getRange(2, 6, rows.length, 1).setNumberFormat(HOURS);
-    sheet.getRange(2, 7, rows.length, 1).setNumberFormat(MONEY);
+    sheet.getRange(2, 3, rows.length, 2).setNumberFormat('ddd m/d/yy');
+    sheet.getRange(2, 7, rows.length, 1).setNumberFormat(HOURS);
+    sheet.getRange(2, 8, rows.length, 1).setNumberFormat(MONEY);
   }
-  [130, 110, 120, 100, 200, 80, 100, 320].forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+  [130, 120, 110, 120, 100, 200, 80, 100, 320].forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   sheet.setFrozenRows(1);
   sheet.setTabColor(MUTED);
 }
@@ -415,21 +434,15 @@ function colours_(names) {
   return map;
 }
 
-function colourOf_(column, colours) {
-  if (column === OTHER_PEOPLE) return OTHER_COLOUR;
-  const i = colours[column];
+function colourOf_(person, colours) {
+  const i = colours[person];
   return i >= 0 ? SERIES[i] : OTHER_COLOUR;
 }
 
-/** The people columns: those with a colour, most paid first, then "Other people" for the rest. */
+/** The people columns: those with a colour first, most paid first; then anyone past the eighth (grey in charts). */
 function columns_(lines, colours) {
   const ranked = ranked_(lines, (l) => l.person);
-  const shown = ranked.filter((p) => colours[p] >= 0);
-  return shown.length < ranked.length ? shown.concat([OTHER_PEOPLE]) : shown;
-}
-
-function inColumn_(person, column, columns) {
-  return column === OTHER_PEOPLE ? columns.indexOf(person) < 0 : person === column;
+  return ranked.filter((p) => colours[p] >= 0).concat(ranked.filter((p) => !(colours[p] >= 0)));
 }
 
 /** Distinct keys, highest labor cost first (then most hours, then by name). */

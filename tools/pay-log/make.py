@@ -8,7 +8,7 @@ people.json holds names and rates of pay, so keep it out of the repository; peop
 shows its shape.
 
 Three tabs:
-  Pay log          the person and their rate of pay, then a block for each pay week (Saturday to
+  Pay log          the person, their rate of pay and (if they have two) their role, then a block for each pay week (Saturday to
                    Friday): the days already dated, three lines a day for property and hours, the
                    pay worked out, and a total for the week; the grand total at the top
   Weekly summary   hours and pay for each property, week by week, with totals
@@ -136,7 +136,7 @@ def layout(saturday):
 
 
 def pay_log(ws, person, weeks):
-    band(ws, '="Pay log  ·  "&B5', 5)
+    band(ws, '="Pay log  ·  "&B5&IF(B7="","","  ·  "&B7)', 5)
     for letter, width in zip('ABCDEF', (15, 26, 10, 13, 56, 12)):
         ws.column_dimensions[letter].width = width
     ws.column_dimensions['F'].hidden = True   # every line's date, for the summaries
@@ -150,11 +150,14 @@ def pay_log(ws, person, weeks):
         align=Alignment(horizontal='center', vertical='center'), border=GRID)
     validate(ws, ['C6'], type='list', formula1='"per hour,per week"')
     validate(ws, ['B6'], type='decimal', operator='greaterThanOrEqual', formula1='0', error='An amount in dollars.')
-    ws.merge_cells('D5:E6')
-    put(ws, 'D5', 'Fill in the property and hours for each day you work: up to three properties a day, '
-                  'one per line. Pay works itself out. On a weekly rate, the week is shared across its properties by hours.',
+    put(ws, 'A7', 'Role', align=Alignment(vertical='center'))
+    put(ws, 'B7', person.get('role') or None, font(), INPUT, align=Alignment(vertical='center', indent=1), border=GRID)
+    ws.merge_cells('D5:E7')
+    put(ws, 'D5', 'Fill in your rate of pay, then the property and hours for each day you work: up to three properties '
+                  'a day, one per line. Pay works itself out. On a weekly rate, the week is shared across its properties '
+                  'by hours. Role is optional: for anyone with two roles at two rates, who keeps a pay log for each.',
         font(9, MUTED, italic=True), align=Alignment(wrap_text=True, vertical='center', indent=1))
-    ws.row_dimensions[5].height = ws.row_dimensions[6].height = 22
+    ws.row_dimensions[5].height = ws.row_dimensions[6].height = ws.row_dimensions[7].height = 22
 
     heading_row(ws, 8, [(c, t, None) for c, t in zip('ABCDE', ('Date', 'Property', 'Hours', 'Pay', 'Work done (optional)'))])
     whole = lambda c: f'${c}${FIRST}:${c}${weeks[-1]["total"]}'
@@ -306,7 +309,9 @@ def build(person, path):
 
 
 def file_name(person):
-    return f"Evolution24 Pay Log - {(person.get('name') or 'Template').rstrip('.')}.xlsx"
+    name = (person.get('name') or 'Template').rstrip('.')
+    role = person.get('role')
+    return f"Evolution24 Pay Log - {name} ({role}).xlsx" if role else f"Evolution24 Pay Log - {name}.xlsx"
 
 
 def main(argv):

@@ -429,10 +429,14 @@ python3 tools/pay-log/test.py                              # fills two logs, che
 
 `people.json` holds names and rates of pay, so it is kept out of git; `people.example.json` shows its shape.
 
+Someone with two roles at two rates keeps two pay logs under the same name, each with its Role filled
+in (people.json: `"role"`); the report adds them together.
+
 **The labor report.** `tools/pay-log/Report.gs` is the master report: a separate Google Sheet that reads
-every pay log in its Drive folder (Google Sheets named "Evolution24 Pay Log - …", not the template)
-and breaks the labor cost down by property and by person, with charts. It only reads the pay logs.
-Setup is at the top of the file: a new Google Sheet in the pay logs' folder, the script pasted into
+every pay log in the shared drive it sits in (Google Sheets with "Pay Log" in the name, not the template,
+in the folder above the report's and every folder under it, so each person's log can be in a private
+folder) and breaks the labor cost down by property and by person, with charts. It only reads the pay logs.
+Setup is at the top of the file: a new Google Sheet in a managers-only folder (Accounting), the script pasted into
 Extensions > Apps Script, and `tools/pay-log/appsscript.json` as its manifest (read-only Drive). Then
 Evolution24 > Refresh report, or Refresh every hour. Tabs: Report (labor cost and hours by property
 and person, each person's total and pay log, a From/To period), By month, and Data (every line read).

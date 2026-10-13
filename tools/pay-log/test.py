@@ -156,7 +156,9 @@ def check(person, keep=None):
 
 # For the labor report's test: three people, as their pay logs read once calculated.
 FIXTURE = [
-    ({'name': 'Alex Test', 'rate': 21.5, 'per': 'hour', 'log_starts': '2026-10-10'}, ENTRIES),
+    ({'name': 'Alex Test', 'role': 'Maintenance', 'rate': 21.5, 'per': 'hour', 'log_starts': '2026-10-10'}, ENTRIES),
+    ({'name': 'Alex Test', 'role': 'Management', 'rate': 38, 'per': 'hour', 'log_starts': '2026-10-10'}, [   # a second role
+        (D(2026, 10, 14), 'Office', 3), (D(2026, 10, 21), 'Water Street', 2)]),
     ({'name': 'Sam Test', 'rate': 1000, 'per': 'week', 'log_starts': '2026-10-10'}, [
         (D(2026, 10, 12), 'Water Street', 8), (D(2026, 10, 13), 'Charlotte Square', 6),
         (D(2026, 10, 13), 'Water Street', 2), (D(2026, 10, 20), 'The Biltmore', 9), (D(2026, 11, 9), 'Office', 4)]),
@@ -177,7 +179,8 @@ def fixture(out):
             filled(person, entries, path)
             ws = load_workbook(path, data_only=True)[make.LOG]
             rows = [[plain(c.value) for c in row] for row in ws.iter_rows(min_row=1, max_col=6)]
-            logs.append({'name': path.stem, 'rows': rows, 'entries': [[d.isoformat(), p, h] for d, p, h in entries],
+            logs.append({'name': path.stem, 'person': person['name'], 'role': person.get('role'), 'rows': rows,
+                         'entries': [[d.isoformat(), p, h] for d, p, h in entries],
                          'rate': person.get('rate'), 'per': person.get('per')})
     Path(out).write_text(json.dumps(logs))
     print(f'{out}: {len(logs)} pay logs')
