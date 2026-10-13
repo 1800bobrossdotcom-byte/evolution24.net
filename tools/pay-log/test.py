@@ -27,7 +27,7 @@ ENTRIES = [  # date, property, hours
     (D(2026, 10, 10), 'Water Street', 3),
     (D(2026, 10, 12), 'Water Street', 5.5),
     (D(2026, 10, 12), '145 South Fitzhugh', 2.5),     # two properties on one day
-    (D(2026, 10, 12), 'Office', 0.75),                # and a third
+    (D(2026, 10, 12), 'Office / all properties', 0.75),                # and a third
     (D(2026, 10, 13), 'The Biltmore', 8),
     (D(2026, 10, 15), '301 Central Avenue', 1),      # all six slots on one day
     (D(2026, 10, 15), '181 St. Paul', 1),
@@ -35,7 +35,7 @@ ENTRIES = [  # date, property, hours
     (D(2026, 10, 15), '121 Park Drive', 0.5),
     (D(2026, 10, 15), '31 Genesee Street', 1),
     (D(2026, 10, 15), '561 South Main', 1.5),
-    (D(2026, 10, 16), 'Office', 1.25),
+    (D(2026, 10, 16), 'Office / all properties', 1.25),
     (D(2026, 10, 19), 'Charlotte Square', 9),
     (D(2026, 10, 31), 'Water Street', 4),             # a Saturday: the next pay week, still October
     (D(2026, 11, 2), 'Water Street', 6),
@@ -168,10 +168,10 @@ def check(person, keep=None):
 FIXTURE = [
     ({'name': 'Alex Test', 'role': 'Maintenance', 'rate': 21.5, 'per': 'hour', 'log_starts': '2026-10-10'}, ENTRIES),
     ({'name': 'Alex Test', 'role': 'Management', 'rate': 38, 'per': 'hour', 'log_starts': '2026-10-10'}, [   # a second role
-        (D(2026, 10, 14), 'Office', 3), (D(2026, 10, 21), 'Water Street', 2)]),
+        (D(2026, 10, 14), 'Office / all properties', 3), (D(2026, 10, 21), 'Water Street', 2)]),
     ({'name': 'Sam Test', 'rate': 1000, 'per': 'week', 'log_starts': '2026-10-10'}, [
         (D(2026, 10, 12), 'Water Street', 8), (D(2026, 10, 13), 'Charlotte Square', 6),
-        (D(2026, 10, 13), 'Water Street', 2), (D(2026, 10, 20), 'The Biltmore', 9), (D(2026, 11, 9), 'Office', 4)]),
+        (D(2026, 10, 13), 'Water Street', 2), (D(2026, 10, 20), 'The Biltmore', 9), (D(2026, 11, 9), 'Office', 4)]),   # the old name: still shared by the report
     ({'name': 'Jo Test', 'per': 'hour', 'log_starts': '2026-10-10'}, [   # no rate of pay set
         (D(2026, 10, 14), 'Water Street', 3), (D(2026, 10, 15), '=HYPERLINK("http://example.com","x")', 1)]),
 ]

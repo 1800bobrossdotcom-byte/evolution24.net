@@ -34,10 +34,11 @@ LOGO = HERE.parent.parent / 'source' / 'logo' / 'sheet-logo.png'
 
 INK, TAN, CREAM, PAPER, ACCENT = '151613', 'DEBB92', 'E5E6D3', 'F4F1EA', '8A6232'   # assets/css/main.css
 INPUT, LINE, MUTED, WHITE, FONT = 'F8EEDF', 'D8D3C6', '6B6A63', 'FFFFFF', 'Arial'
-PROPERTIES = ['301 Central Avenue', '145 South Fitzhugh', 'Water Street', 'The Biltmore', '181 St. Paul',
-              'Charlotte Square', '2215 James Street', '121 Park Drive', '379 South Main', '561 South Main',
-              '31 Genesee Street', '440 Armstrong', '444 Armstrong', '452 Armstrong', '4940 Hillcrest',
-              '300 Alexander', 'Office']
+# The first is time for every building: the labor report shares it across them (Report.gs, BUILDINGS).
+PROPERTIES = ['Office / all properties', '301 Central Avenue', '145 South Fitzhugh', 'Water Street', 'The Biltmore',
+              '181 St. Paul', 'Charlotte Square', '2215 James Street', '121 Park Drive', '379 South Main',
+              '561 South Main', '31 Genesee Street', '440 Armstrong', '444 Armstrong', '452 Armstrong',
+              '4940 Hillcrest', '300 Alexander']
 SLOTS = 20                     # property rows on Monthly summary: the list above, and room to add more
 LOG, WEEK, MONTH = 'Pay log', 'Weekly summary', 'Monthly summary'
 WEEKS, MONTHS = 52, 12

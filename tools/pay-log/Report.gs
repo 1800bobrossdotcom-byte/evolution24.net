@@ -15,12 +15,19 @@
  *     Evolution24 > Refresh every hour.
  *
  * The tabs:
- *  Report    labor cost for each property, split by person, with a chart; the same in hours;
- *            each person's total with a chart, and a link to their pay log. The From and To dates
- *            at the top choose the period (blank: everything).
- *  By month  labor cost month by month, split by person (with a chart) and by property.
- *  Data      every line read from the pay logs: person, date, property, hours, pay. Rewritten on
- *            each refresh; use it for your own pivot tables.
+ *  Report      labor cost for each property, split by person, with a chart; the same in hours;
+ *              each person's total with a chart, and a link to their pay log. The From and To
+ *              dates at the top choose the period (blank: everything).
+ *  By month    labor cost month by month, split by person (with a chart) and by property.
+ *  Properties  the buildings that share office / all-properties time, and each one's share.
+ *  Data        every line read from the pay logs, after sharing: person, date, property, what it
+ *              was logged as, hours, pay. Rewritten on each refresh; use it for your own pivots.
+ *
+ * Office / all properties: hours logged against "Office / all properties" (or "Office", or "All
+ * properties") belong to every building, so the report shares them, and their pay, across the
+ * buildings on the Properties tab in proportion to each one's share: equal shares to start with;
+ * put in unit counts to share by size, or 0 to leave a building out. The pay logs keep the line as
+ * logged; only the report divides it.
  *
  * Which files: every Google Sheet with "Pay Log" in its name, except the template, in the folder
  * above the report's own folder (the top of the shared drive, when the report is in Accounting) and
@@ -43,7 +50,15 @@ const LOG_TAB = 'Pay log';
 const LOG_FIRST_ROW = 11;
 const SLOTS = 6;            // property and hours slots in each day's row
 const SLOT_PAY_COL = 18;    // R: the first slot's pay (hidden)
-const TABS = { report: 'Report', month: 'By month', data: 'Data' };
+const TABS = { report: 'Report', month: 'By month', properties: 'Properties', data: 'Data' };
+const SHARED_LABEL = 'Office / all properties';
+const SHARED = /^(office|all properties|office\s*\/\s*all properties)$/i;
+// The buildings that share office / all-properties time, an equal share each to start with; after
+// the first refresh, the Properties tab is the list. Matches tools/pay-log/make.py's property list.
+const BUILDINGS = ['301 Central Avenue', '145 South Fitzhugh', 'Water Street', 'The Biltmore', '181 St. Paul',
+  'Charlotte Square', '2215 James Street', '121 Park Drive', '379 South Main', '561 South Main', '31 Genesee Street',
+  '440 Armstrong', '444 Armstrong', '452 Armstrong', '4940 Hillcrest', '300 Alexander'];
+const SHARES_FIRST_ROW = 7;
 const NO_PROPERTY = '(no property)';
 
 const INK = '#151613';
@@ -86,7 +101,7 @@ function stopRefreshing() {
     .forEach((t) => ScriptApp.deleteTrigger(t));
 }
 
-/** Read every pay log and rebuild the three tabs. */
+/** Read every pay log and rebuild the tabs. */
 function refreshReport() {
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(60 * 1000)) return;   // a refresh is already running
@@ -95,15 +110,19 @@ function refreshReport() {
     const tz = ss.getSpreadsheetTimeZone();
     const report = tab_(ss, TABS.report, 0);
     const month = tab_(ss, TABS.month, 1);
-    const data = tab_(ss, TABS.data, 2);
+    const props = tab_(ss, TABS.properties, 2);
+    const data = tab_(ss, TABS.data, 3);
     dropBlankDefault_(ss);
     const period = period_(report, tz);
+    const shares = readShares_(props);
     const read = readPayLogs_(ss);
-    const lines = read.lines.filter((l) => (!period.from || l.day >= period.from) && (!period.to || l.day <= period.to));
+    const all = share_(read.lines, shares);
+    const lines = all.filter((l) => (!period.from || l.day >= period.from) && (!period.to || l.day <= period.to));
     const colours = colours_(read.lines.map((l) => l.person));
-    writeData_(data, read.lines);
-    writeReport_(report, lines, read.sources, period, colours, tz);
+    writeData_(data, all);
+    writeReport_(report, lines, read.sources, period, colours, tz, shares);
     writeMonths_(month, lines, colours);
+    writeShares_(props, shares);
     toast_(ss, 'Read ' + read.sources.length + ' pay logs, ' + read.lines.length + ' lines.');
   } finally {
     lock.releaseLock();
@@ -188,9 +207,69 @@ function readPayLogs_(ss) {
   return { lines: lines, sources: sources };
 }
 
+/* ---- office / all properties ----------------------------------------------------------- */
+
+/** The Properties tab: each building and its share. Blank share: 1. A fresh tab starts from BUILDINGS. */
+function readShares_(sheet) {
+  const last = sheet.getLastRow();
+  if (last < SHARES_FIRST_ROW) return BUILDINGS.map((name) => ({ name: name, share: 1 }));
+  return sheet.getRange(SHARES_FIRST_ROW, 1, last - SHARES_FIRST_ROW + 1, 2).getValues()
+    .map((row) => ({ name: text_(row[0]), share: typeof row[1] === 'number' ? Math.max(0, row[1]) : text_(row[1]) === '' ? 1 : 0 }))
+    .filter((r) => r.name && !SHARED.test(r.name));
+}
+
+/**
+ * Lines with office / all-properties time become one line per building, each with its share of the
+ * hours and pay; every other line stays as it is. `loggedAs` keeps what the pay log said.
+ */
+function share_(lines, shares) {
+  const takers = shares.filter((s) => s.share > 0);
+  const total = takers.reduce((a, s) => a + s.share, 0);
+  const out = [];
+  lines.forEach((l) => {
+    if (!SHARED.test(l.property) || !total) {
+      out.push(Object.assign({}, l, { loggedAs: l.property }));
+      return;
+    }
+    takers.forEach((s) => {
+      const part = s.share / total;
+      out.push(Object.assign({}, l, { property: s.name, loggedAs: SHARED_LABEL, hours: l.hours * part, pay: l.pay * part, shared: true }));
+    });
+  });
+  return out;
+}
+
+function writeShares_(sheet, shares) {
+  const width = 4;
+  reset_(sheet, width, [230, 90, 150, 360]);
+  band_(sheet, width, 'Properties  ·  sharing office / all-properties time');
+  sheet.getRange(5, 1, 1, width).merge()
+    .setValue('Hours logged as "' + SHARED_LABEL + '" are shared across these buildings by their shares. Equal shares split '
+      + 'it evenly; put in unit counts to split it by size; 0 leaves a building out. Add buildings in the tan rows, '
+      + 'then Evolution24 > Refresh report.')
+    .setWrap(true).setFontColor(MUTED).setFontStyle('italic').setFontSize(9);
+  sheet.setRowHeight(5, 44);
+  header_(sheet, SHARES_FIRST_ROW - 1, ['Property', 'Share', 'Share of office time'], width);
+  const rows = shares.length + 10;
+  const last = SHARES_FIRST_ROW + rows - 1;
+  const values = [];
+  for (let i = 0; i < rows; i++) {
+    const s = shares[i];
+    const r = SHARES_FIRST_ROW + i;
+    values.push([s ? safe_(s.name) : '', s ? s.share : '',
+      '=IF(OR(A' + r + '="",B' + r + '=""),"",B' + r + '/SUM($B$' + SHARES_FIRST_ROW + ':$B$' + last + '))']);
+  }
+  sheet.getRange(SHARES_FIRST_ROW, 1, rows, 3).setValues(values);
+  sheet.getRange(SHARES_FIRST_ROW, 1, rows, 2).setBackground(INPUT);
+  sheet.getRange(SHARES_FIRST_ROW, 3, rows, 1).setNumberFormat('0.0%');
+  grid_(sheet.getRange(SHARES_FIRST_ROW, 1, rows, 3));
+  sheet.setFrozenRows(3);
+  sheet.setTabColor(TAN);
+}
+
 /* ---- the tabs -------------------------------------------------------------------------- */
 
-function writeReport_(sheet, lines, sources, period, colours, tz) {
+function writeReport_(sheet, lines, sources, period, colours, tz, shares) {
   const people = columns_(lines, colours);
   const properties = ranked_(lines, (l) => l.property);
   const width = Math.max(people.length + 2, 6);
@@ -216,6 +295,14 @@ function writeReport_(sheet, lines, sources, period, colours, tz) {
       + '   ·   ' + properties.length + (properties.length === 1 ? ' property' : ' properties'))
     .setFontSize(15).setFontWeight('bold').setBackground(PAPER);
   sheet.setRowHeight(8, 36);
+  const shared = lines.filter((l) => l.shared);
+  if (shared.length) {
+    const takers = shares.filter((s) => s.share > 0).length;
+    sheet.getRange(9, 1, 1, width).merge()
+      .setValue('Includes ' + number_(sum_(shared, 'hours')) + ' hours and ' + money_(sum_(shared, 'pay')) + ' of office / '
+        + 'all-properties time, shared across ' + takers + ' buildings by their shares on the Properties tab.')
+      .setFontColor(MUTED).setFontStyle('italic').setFontSize(9);
+  }
 
   let row = 10;
   if (!lines.length) {
@@ -285,10 +372,10 @@ function writeMonths_(sheet, lines, colours) {
 }
 
 function writeData_(sheet, lines) {
-  const head = ['Person', 'Role', 'Date', 'Pay week ending', 'Month', 'Property', 'Hours', 'Labor cost', 'Pay log'];
+  const head = ['Person', 'Role', 'Date', 'Pay week ending', 'Month', 'Property', 'Logged as', 'Hours', 'Labor cost', 'Pay log'];
   const rows = lines.slice().sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : a.person < b.person ? -1 : 1))
     .map((l) => [safe_(l.person), safe_(l.role), date_(l.day), date_(weekEnding_(l.day)), month_(l.day.slice(0, 7)),
-      safe_(l.property), l.hours, l.pay, l.url]);
+      safe_(l.property), safe_(l.loggedAs), l.hours, l.pay, l.url]);
   const width = head.length;
   sheet.getCharts().forEach((c) => sheet.removeChart(c));
   ensure_(sheet, rows.length + 1, width);
@@ -299,10 +386,10 @@ function writeData_(sheet, lines) {
   if (rows.length) {
     sheet.getRange(2, 1, rows.length, width).setValues(rows);
     sheet.getRange(2, 3, rows.length, 2).setNumberFormat('ddd m/d/yy');
-    sheet.getRange(2, 7, rows.length, 1).setNumberFormat(HOURS);
-    sheet.getRange(2, 8, rows.length, 1).setNumberFormat(MONEY);
+    sheet.getRange(2, 8, rows.length, 1).setNumberFormat(HOURS);
+    sheet.getRange(2, 9, rows.length, 1).setNumberFormat(MONEY);
   }
-  [130, 120, 110, 120, 100, 200, 80, 100, 320].forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+  [130, 120, 110, 120, 100, 200, 170, 80, 100, 320].forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   sheet.setFrozenRows(1);
   sheet.setTabColor(MUTED);
 }

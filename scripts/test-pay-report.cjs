@@ -272,6 +272,7 @@ function world(logs) {
   };
   vm.createContext(sandbox);
   vm.runInContext(CODE, sandbox);
+  sandbox.__buildings = JSON.parse(JSON.stringify(vm.runInContext('BUILDINGS', sandbox)));   // out of the sandbox's realm
   return { sandbox, report, books, addLog, opened, props, triggers, menus };
 }
 
@@ -292,6 +293,19 @@ function expectedLines(logs) {
     });
   });
   return out;
+}
+
+/** Office / all-properties time shared across the buildings by their shares, as the report should. */
+const SHARED = /^(office|all properties|office\s*\/\s*all properties)$/i;
+const MAKE = fs.readFileSync(path.join(ROOT, 'tools', 'pay-log', 'make.py'), 'utf8');
+const LIST = /PROPERTIES = \[([\s\S]*?)\]/.exec(MAKE)[1].match(/'([^']+)'/g).map((q) => q.slice(1, -1));
+const BUILDINGS = LIST.filter((p) => !SHARED.test(p));
+function shareOut(lines, shares = BUILDINGS.map((name) => ({ name, share: 1 }))) {
+  const takers = shares.filter((s) => s.share > 0);
+  const total = takers.reduce((a, s) => a + s.share, 0);
+  return lines.flatMap((l) => (SHARED.test(l.property)
+    ? takers.map((s) => ({ ...l, property: s.name, hours: l.hours * s.share / total, pay: l.pay * s.share / total }))
+    : [l]));
 }
 
 function sums(lines, key, value) {
@@ -343,29 +357,33 @@ function checkMatrix(sheet, heading, lines, rowKey, value) {
 const PALETTE = ['#2A78D6', '#EB6834', '#1BAF7A', '#EDA100', '#E87BA4', '#008300', '#6250D6', '#E34948'];
 const SERIES_OF = (map, person) => (map[person] >= 0 ? PALETTE[map[person]] : '#8C8A80');
 const ALL = expectedLines(LOGS);
+const ALLOC = shareOut(ALL);
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 let preview = null;
 
-test('reads the pay logs in every folder of the drive, skips the rest, and lays out its three tabs', () => {
+test('reads the pay logs in every folder of the drive, skips the rest, and lays out its tabs', () => {
   const w = world(LOGS);
   w.sandbox.refreshReport();
-  assert.deepStrictEqual(w.report.sheets.map((s) => s.name), ['Report', 'By month', 'Data'], 'tabs, and Sheet1 gone');
+  assert.deepStrictEqual(w.report.sheets.map((s) => s.name), ['Report', 'By month', 'Properties', 'Data'], 'tabs, and Sheet1 gone');
   assert.deepStrictEqual(w.opened.sort(), ['broken', 'log0', 'log1', 'log2', 'log3'],
     'opens the pay logs in every folder of the drive (one two folders down), and nothing else: not the template, the xlsx, '
     + 'the budget, itself, or a pay log in another drive');
-  const data = w.report.sheets[2];
+  const data = w.report.sheets[3];
   const rows = [];
-  for (let r = 2; data.peek(r, 1) !== ''; r++) rows.push([1, 2, 3, 4, 5, 6, 7, 8, 9].map((c) => data.peek(r, c)));
-  assert.strictEqual(rows.length, ALL.length, 'one Data row per line');
-  close(rows.reduce((a, r) => a + r[6], 0), ALL.reduce((a, l) => a + l.hours, 0), 'Data hours');
-  close(rows.reduce((a, r) => a + r[7], 0), ALL.reduce((a, l) => a + l.pay, 0), 'Data pay');
+  for (let r = 2; data.peek(r, 1) !== ''; r++) rows.push([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => data.peek(r, c)));
+  assert.strictEqual(rows.length, ALLOC.length, 'one Data row per line, office time one per building');
+  close(rows.reduce((a, r) => a + r[7], 0), ALL.reduce((a, l) => a + l.hours, 0), 'Data hours: sharing loses none');
+  close(rows.reduce((a, r) => a + r[8], 0), ALL.reduce((a, l) => a + l.pay, 0), 'Data pay: sharing loses none');
+  assert(rows.some((r) => r[6] === 'Office / all properties' && r[5] === 'Water Street'), 'shared rows say what they were logged as');
+  assert(!rows.some((r) => SHARED.test(r[5])), 'no office line left unshared');
   assert.deepStrictEqual([...new Set(rows.filter((r) => r[0] === 'Alex Test').map((r) => r[1]))].sort(), ['Maintenance', 'Management'], 'roles');
   const injected = rows.find((r) => String(r[5]).startsWith('=HYPERLINK'));
   assert(injected, 'the odd property name is there');
   const cell = [...data.cells.values()].find((c) => c.value === injected[5]);
   assert(cell.text && !cell.formula, 'a property name that looks like a formula is kept as text');
   rows.forEach((r) => assert.strictEqual(r[3].getDay(), 5, 'pay week ending is a Friday'));
+  assert.deepStrictEqual(w.sandbox.__buildings, BUILDINGS, "the report's buildings are make.py's list, less office time");
   assert.strictEqual(w.report.sheets[0].images.length, 1, 'logo');
   preview = w;
 });
@@ -374,8 +392,8 @@ test('Report: labor cost and hours by property and person, totals both ways', ()
   const w = world(LOGS);
   w.sandbox.refreshReport();
   const report = w.report.sheets[0];
-  const cost = checkMatrix(report, 'Labor cost by property and person', ALL, (l) => l.property, 'pay');
-  checkMatrix(report, 'Hours by property and person', ALL, (l) => l.property, 'hours');
+  const cost = checkMatrix(report, 'Labor cost by property and person', ALLOC, (l) => l.property, 'pay');
+  checkMatrix(report, 'Hours by property and person', ALLOC, (l) => l.property, 'hours');
   assert.deepStrictEqual(cost.columns, ['Sam Test', 'Alex Test', 'Jo Test', 'Total'], 'people, most paid first');
   const props = Object.keys(cost.rows);
   const totals = props.map((p) => cost.rows[p][cost.columns.length - 1]);
@@ -384,6 +402,10 @@ test('Report: labor cost and hours by property and person, totals both ways', ()
   const pay = ALL.reduce((a, l) => a + l.pay, 0);
   assert(headline.startsWith(`$${pay.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} labor cost`), headline);
   assert(headline.includes('3 people'), headline);
+  const office = ALL.filter((l) => SHARED.test(l.property));
+  const dollars = office.reduce((a, l) => a + l.pay, 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  assert.strictEqual(report.peek(9, 1), `Includes ${Math.round(office.reduce((a, l) => a + l.hours, 0) * 100) / 100} hours and `
+    + `$${dollars} of office / all-properties time, shared across 16 buildings by their shares on the Properties tab.`);
 });
 
 test('Report: each person, with a link to their pay log and a note when something is missing', () => {
@@ -446,10 +468,10 @@ test('By month: labor cost month by month, by person and by property', () => {
   w.sandbox.refreshReport();
   const month = w.report.sheets[1];
   const lab = (l) => monthLabel(l.day);
-  checkMatrix(month, 'By person', ALL, lab, 'pay');
+  checkMatrix(month, 'By person', ALLOC, lab, 'pay');
   const t = table(month, 'By property');
   const cell = {};
-  ALL.forEach((l) => { const k = `${lab(l)}|${l.property}`; cell[k] = (cell[k] || 0) + l.pay; });
+  ALLOC.forEach((l) => { const k = `${lab(l)}|${l.property}`; cell[k] = (cell[k] || 0) + l.pay; });
   Object.entries(t.rows).forEach(([m, values]) => t.columns.slice(0, -1).forEach((p, i) => close(values[i], cell[`${m}|${p}`] || 0, `${m} ${p}`)));
   assert.deepStrictEqual(Object.keys(t.rows), ['Oct 2026', 'Nov 2026', 'Sep 2027'], 'months in order');
 });
@@ -461,14 +483,14 @@ test('the period on Report narrows every table, stays put, and can be typed eith
   report.cell(5, 2).value = new Date('2026-10-31T00:00:00Z');   // typed backwards
   report.cell(5, 4).value = new Date('2026-10-12T00:00:00Z');
   w.sandbox.refreshReport();
-  const inside = ALL.filter((l) => l.day >= '2026-10-12' && l.day <= '2026-10-31');
+  const inside = ALLOC.filter((l) => l.day >= '2026-10-12' && l.day <= '2026-10-31');
   checkMatrix(report, 'Labor cost by property and person', inside, (l) => l.property, 'pay');
   checkMatrix(w.report.sheets[1], 'By person', inside, (l) => monthLabel(l.day), 'pay');
   assert.strictEqual(report.peek(5, 2).toISOString().slice(0, 10), '2026-10-12');
   assert.strictEqual(report.peek(5, 4).toISOString().slice(0, 10), '2026-10-31');
   let n = 0;
-  for (let r = 2; w.report.sheets[2].peek(r, 1) !== ''; r++) n++;
-  assert.strictEqual(n, ALL.length, 'Data keeps every line');
+  for (let r = 2; w.report.sheets[3].peek(r, 1) !== ''; r++) n++;
+  assert.strictEqual(n, ALLOC.length, 'Data keeps every line');
 });
 
 test('refreshing again rebuilds in place: no doubled charts or logos', () => {
@@ -476,7 +498,33 @@ test('refreshing again rebuilds in place: no doubled charts or logos', () => {
   w.sandbox.refreshReport();
   w.sandbox.refreshReport();
   w.sandbox.refreshReport();
-  assert.deepStrictEqual(w.report.sheets.map((s) => [s.charts.length, s.images.length]), [[2, 1], [1, 1], [0, 0]]);
+  assert.deepStrictEqual(w.report.sheets.map((s) => [s.charts.length, s.images.length]), [[2, 1], [1, 1], [0, 1], [0, 0]]);
+});
+
+test('office time follows the shares on the Properties tab, which stay put', () => {
+  const w = world(LOGS);
+  w.sandbox.refreshReport();
+  const props = w.report.sheets[2];
+  const listed = [];
+  for (let r = 7; props.peek(r, 1) !== ''; r++) listed.push([props.peek(r, 1), props.peek(r, 2)]);
+  assert.deepStrictEqual(listed, BUILDINGS.map((b) => [b, 1]), 'starts with every building, an equal share each');
+  // Share by size: Water Street three times the others, 301 Central left out, a new building added.
+  const row = (name) => 7 + listed.findIndex(([n]) => n === name);
+  props.cell(row('Water Street'), 2).value = 3;
+  props.cell(row('301 Central Avenue'), 2).value = 0;
+  props.cell(7 + listed.length, 1).value = 'New Building';
+  w.sandbox.refreshReport();
+  const shares = BUILDINGS.map((name) => ({ name, share: name === 'Water Street' ? 3 : name === '301 Central Avenue' ? 0 : 1 }))
+    .concat([{ name: 'New Building', share: 1 }]);
+  const expected = shareOut(ALL, shares);
+  checkMatrix(w.report.sheets[0], 'Labor cost by property and person', expected, (l) => l.property, 'pay');
+  const cost = table(w.report.sheets[0], 'Labor cost by property and person');
+  const direct = ALL.filter((l) => l.property === '301 Central Avenue').reduce((a, l) => a + l.pay, 0);
+  close(cost.rows['301 Central Avenue'].slice(-1)[0], direct, 'a share of 0: only its own hours, no office time');
+  assert.strictEqual(props.peek(row('Water Street'), 2), 3, 'shares kept after the refresh');
+  assert.strictEqual(props.peek(7 + listed.length, 1), 'New Building', 'added building kept');
+  assert.strictEqual(props.peek(7 + listed.length, 2), 1, 'a blank share counts as 1');
+  assert(String(props.peek(7, 3)).startsWith('=IF('), 'share of office time is a live formula');
 });
 
 test('colours stay with people as others join; past the eighth, people stay in the tables and go grey', () => {

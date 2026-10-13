@@ -439,8 +439,11 @@ folder) and breaks the labor cost down by property and by person, with charts. I
 Setup is at the top of the file: a new Google Sheet in a managers-only folder (Accounting), the script pasted into
 Extensions > Apps Script, and `tools/pay-log/appsscript.json` as its manifest (read-only Drive). Then
 Evolution24 > Refresh report, or Refresh every hour. Tabs: Report (labor cost and hours by property
-and person, each person's total and pay log, a From/To period), By month, and Data (every line read).
-Each person keeps one chart colour in every chart; scripts/build.py fills in the logo.
+and person, each person's total and pay log, a From/To period), By month, Properties (who shares office time), and Data (every line read).
+Hours logged as "Office / all properties" (or "Office") are shared, with their pay, across the buildings
+on the report's Properties tab by each one's share: equal to start with, unit counts to share by size,
+0 to leave one out. The pay logs keep the line as logged; the report's Data tab says what each shared
+line was logged as. Each person keeps one chart colour in every chart; scripts/build.py fills in the logo.
 
 ```
 node scripts/test-pay-report.cjs                  # the report against real, filled pay logs (Python and LibreOffice)
