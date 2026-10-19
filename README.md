@@ -508,17 +508,16 @@ python3 tools/instagram/make.py        # writes tools/instagram/out/ (needs Pill
 Names, photos, the logo and the phone number come from the site. Which photo goes in
 which window, and the words on each post, are set at the top of `make.py`.
 
-**The seamless grid.** `tools/instagram/seamless.py` draws a second set of nine: one 3240 × 4320
-picture, cut into nine 3:4 posts that join up on the profile. The top row is the site's hero in
-type (the logo, "An evolution | in *home*." across two posts, the numbers); below it, the building
-mark stands as a skyline the width of the grid, each building filled with a duotone photo of one
-of ours, on a tan line over a strip of ink with the phone number, the website and "Find your
-*place*." Pictures cross the posts' edges but words never do, so each post reads on its own; the
-page checks this and the run fails if any text crosses an edge. `captions-seamless.md` holds the
-captions, alt text and the order to post them.
+**The featured grid.** `tools/instagram/featured.py` draws a second set of nine, each a whole
+post on its own: eight full-bleed photos, one building to a post, with the city, the building's
+name and a line about it at the foot, around the brand on ink in the center (the logo, "An
+evolution in *home*.", the numbers and the website). Which photo each building shows, and its
+line, are set at the top of `featured.py`; a photo that would have to be blown up past 1.3x stops
+the run, and the page checks that no words come near a post's edge. `captions-featured.md` holds
+the captions, alt text and the order to post them.
 
 ```bash
-python3 tools/instagram/seamless.py    # writes tools/instagram/out/seamless/ (needs Pillow and Playwright)
+python3 tools/instagram/featured.py    # writes tools/instagram/out/featured/ (needs Pillow and Playwright)
 ```
 
 **The video.** `tools/instagram/story/story.py` makes a 20-second video, cut to the beat,
@@ -573,7 +572,7 @@ tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and log
 tools/rent-manager/      the Rent Manager client and connection check (Apps Script); the check's building list is generated
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it
 tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words;
-                         seamless.py draws the seamless nine, captions-seamless.md holds theirs
+                         featured.py draws the featured nine, captions-featured.md holds theirs
 tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums;
                          Report.gs is the master labor report (Apps Script) that reads them all
 sitemap.xml robots.txt llms.txt speculation-rules.json site.webmanifest .well-known/security.txt
