@@ -508,16 +508,19 @@ python3 tools/instagram/make.py        # writes tools/instagram/out/ (needs Pill
 Names, photos, the logo and the phone number come from the site. Which photo goes in
 which window, and the words on each post, are set at the top of `make.py`.
 
-**The featured grid.** `tools/instagram/featured.py` draws a second set of nine, each a whole
-post on its own: eight full-bleed photos, one building to a post, with the city, the building's
-name and a line about it at the foot, around the brand on ink in the center (the logo, "An
-evolution in *home*.", the numbers and the website). Which photo each building shows, and its
-line, are set at the top of `featured.py`; a photo that would have to be blown up past 1.3x stops
-the run, and the page checks that no words come near a post's edge. `captions-featured.md` holds
-the captions, alt text and the order to post them.
+**Now renting.** `tools/instagram/leasing.py` draws a second set of nine for a leasing push,
+each a whole post on its own. Five are listings, at the corners and in the center: a building's
+photo with a tan "Now available" stamp carrying how many of its homes are free, and a card with the
+city, the building, the kinds of home and the rent they start at. Between them a cross of
+statements on ink and tan: *Now renting.* *Now available.* *Now touring.* *Apply online.* The
+counts, kinds and rents come from `data/properties.json`, the site's "Available now" list, so run
+it again after that list changes; a listing whose building has nothing free stops the run, as
+does a photo that would have to be blown up past 1.3x. Which buildings and photos it shows are set
+at the top of `leasing.py`. `captions-leasing.md` holds the captions, alt text and the order to
+post them.
 
 ```bash
-python3 tools/instagram/featured.py    # writes tools/instagram/out/featured/ (needs Pillow and Playwright)
+python3 tools/instagram/leasing.py     # writes tools/instagram/out/leasing/ (needs Pillow and Playwright)
 ```
 
 **The video.** `tools/instagram/story/story.py` makes a 20-second video, cut to the beat,
@@ -572,7 +575,7 @@ tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and log
 tools/rent-manager/      the Rent Manager client and connection check (Apps Script); the check's building list is generated
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it
 tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words;
-                         featured.py draws the featured nine, captions-featured.md holds theirs
+                         leasing.py draws the Now renting nine, captions-leasing.md holds theirs
 tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums;
                          Report.gs is the master labor report (Apps Script) that reads them all
 sitemap.xml robots.txt llms.txt speculation-rules.json site.webmanifest .well-known/security.txt
