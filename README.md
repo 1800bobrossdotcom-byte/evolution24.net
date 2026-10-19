@@ -160,7 +160,9 @@ Here:
 - **Maps** load nothing from Google until someone presses "Show the map".
 - **Caching:** CSS and JS are requested as `?v=<content hash>` and cached for a year as
   immutable. Images are cached for 30 days.
-- **No third-party requests at all.** No cookies, no analytics, no consent banner.
+- **No third-party requests at all, and no cookies for visitors.** The site counts its own
+  visits on its own server (see *Statistics and the dashboard*), keeping no IP address, so
+  there is nothing for a consent banner to ask about.
 
 ## SEO
 
@@ -240,56 +242,62 @@ project's primary domain and `www.evolution24.net` as a redirect to it, then poi
 Vercel as its domain settings instruct. `vercel.json` also redirects `www` itself, as a
 second line of defence.
 
-## Enquiries: email and the lead sheet
+## Enquiries: each building's form, the lead sheet and the inbox
 
-Built on what Charlotte Square does, adapted for Vercel and for a site with no
-database: **the lead sheet is the record, and the email is the alert.**
+Charlotte Square's intake, for a site with eleven buildings. **Every building's page has
+its own enquiry form** (*Ask about Water Street.*, at `#enquire`), and the contact page
+keeps the general one. Both post to `/api/inquiry/` (`api/inquiry.js`, a Vercel
+function), which:
 
-The contact form posts to `/api/inquiry/` (`api/inquiry.js`, a Vercel function).
-In order:
-
-1. The enquiry goes to the **lead sheet** in the Evolution24 Google Workspace, onto
-   the tab for the property it is about, or **General** when none was picked.
-2. The leasing team gets an **email**, to every address in `LEAD_TO`: which
-   property, everything from the form, and whether step 1 worked. Reply-To is the
+1. **saves the enquiry in the database** (`api/_lib/db.js`), the record the dashboard
+   reads, when one is connected;
+2. at the same time puts it on the **lead sheet** in the Evolution24 Google Workspace,
+   on that building's tab (General when none was picked); sends the visitor a short
+   **confirmation email** naming the building (`api/_lib/confirm.js`: no more than one
+   per address in twelve hours, never to an address that unsubscribed, and never
+   repeating what they typed); and, when switched on, adds them to that building in
+   **Rent Manager** as a prospect (see *Rent Manager*);
+3. then emails **the leasing team**, every address in `LEAD_TO`, with the building as
+   the headline, every answer in words, and how steps 1 and 2 went. Reply-To is the
    prospect, so pressing reply answers them.
 
-The visitor is told it worked if either one landed. Only when both fail are they
-asked to call, because only then is nothing written down. When the sheet fails the
-email says why; when both fail, Vercel's function logs do (Project → Logs).
+The visitor is told it worked if the database, the sheet or the email has it. Only when
+all three fail are they asked to call, because only then is nothing written down.
 
-**Charlotte Square is left out** of the form, the endpoint and the sheet: it has its
-own site, form and lead sheet. The form's property menu skips it and points to
+**A building's form fits the building.** *Home you'd like to see* lists the homes it has
+open, as the site lists them (*Unit 302RV · 1 bed · $1,590/mo*); the endpoint accepts
+only those, so the lead sheet's *Home* column and the email always name a real unit.
+*I'm interested in* starts at *Booking a tour*. A building with nothing open asks for
+bedrooms instead and starts at *Joining the waitlist*. *Moving in* offers *As soon as
+possible*, the next six months by name, or *Later*. Every *Contact*, *Send a message*
+and *Join the waitlist* on a building's page goes to its form.
+
+**Charlotte Square is left out** of the forms, the endpoint and the sheet: it has its
+own site, form and lead sheet. The contact form's property menu skips it and points to
 charlottesquareroc.com instead.
 
-**What the form asks:** name, email, phone, property, what they are interested in,
-bedrooms, when they are moving, how they heard about us, and a message. The choices
-are `LEAD_OPTIONS` in `scripts/build.py`. They feed the form, `api/leads-config.json`
-(what the endpoint accepts) and the generated block in the sheet script, so the three
-cannot drift apart.
-
-**Each building's enquiries land on its own tab.** Every way to write in from a
-building's page (*Send a message*, the header's *Contact*, *Join the waitlist*) opens
-the form with that building already picked, so its enquiries reach its tab rather than
-General. On a fully leased building, *Join the waitlist* also picks *Joining the
-waitlist*. General gets only what could be about anywhere: the home page, the city
-pages, the contact page itself. Charlotte Square's page sends people to the form on
-charlottesquareroc.com, so its enquiries reach its own lead sheet.
+**The choices** are `LEAD_OPTIONS` in `scripts/build.py`. They feed the forms,
+`api/leads-config.json` (what the endpoint accepts, with each building's open units)
+and the generated block in the sheet script, so they cannot drift apart. The lead sheet
+gained two columns at the end, *Home* and *Sent from* (the building's page or the
+contact page); a tab made before them gets them on its next enquiry.
 
 **Came via.** Once per visit the site notes the campaign tag (`utm_source`,
 `utm_medium`, `utm_campaign`) or the outside site that brought the visitor, and the
-first page they opened. It is kept in `sessionStorage`, not a cookie, sent only with
-the form, and shows in the email and in the sheet's *Came via* column. The privacy
-page says so.
+first page they opened. It is kept in `sessionStorage`, not a cookie, and sent with the
+form. When the page could not say (storage blocked, say), the endpoint looks up the
+visitor's first pageview of the day in the statistics instead. It shows in the email,
+the sheet's *Came via* column and the dashboard.
 
 **Protection.** A honeypot field people never see; a same-origin check; five sends
-per connection per ten minutes (held in memory, so a speed bump rather than a wall);
-every field capped and stripped of control characters; menus that accept only their
-own choices; and the sheet script stores anything starting with `=`, `+`, `-` or `@`
+per connection per ten minutes (in the database, or in memory without one); every
+field capped and stripped of control characters; menus that accept only their own
+choices; and the sheet script stores anything starting with `=`, `+`, `-` or `@`
 as plain text, so a "name" can never run as a formula.
 
-Without JavaScript the form still posts, and the endpoint sends the browser back to
-`/contact-us/#sent` or `#not-sent`, where CSS `:target` shows the notice.
+Without JavaScript the forms still post, and the endpoint sends the browser back to
+the page they came from with `#sent` or `#not-sent`, where CSS `:target` shows the
+notice.
 
 ### Setup, once
 
@@ -320,6 +328,8 @@ built.
 | `LEADS_SHEET_URL` | The web-app address from step 1 (ends `/exec`) |
 | `LEADS_SHEET_TOKEN` | The token from step 1 (Evolution24 menu → Show the connection token) |
 | `LEADS_SHEET_LINK` | Optional: the sheet's own address, linked from every email |
+| `REPLY_TO` | Optional: where replies to a visitor's confirmation go (the first `LEAD_TO` address if not set) |
+| `DB_URL`, `DB_TOKEN` | The database (see *Statistics and the dashboard*); without them the form still works |
 
 The inbox addresses live only in Vercel, never in this repository or the page source,
 because a published address is the first thing a harvester finds.
@@ -327,11 +337,13 @@ because a published address is the first thing a harvester finds.
 **4. Test it.** Send the form on the live site. Both inboxes get the email, and the row
 appears on the right tab with the Overview counting it.
 
-Two local tests cover the same ground with no accounts or network:
-`node scripts/test-inquiry.cjs` checks the endpoint (validation, email, failures), and
+Three local tests cover the same ground with no accounts or network:
+`node scripts/test-inquiry.cjs` checks the endpoint (validation, email, failures);
 `node scripts/test-lead-sheet.cjs` runs the sheet script itself behind the endpoint, in
 an in-memory stand-in for Google Sheets, and checks that setup makes a tab for every
-property and that each property's enquiry lands on its own tab and nowhere else.
+property and that each property's enquiry lands on its own tab and nowhere else; and
+`node scripts/test-analytics.cjs` runs the whole chain with the database: a building's
+form, the confirmation, Rent Manager, the dashboard's numbers, reports and unsubscribing.
 
 ### When it does not work
 
@@ -343,11 +355,127 @@ property and that each property's enquiry lands on its own tab and nowhere else.
 | Row in the sheet, no email | Vercel → Logs. `403 … your own email address`: no verified domain, or `LEAD_FROM` not on it. `401`: the key |
 | A new property on the site has no tab | Nothing: the first enquiry for it makes its tab. Run `setup` after updating the script to tidy the order |
 
-**Not carried over from Charlotte Square (yet):** the `/admin/` dashboard, analytics,
-the visitor's branded confirmation email and Claude's summaries, which all run on
-Charlotte's Cloudflare database. Here the lead sheet is the dashboard.
+## Statistics and the dashboard
+
+Charlotte Square's analytics, for eleven buildings. All first-party: nothing is sent to
+Google Analytics or anyone else, and the Content Security Policy still allows only this
+site.
+
+**What is counted.** `assets/js/analytics.js` on every page sends a pageview, and these
+named events, to `/api/collect/` (`api/collect.js`), which stores them in the database:
+
+| Event | When |
+| --- | --- |
+| `phone_click`, `email_click` | a tap on the phone number or the email address |
+| `apply_click` | an *Apply* link to Rent Manager's application, with its building and unit |
+| `portal_click` | the residents' portal |
+| `map_click` | *Show the map* or *Directions* |
+| `gallery_open` | the photo gallery |
+| `filter` | a unit-size filter (studio, 1, 2 or 3 bedrooms) |
+| `form_start` | the first touch on an enquiry form |
+| `outbound` | any other link to another site |
+
+Every pageview and event on a building's page, and every *Apply* click, is filed under
+that building. No cookie is set and no IP address kept: a visit is grouped by a code made
+from the day, a secret salt, the connection and the browser, which changes at midnight.
+Do Not Track and Global Privacy Control turn it off. Bots are not counted, and a page
+the browser prerendered counts only once it is shown. The privacy page says all this.
+
+**The dashboard** is at **`/admin/`**, behind one password (six wrong tries lock that
+connection out for fifteen minutes; a sign-in lasts twelve hours). It shows the last 7,
+30, 90 or 365 days:
+- visitors, pageviews, enquiries, the enquiry rate, phone taps, Apply clicks and portal visits, day by day;
+- **by building**: each one's visitors, Apply clicks, phone taps, enquiries and rate;
+- the units people applied for, and size interest;
+- where visitors and enquiries came from (search, social, listing sites, campaigns), and the
+  steps from visit to form to enquiry;
+- every enquiry, filtered by building, with buttons to mark it handled or send it again to the
+  inbox, the sheet, the visitor or Rent Manager;
+- what the emails did (sent, delivered, bounced, unsubscribed), once Resend's reports are connected;
+- a link builder for tagged ads, posts and signs (`?utm_source=…`);
+- **shared reports**: a day, week or month frozen into a page at `/r/<link>/` that anyone with
+  the link can read and save as a PDF, holding totals only, never a person. Switching one off
+  makes its link stop working at once.
+
+### Setup, once
+
+**1. The database.** A free Turso database (turso.tech; SQLite, like Charlotte Square's
+D1). Create one, then a token for it, and add `DB_URL` (the `libsql://…` address) and
+`DB_TOKEN` in Vercel. If Turso is offered in Vercel's Marketplace for the project, connecting
+it there sets `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`, which work the same. The tables
+are made on the first request; there is nothing to run.
+
+**2. The dashboard's secrets.** Run `node scripts/hash-password.mjs` on your own computer.
+It makes a password (save it in a password manager) and prints `ADMIN_PASSWORD_HASH`,
+`SESSION_SECRET` and `VISITOR_SALT`. Add all three in Vercel, for Production.
+
+**3. Email reports (optional).** Resend → Webhooks → Add endpoint
+`https://evolution24.net/api/email-events/`, with every *email.* event. Put its signing
+secret (`whsec_…`) in `RESEND_WEBHOOK_SECRET`. Until then the dashboard counts emails sent,
+and says that delivery counts start once this is connected.
+
+**4. Redeploy**, then open `/admin/` and sign in.
+
+**Search Console.** Add evolution24.net as a property in Google Search Console; the
+sitemap is `https://evolution24.net/sitemap.xml`. To verify with an HTML file, put the file
+Google gives you in the repository root and push it.
+
+`node scripts/test-analytics.cjs` runs every function in `api/` against a real SQLite
+database behind the same protocol as Turso, with stand-ins for Resend, the lead sheet and
+Rent Manager.
 
 ## Rent Manager
+
+Three connections, all through Rent Manager's Web API (`evolution.api.rentmanager.com`):
+
+### What is open, on the website
+
+`scripts/availability.mjs` reads every building's units from Rent Manager (type, status,
+occupancy and market rent) and rewrites each building's `units` and `units_as_of` in
+`data/properties.json`; `.github/workflows/availability.yml` runs it at 7 and 10 am and
+1, 4, 7 and 10 pm, rebuilds the pages, and pushes, so Vercel publishes the change. Each
+building's page, the *Available now* list, the forms' *Home* menus, the dashboard and the
+home page's counts all follow.
+
+How it reads a unit is Charlotte Square's live-tested reader: vacant units are open now;
+units being made ready, and units on notice with a move-out date to come, are open from
+that date (*From Nov 15* in the tables); anything Rent Manager calls rented or leased, a
+model or a down unit is never listed. A unit named with `-F` is furnished. A building's
+`hide_units` in `data/properties.json` keeps a unit off by hand (spoken for, lease not in
+Rent Manager yet). It writes nothing if the answer looks wrong: nothing open anywhere
+while the site lists some, or more than a quarter of all units open at once.
+
+**Setup:** GitHub → the repository → Settings → Secrets and variables → Actions → add
+`RM_USERNAME` and `RM_PASSWORD` (a read-only Rent Manager user that can see every
+building's units; Charlotte Square's website user will do if it can). Until they are
+there, the job does nothing. To run it now: Actions → *Availability from Rent Manager* →
+*Run workflow* (tick *Only report* for a dry run). A failed run emails the repository's
+owner and the site keeps its last list. `node scripts/test-availability.cjs` tests it
+against a fake Rent Manager.
+
+### Leads, into Rent Manager
+
+With `RM_PROSPECTS=on` in Vercel, every enquiry about a building is added to Rent Manager
+as a prospect of that building (`api/_lib/rentmanager.js`): its name, email and phone, the
+move-in month, the lead source, and a comment naming the home they asked about and the
+enquiry number. The same person asking about the same building again within 90 days is
+not added twice. Rent Manager files every prospect under a property, so the contact page's
+enquiries with no building picked stay in the sheet only. The team email and the
+dashboard say whether each one got there, and the dashboard can send one again.
+
+| Vercel variable | Value |
+| --- | --- |
+| `RM_PROSPECTS` | `on` |
+| `RM_USERNAME`, `RM_PASSWORD` | a Rent Manager user allowed to add prospects |
+| `RM_LEAD_SOURCE_ID` | optional: the ID of Rent Manager's "Website" lead source |
+| `RM_PHONE_TYPE_ID` | optional: the ID of the phone type to file numbers under |
+| `RM_COMPANY`, `RM_LOCATION_ID` | only if not `evolution` and location 1 |
+
+Try it on one test enquiry first and look at the prospect in Rent Manager: the API's field
+reference is behind its login, so the request follows its published model (Prospects,
+Contacts, PhoneNumbers) and has been tested against a stand-in, not the real thing.
+
+### The Google sheets
 
 `tools/rent-manager/` is the start of the sync that will fill the Google sheets from
 Rent Manager's Web API, so nobody copies figures across by hand. It is one Apps Script
@@ -452,12 +580,11 @@ PREVIEW=out node scripts/test-pay-report.cjs      # and a picture of each tab (P
 
 ## Things to check before launch
 
-**Rents and availability are a snapshot.** The 19 available units, with their rents, were
-read from the Rent Manager listing on **22 September 2026** (`units_as_of` in
-`data/properties.json`). Every table says so. Before launch, and whenever units change,
-update `units` for each building and run the build. Every Apply button goes to Rent
-Manager's live application for that exact unit, so an applicant always sees the current
-price there.
+**Rents and availability come from Rent Manager** once the availability job has its two
+secrets (see *Rent Manager*). Until then they are the snapshot read from the Rent Manager
+listing on **22 September 2026** (`units_as_of` in `data/properties.json`), and every
+table says so. Every Apply button goes to Rent Manager's live application for that exact
+unit, so an applicant always sees the current price there.
 
 **Five descriptions were written, not copied.** The old site had no description for
 379 South Main, 561 South Main, 31 Genesee Street, the Biltmore and 181 St. Paul. These
@@ -569,8 +696,14 @@ data/properties.json     facts (edit)          data/photos.json    generated by 
 data/page-dates.json     when each page's content last changed, for the sitemap (generated)
 source/photos/           original photos, untouched, with manifest.json (alt text, source URL)
 source/logo/             the PSD and its traced vectors
-scripts/                 photos.py, build.py, render-og.cjs, render-icons.cjs, the test-*.cjs checks, compare-after-effects.cjs
-api/inquiry.js           the contact form's endpoint (Vercel function); api/leads-config.json is generated
+scripts/                 photos.py, build.py, availability.mjs, hash-password.mjs, render-og.cjs, render-icons.cjs,
+                         the test-*.cjs checks, compare-after-effects.cjs
+api/inquiry.js           the enquiry forms' endpoint (Vercel function); api/leads-config.json is generated
+api/collect.js …         the statistics and the dashboard's API: collect, login, logout, stats, inquiries,
+                         reports, r (a shared report), unsubscribe, email-events; api/_lib/ holds what they share
+admin/                   the dashboard (/admin/): admin.js and admin.css in assets/
+assets/js/analytics.js   the first-party statistics script     assets/css/report.css  shared reports
+.github/workflows/       availability.yml: Rent Manager's open units onto the site, six times a day
 tools/lead-sheet/Code.gs the lead sheet's Apps Script; its property list and logo are generated
 tools/rent-manager/      the Rent Manager client and connection check (Apps Script); the check's building list is generated
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it

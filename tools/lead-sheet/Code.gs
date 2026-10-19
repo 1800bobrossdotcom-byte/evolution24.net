@@ -51,9 +51,12 @@ const LISTS = 'Lists';
 const ROWS = 400;            // rows made ready on each tab; new leads push them down
 const ROW_H = 44;            // every lead row: two lines of a message, then clipped
 
+// Home and Sent from came later, so they sit after Enquiry #: a tab made before
+// them keeps its columns where they were, and gains these two on its next lead.
 const HEADERS = ['Received', 'Status', 'Owner', 'Next step', 'Replied', 'Name', 'Email', 'Phone',
-  'Interested in', 'Bedrooms', 'Moving in', 'Heard about us', 'Came via', 'Message', 'Notes', 'Enquiry #'];
-const WIDTHS = [150, 128, 110, 110, 76, 170, 220, 130, 170, 110, 150, 160, 200, 380, 280, 132];
+  'Interested in', 'Bedrooms', 'Moving in', 'Heard about us', 'Came via', 'Message', 'Notes', 'Enquiry #',
+  'Home', 'Sent from'];
+const WIDTHS = [150, 128, 110, 110, 76, 170, 220, 130, 170, 110, 150, 160, 200, 380, 280, 132, 230, 150];
 const COL = {};
 HEADERS.forEach((h, i) => { COL[h] = i + 1; });
 
@@ -192,6 +195,8 @@ function buildLeads_(leads, lists, colour) {
     'Came via': 'The site or ad link that brought them, when the website could tell.',
     'Notes': 'Anything the team should know.',
     'Enquiry #': 'The same reference as in the email the team received.',
+    'Home': 'The apartment they asked about on the building’s page, with its size and rent as the site listed them.',
+    'Sent from': 'Which form: the building’s own page, or the contact page.',
   };
   HEADERS.forEach((h, i) => leads.getRange(1, i + 1).setNote(notes[h] || ''));
 
@@ -204,7 +209,7 @@ function buildLeads_(leads, lists, colour) {
   col('Received').setNumberFormat('mmm d, h:mm am/pm').setFontColor(SUBTLE);
   col('Name').setFontWeight('bold');
   col('Email').setFontColor(ACCENT);
-  ['Name', 'Email', 'Phone', 'Came via', 'Message', 'Notes', 'Enquiry #'].forEach((h) => col(h).setNumberFormat('@'));
+  ['Name', 'Email', 'Phone', 'Came via', 'Message', 'Notes', 'Enquiry #', 'Home', 'Sent from'].forEach((h) => col(h).setNumberFormat('@'));
   col('Message').setWrap(true);
   col('Notes').setWrap(true);
   col('Status').setFontWeight('bold').setHorizontalAlignment('center');
@@ -462,6 +467,11 @@ function doPost(e) {
       if (overview) buildOverview_(overview);
     }
 
+    // A tab made before the newest columns gets them now, once, styled like the rest.
+    if (sheet.getMaxColumns() < HEADERS.length || sheet.getRange(1, HEADERS.length).getValue() !== HEADERS[HEADERS.length - 1]) {
+      buildLeads_(sheet, lists, colourFor_(name));
+    }
+
     // The website may send the same enquiry twice (a retry): keep one row.
     const id = String(lead.id || '');
     if (id && sheet.getLastRow() > 1) {
@@ -495,6 +505,8 @@ function doPost(e) {
       'Message': text_(lead.message),
       'Notes': '',
       'Enquiry #': text_(id),
+      'Home': text_(lead.unit),
+      'Sent from': text_(lead.form),
     };
     row.setValues([HEADERS.map((h) => values[h])]);
 

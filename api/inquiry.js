@@ -1,48 +1,48 @@
 /* =============================================================================
-   POST /api/inquiry/ — one enquiry from the contact form, on Vercel.
+   POST /api/inquiry/ — one enquiry, from a building's own form or the contact
+   page, on Vercel.
 
-   Built on the Charlotte Square intake, adapted for a site with no database:
-   the lead sheet in Google Workspace is the record, and the leasing team's
-   email is the alert.
+   Charlotte Square's intake, for a site with eleven buildings:
 
-     1. The enquiry goes to the lead sheet (tools/lead-sheet/Code.gs), onto the
-        tab for the property it is about, or General when none was picked.
-     2. Then an email to everyone in LEAD_TO, saying whether step 1 worked.
-        Reply-To is the prospect, so replying in Gmail answers them.
+     1. The enquiry is saved in the database (api/_lib/db.js), when one is
+        connected: the dashboard's record, which nothing downstream can lose.
+     2. At the same time it goes to the lead sheet (tools/lead-sheet/Code.gs),
+        onto its building's tab, or General when none was picked; the visitor
+        gets a short confirmation email (api/_lib/confirm.js); and, if switched
+        on, it becomes a prospect of that building in Rent Manager
+        (api/_lib/rentmanager.js).
+     3. Then an email to everyone in LEAD_TO, saying how 1 and 2 went. Reply-To
+        is the prospect, so replying in Gmail answers them.
 
-   The visitor is told it worked if either one landed. Only when both fail are
-   they asked to call instead, because only then is nothing written down.
+   The visitor is told it worked if the database, the sheet or the email has
+   it. Only when all three fail are they asked to call instead, because only
+   then is nothing written down.
 
-   Environment variables (Vercel → Settings → Environment Variables):
-     LEAD_TO            the leasing inboxes, separated by commas; each gets every enquiry
-     LEAD_FROM          the From: line, on a domain verified in Resend
-     RESEND_API_KEY     Resend's API key
-     LEADS_SHEET_URL    the lead sheet's web-app address (…/exec)
-     LEADS_SHEET_TOKEN  the token the sheet's setup printed
-     LEADS_SHEET_LINK   optional: the sheet's own address, linked from each email
-     RESEND_API_URL     only ever set by the local tests, to point at a stub
-
-   The allowed choices and the property list come from leads-config.json,
-   which scripts/build.py writes from the same data as the contact form and
-   the lead sheet, so the three cannot drift apart. Charlotte Square is not
-   in it: it has its own site, form and lead sheet.
+   Settings: see api/_lib/leads.js (email and the sheet), api/_lib/db.js (the
+   database), api/_lib/rentmanager.js (Rent Manager). The allowed choices, the
+   buildings and their open units come from leads-config.json, which
+   scripts/build.py writes from the same data as the forms and the lead sheet,
+   so they cannot drift apart. Charlotte Square is not in it: it has its own
+   site, form and lead sheet.
    ============================================================================= */
 'use strict';
 
 const crypto = require('crypto');
-const CONFIG = require('./leads-config.json');
+const { database } = require('./_lib/db.js');
+const { visitorHash, today } = require('./_lib/auth.js');
+const { CONFIG, sheetOn, emailOn, moveInValue, leadFor, notify, logEmail, sheetAndRecord } = require('./_lib/leads.js');
+const { confirmAndRecord } = require('./_lib/confirm.js');
+const { prospectAndRecord } = require('./_lib/rentmanager.js');
 
 /* Submissions per address per window. High enough that a couple sent in
    earnest, or a shared office connection, never trips it; low enough to be
-   useless to a script. Kept in memory, so it is per server instance: a speed
-   bump, not a wall. The honeypot and the same-origin check do the rest. */
+   useless to a script. In the database when there is one; otherwise in memory,
+   per server instance: a speed bump, not a wall. */
 const MAX_PER_WINDOW = 5;
-const WINDOW_MS = 10 * 60 * 1000;
+const WINDOW_S = 10 * 60;
 const attempts = new Map();
 
 const LIMITS = { first_name: 80, last_name: 80, email: 160, phone: 40, message: 2000, attribution: 120 };
-const SHEET_TIMEOUT_MS = 15000;
-const EMAIL_TIMEOUT_MS = 10000;
 
 /** Text as it may be stored: control characters out (they can fake email
  *  headers or hide text), trimmed, capped. Anything but a string is nothing. */
@@ -55,76 +55,71 @@ function cleanMessage(v, n) {
   if (typeof v !== 'string') return '';
   return v.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, ' ').trim().slice(0, n);
 }
-/* Deliberately permissive: this catches a typo, it does not adjudicate RFC 5322.
-   A real address that a clever pattern rejects is a lost lead. */
+/* Deliberately permissive: this catches a typo, it does not adjudicate RFC 5322. */
 const looksLikeEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 const pick = (list, v) => (typeof v === 'string' && Object.prototype.hasOwnProperty.call(list, v) ? v : '');
-const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-const leadTo = () => String(process.env.LEAD_TO || '').split(',').map((s) => s.trim()).filter(Boolean);
-const sheetOn = () => Boolean(process.env.LEADS_SHEET_URL && process.env.LEADS_SHEET_TOKEN);
-const emailOn = () => Boolean(process.env.RESEND_API_KEY && leadTo().length);
-
-/* What was pasted into the two sheet variables, forgivingly: the token is 64
-   hex characters, so a whole log line, quotes or a trailing space still work;
-   likewise any text around the web-app address. */
-function sheetToken() {
-  const s = String(process.env.LEADS_SHEET_TOKEN || '');
-  const m = /[0-9a-f]{64}/i.exec(s);
-  return m ? m[0] : s.trim();
-}
-function sheetUrl() {
-  const s = String(process.env.LEADS_SHEET_URL || '');
-  const m = /https:\/\/[^\s"'<>]+/.exec(s);
-  return m ? m[0] : s.trim();
-}
+/** A page of this site: a path and nothing else. */
+const pagePath = (v) => { const s = clean(v, 200); return /^\/[\w\-./]*$/.test(s) ? s : ''; };
 
 /** A reference the team can quote: the date, then four characters that are
  *  hard to misread. Also what keeps a retried post from becoming two rows. */
-function makeId(now) {
+function makeRef(now) {
   const alphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
   let tail = '';
-  const bytes = crypto.randomBytes(4);
-  for (const b of bytes) tail += alphabet[b % alphabet.length];
-  const ymd = now.toISOString().slice(2, 10).replace(/-/g, '');
-  return `E24-${ymd}-${tail}`;
+  for (const b of crypto.randomBytes(4)) tail += alphabet[b % alphabet.length];
+  return `E24-${now.toISOString().slice(2, 10).replace(/-/g, '')}-${tail}`;
 }
 
-/** Which site or campaign brought them, in words, from what the page noted
- *  on arrival: a campaign tag if there was one, otherwise the site they came
- *  from, and the first page they saw if it was not this one. */
-function cameVia(f) {
-  const a = (k) => clean(f[k], LIMITS.attribution);
-  const parts = [];
-  if (a('utm_source')) {
-    parts.push([a('utm_source'), a('utm_medium')].filter(Boolean).join(' / '));
-    if (a('utm_campaign')) parts.push(a('utm_campaign'));
-  } else if (a('ref')) {
-    parts.push(a('ref').replace(/^www\./, ''));
-  }
-  const landing = a('landing');
-  if (landing && landing !== '/contact-us/' && /^\/[\w\-./]*$/.test(landing)) parts.push(landing === '/' ? 'landed on the home page' : `landed on ${landing}`);
-  return parts.join(' · ');
-}
-
-function throttled(ip, now) {
+function throttledInMemory(ip, now) {
   const hit = attempts.get(ip);
-  if (!hit || now - hit.start >= WINDOW_MS) {
+  if (!hit || now - hit.start >= WINDOW_S) {
     attempts.set(ip, { start: now, count: 1 });
-    if (attempts.size > 5000) { // forget the oldest half rather than grow without end
-      const keys = [...attempts.keys()].slice(0, 2500);
-      keys.forEach((k) => attempts.delete(k));
-    }
+    if (attempts.size > 5000) [...attempts.keys()].slice(0, 2500).forEach((k) => attempts.delete(k));
     return false;
   }
   hit.count += 1;
   return hit.count > MAX_PER_WINDOW;
 }
 
+/** The sliding window, in the database. A throttle that cannot be read fails
+ *  open: it must never become an outage on the one form that earns money. */
+async function throttled(db, ip, now) {
+  if (!db) return throttledInMemory(ip, now);
+  try {
+    const row = await db.prepare('SELECT count, window FROM inquiry_attempts WHERE ip = ?').bind(ip).first();
+    if (!row || now - row.window >= WINDOW_S) {
+      await db.prepare(`INSERT INTO inquiry_attempts (ip, count, window) VALUES (?, 1, ?)
+                        ON CONFLICT(ip) DO UPDATE SET count = 1, window = excluded.window`).bind(ip, now).run();
+      return false;
+    }
+    if (row.count >= MAX_PER_WINDOW) return true;
+    await db.prepare('UPDATE inquiry_attempts SET count = count + 1 WHERE ip = ?').bind(ip).run();
+    return false;
+  } catch {
+    return throttledInMemory(ip, now);
+  }
+}
+
+/** Where this visitor came from, read off their own pageviews (api/collect.js)
+ *  when the page could not say: the first one today or yesterday carrying a
+ *  campaign tag or an outside referrer, else simply the first. Needs no cookie. */
+async function firstTouch(db, ip, ua) {
+  const salt = process.env.VISITOR_SALT || 'unset';
+  const now = new Date();
+  const d0 = today(now);
+  const d1 = today(new Date(now.getTime() - 86400000));
+  const [v0, v1] = await Promise.all([visitorHash(ip, ua, salt, d0), visitorHash(ip, ua, salt, d1)]);
+  return db.prepare(
+    `SELECT path, ref, utm_source, utm_medium, utm_campaign FROM events
+      WHERE kind = 'pageview' AND ((day = ? AND visitor = ?) OR (day = ? AND visitor = ?))
+      ORDER BY (utm_source IS NULL AND ref IS NULL), ts LIMIT 1`,
+  ).bind(d0, v0, d1, v1).first();
+}
+
 async function readBody(req) {
   const type = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
   let raw = req.body;
-  if (raw && typeof raw === 'object' && !Buffer.isBuffer(raw)) return { type, data: raw };
+  if (raw && typeof raw === 'object' && !Buffer.isBuffer(raw)) return raw;
   if (raw === undefined) {
     const chunks = [];
     let size = 0;
@@ -137,116 +132,53 @@ async function readBody(req) {
   } else if (Buffer.isBuffer(raw)) {
     raw = raw.toString('utf8');
   }
-  if (type === 'application/json') return { type, data: JSON.parse(raw || '{}') };
-  return { type, data: Object.fromEntries(new URLSearchParams(raw || '')) };
+  if (type === 'application/json') return JSON.parse(raw || '{}');
+  return Object.fromEntries(new URLSearchParams(raw || ''));
 }
 
-/** Post the enquiry to the lead sheet. {ok, tab} or {ok:false, note}. */
-async function toSheet(lead) {
-  if (!sheetOn()) return { ok: false, note: 'The lead sheet is not connected (LEADS_SHEET_URL and LEADS_SHEET_TOKEN).' };
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), SHEET_TIMEOUT_MS);
-  try {
-    // Apps Script answers a POST with a redirect to the result; fetch follows it.
-    const res = await fetch(sheetUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: sheetToken(), lead }),
-      redirect: 'follow',
-      signal: ctrl.signal,
-    });
-    const text = await res.text();
-    let answer = null;
-    try { answer = JSON.parse(text); } catch { /* an HTML page: see below */ }
-    if (answer && answer.ok) return { ok: true, tab: answer.tab || lead.property || CONFIG.general_tab };
-    if (answer && answer.error === 'Wrong token.') {
-      return { ok: false, note: 'The sheet said: Wrong token. Copy it again from the sheet’s Evolution24 menu → Show the connection token, into LEADS_SHEET_TOKEN.' };
-    }
-    if (answer && answer.error) return { ok: false, note: `The sheet said: ${String(answer.error).slice(0, 200)}` };
-    if (/accounts\.google\.com|ServiceLogin|<html/i.test(`${res.url} ${text.slice(0, 500)}`)) {
-      return { ok: false, note: 'Google asked for a sign-in. Deploy the script as a web app with “Who has access: Anyone”.' };
-    }
-    return { ok: false, note: `The sheet answered ${res.status}.` };
-  } catch (err) {
-    return { ok: false, note: err && err.name === 'AbortError' ? 'The sheet took too long to answer.' : `Could not reach the sheet: ${String(err).slice(0, 150)}` };
-  } finally {
-    clearTimeout(timer);
-  }
+/** The enquiry as stored: every choice checked against the form's own lists. */
+function rowFrom(form, req, now) {
+  const slug = pick(CONFIG.properties, form.property);
+  const building = slug ? CONFIG.properties[slug] : null;
+  const units = (building && building.units) || {};
+  const unitId = pick(units, String(form.unit || ''));
+  const unit = unitId ? units[unitId] : null;
+  const a = (k) => clean(form[k], LIMITS.attribution);
+  const ref = a('ref').replace(/^www\./, '');
+  return {
+    ref: makeRef(now),
+    ts: Math.floor(now.getTime() / 1000),
+    day: today(now),
+    property: slug,
+    property_name: building ? building.name : '',
+    first_name: clean(form.first_name, LIMITS.first_name),
+    last_name: clean(form.last_name, LIMITS.last_name),
+    email: clean(form.email, LIMITS.email),
+    phone: clean(form.phone, LIMITS.phone),
+    interest: pick(CONFIG.interest, form.interest),
+    bedrooms: pick(CONFIG.bedrooms, form.bedrooms) || (unit ? unit.bedrooms : ''),
+    unit: unit ? unit.label : '',
+    unit_id: unitId ? Number(unitId) : null,
+    move_in: moveInValue(form.move_in),
+    source: pick(CONFIG.source, form.source),
+    message: cleanMessage(form.message, LIMITS.message),
+    country: /^[A-Z]{2}$/.test(String(req.headers['x-vercel-ip-country'] || '')) ? req.headers['x-vercel-ip-country'] : null,
+    form: form.form === 'property' && slug ? 'property' : 'contact',
+    page: pagePath(form.page) || (form.form === 'property' && slug ? `/properties/${slug}/` : '/contact-us/'),
+    utm_source: a('utm_source'), utm_medium: a('utm_medium'), utm_campaign: a('utm_campaign'),
+    referrer: /^[a-z0-9.-]+$/i.test(ref) ? ref : '',
+    landing: pagePath(form.landing),
+    site: String(req.headers.host || '').slice(0, 100),
+  };
 }
 
-/** The leasing team's email. {ok} or {ok:false, error}, the error in the
- *  provider's own words so the logs say why, not just that it failed. */
-async function notify(lead, sheet) {
-  if (!process.env.RESEND_API_KEY) return { ok: false, error: 'RESEND_API_KEY is not set on this deployment.' };
-  const to = leadTo();
-  if (!to.length) return { ok: false, error: 'LEAD_TO is not set on this deployment.' };
-
-  const where = lead.property || 'No property picked';
-  const rows = [
-    ['Name', lead.name],
-    ['Email', lead.email, `mailto:${lead.email}`],
-    ['Phone', lead.phone || '—', lead.phone ? `tel:${lead.phone.replace(/[^\d+]/g, '')}` : ''],
-    ['Property', where],
-    ['Interested in', lead.interest || '—'],
-    ['Bedrooms', lead.bedrooms || '—'],
-    ['Moving in', lead.move_in || '—'],
-    ['Heard about us', lead.source || '—'],
-  ];
-  if (lead.came_via) rows.push(['Came via', lead.came_via]);
-  const cell = (v, href) => (href ? `<a href="${esc(href)}" style="color:#8a6232">${esc(v)}</a>` : esc(v));
-  const table = rows.map(([k, v, href]) => `<tr><td style="padding:5px 16px 5px 0;color:#5c5d55;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:5px 0"><strong>${cell(v, href)}</strong></td></tr>`).join('');
-  const sheetLine = sheet.ok
-    ? `Added to the lead sheet, on the <strong>${esc(sheet.tab)}</strong> tab.`
-    : `<span style="color:#b42318">Not added to the lead sheet: ${esc(sheet.note)}</span>`;
-  const link = process.env.LEADS_SHEET_LINK && /^https:\/\//.test(process.env.LEADS_SHEET_LINK)
-    ? ` <a href="${esc(process.env.LEADS_SHEET_LINK.trim())}" style="color:#8a6232">Open the lead sheet</a>` : '';
-
-  const html = `<div style="font:15px/1.55 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#151613;max-width:600px">
-<p style="margin:0 0 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8a6232"><strong>Evolution24 Properties · New enquiry</strong></p>
-<p style="margin:0 0 4px;font:28px/1.15 Georgia,'Times New Roman',serif">${esc(where)}</p>
-<p style="margin:0 0 18px;color:#5c5d55">From ${esc(lead.name)}. Reply to this email to answer them directly.</p>
-<table style="border-collapse:collapse;font-size:15px">${table}</table>
-${lead.message ? `<p style="margin:18px 0 4px;color:#5c5d55">Message</p><div style="margin:0;padding:12px 14px;background:#f4f1ea;border-radius:4px;white-space:pre-wrap">${esc(lead.message)}</div>` : ''}
-<p style="margin:20px 0 0;font-size:13px;color:#5c5d55">${sheetLine}${link}</p>
-<p style="margin:6px 0 0;font-size:12px;color:#8c8a80">Enquiry ${esc(lead.id)} · sent from the contact form on ${esc(lead.site)}</p>
-</div>`;
-  const text = [
-    `New enquiry: ${where}`, `From ${lead.name}. Reply to this email to answer them directly.`, '',
-    ...rows.map(([k, v]) => `${k}: ${v}`),
-    ...(lead.message ? ['', 'Message:', lead.message] : []),
-    '', sheet.ok ? `Added to the lead sheet, on the ${sheet.tab} tab.` : `Not added to the lead sheet: ${sheet.note}`,
-    `Enquiry ${lead.id}`,
-  ].join('\n');
-
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), EMAIL_TIMEOUT_MS);
-  try {
-    const res = await fetch(process.env.RESEND_API_URL || 'https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: (process.env.LEAD_FROM || '').trim() || 'Evolution24 Properties <onboarding@resend.dev>',
-        to,
-        reply_to: lead.email,
-        subject: `New enquiry · ${where} · ${lead.name}`,
-        html,
-        text,
-      }),
-      signal: ctrl.signal,
-    });
-    if (res.ok) return { ok: true };
-    let detail = '';
-    try { const body = await res.json(); detail = (body && (body.message || body.error || body.name)) || ''; } catch { /* the status will do */ }
-    return { ok: false, error: `${res.status}: ${String(detail || res.statusText).slice(0, 300)}` };
-  } catch (err) {
-    return { ok: false, error: err && err.name === 'AbortError' ? 'The email provider took too long to answer.' : `Could not reach the email provider: ${String(err).slice(0, 200)}` };
-  } finally {
-    clearTimeout(timer);
-  }
-}
+const COLUMNS = ['ref', 'ts', 'day', 'property', 'property_name', 'first_name', 'last_name', 'email', 'phone', 'interest',
+  'bedrooms', 'unit', 'unit_id', 'move_in', 'source', 'message', 'country', 'form', 'page',
+  'utm_source', 'utm_medium', 'utm_campaign', 'referrer', 'landing'];
 
 module.exports = async function handler(req, res) {
   const wantsJson = /application\/json/i.test(`${req.headers['content-type'] || ''} ${req.headers.accept || ''}`);
+  let back = '/contact-us/';
   const reply = (status, body) => {
     res.statusCode = status;
     res.setHeader('Cache-Control', 'no-store');
@@ -254,9 +186,9 @@ module.exports = async function handler(req, res) {
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.end(JSON.stringify(body));
     } else {
-      // The form without JavaScript: back to the contact page, where the
+      // The form without JavaScript: back to the page it was on, where the
       // fragment shows the matching notice with CSS alone.
-      res.setHeader('Location', `/contact-us/#${body.ok ? 'sent' : 'not-sent'}`);
+      res.setHeader('Location', `${back}#${body.ok ? 'sent' : 'not-sent'}`);
       res.statusCode = 303;
       res.end();
     }
@@ -278,53 +210,70 @@ module.exports = async function handler(req, res) {
 
   let form;
   try {
-    form = (await readBody(req)).data || {};
+    form = (await readBody(req)) || {};
   } catch {
     return reply(400, { error: 'Please send the form again.' });
   }
+  if (form.form === 'property' && pagePath(form.page)) back = pagePath(form.page);
 
   // The honeypot: a field people never see. Anything that fills it in is not a person.
   if (clean(form.website, 200)) return reply(202, { ok: true });
 
   const now = new Date();
+  const db = database();
   const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || (req.socket && req.socket.remoteAddress) || 'unknown';
-  if (throttled(ip, now.getTime())) {
+  if (await throttled(db, ip, Math.floor(now.getTime() / 1000))) {
     return reply(429, { error: `Too many messages from this connection. Please call us on ${CONFIG.office_phone}.` });
   }
 
-  const first = clean(form.first_name, LIMITS.first_name);
-  const last = clean(form.last_name, LIMITS.last_name);
-  const email = clean(form.email, LIMITS.email);
-  if (!first || !last || !looksLikeEmail(email)) return reply(400, { error: 'Please check your name and email address.' });
+  const row = rowFrom(form, req, now);
+  if (!row.first_name || !row.last_name || !looksLikeEmail(row.email)) return reply(400, { error: 'Please check your name and email address.' });
 
-  const slug = pick(CONFIG.properties, form.property);
-  const lead = {
-    id: makeId(now),
-    received: now.toISOString(),
-    property: slug ? CONFIG.properties[slug].name : '',
-    name: `${first} ${last}`,
-    email,
-    phone: clean(form.phone, LIMITS.phone),
-    interest: CONFIG.interest[pick(CONFIG.interest, form.interest)] || '',
-    bedrooms: CONFIG.bedrooms[pick(CONFIG.bedrooms, form.bedrooms)] || '',
-    move_in: CONFIG.move_in[pick(CONFIG.move_in, form.move_in)] || '',
-    source: CONFIG.source[pick(CONFIG.source, form.source)] || '',
-    came_via: cameVia(form),
-    message: cleanMessage(form.message, LIMITS.message),
-    site: String(req.headers.host || '').slice(0, 100),
-  };
-
-  if (!sheetOn() && !emailOn()) {
-    console.error('inquiry: neither the lead sheet nor email is configured; nothing was recorded for', lead.id);
+  if (!db && !sheetOn() && !emailOn()) {
+    console.error('inquiry: no database, lead sheet or email is configured; nothing was recorded for', row.ref);
     return reply(503, { error: `Our form is not connected yet. Please call us on ${CONFIG.office_phone}.` });
   }
 
-  // Sheet first, so the email can say whether it got there.
-  const sheet = await toSheet(lead);
-  const mail = await notify(lead, sheet);
-  if (!sheet.ok) console.error('inquiry', lead.id, 'lead sheet:', sheet.note);
-  if (!mail.ok) console.error('inquiry', lead.id, 'email:', mail.error);
+  const env = { ...process.env, DB: db };
+  // 1. The database, first: the record the dashboard keeps.
+  let stored = false;
+  if (db) {
+    try {
+      if (!row.utm_source && !row.referrer) {
+        const t = await firstTouch(db, ip, String(req.headers['user-agent'] || '')).catch(() => null);
+        if (t) Object.assign(row, { utm_source: t.utm_source || '', utm_medium: t.utm_medium || '', utm_campaign: t.utm_campaign || '', referrer: t.ref || '', landing: row.landing || t.path || '' });
+      }
+      const r = await db.prepare(`INSERT INTO inquiries (${COLUMNS.join(', ')}) VALUES (${COLUMNS.map(() => '?').join(', ')})`)
+        .bind(...COLUMNS.map((c) => (row[c] === '' ? null : row[c]))).run();
+      row.id = r.meta.last_row_id;
+      stored = Boolean(row.id);
+    } catch (err) {
+      console.error('inquiry', row.ref, 'database:', err.message);
+    }
+  }
 
-  if (sheet.ok || mail.ok) return reply(202, { ok: true, id: lead.id });
+  // 2. The sheet, the visitor's confirmation and Rent Manager, side by side. Links in
+  // emails always point at the live site, whatever address the request came in on.
+  const reqOrigin = CONFIG.site;
+  const [sheet, , rm] = await Promise.all([
+    sheetAndRecord(env, row),
+    stored ? confirmAndRecord(env, row, reqOrigin) : Promise.resolve(null),
+    prospectAndRecord(env, row),
+  ]);
+
+  // 3. The team's email, saying how those went.
+  const mail = await notify(env, leadFor(row), { sheet, rm, origin: reqOrigin });
+  if (stored) {
+    await logEmail(env, 'notification', row.id, mail);
+    await db.prepare('UPDATE inquiries SET notified = ?, notify_err = ? WHERE id = ?')
+      .bind(mail.ok ? 1 : 0, mail.ok ? null : (mail.error || 'Unknown error'), row.id).run().catch(() => {});
+  }
+  if (!sheet.ok && sheetOn()) console.error('inquiry', row.ref, 'lead sheet:', sheet.note);
+  if (!mail.ok) console.error('inquiry', row.ref, 'email:', mail.error);
+  if (rm.tried && !rm.ok) console.error('inquiry', row.ref, 'Rent Manager:', rm.note);
+
+  if (stored || sheet.ok || mail.ok) return reply(202, { ok: true, id: row.ref });
   return reply(502, { error: `Sorry, your message did not go through. Please call us on ${CONFIG.office_phone}.` });
 };
+
+module.exports.rowFrom = rowFrom;

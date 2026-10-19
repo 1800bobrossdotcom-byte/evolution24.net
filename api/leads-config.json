@@ -4,52 +4,162 @@
   "301-central-avenue": {
    "name": "301 Central Avenue",
    "city": "Rochester",
-   "region": "rochester"
+   "region": "rochester",
+   "pid": 1,
+   "units": {
+    "6": {
+     "label": "Unit 6 · 2 bed · $1,900/mo",
+     "bedrooms": "2"
+    }
+   }
   },
   "145-south-fitzhugh-street": {
    "name": "145 South Fitzhugh",
    "city": "Rochester",
-   "region": "rochester"
+   "region": "rochester",
+   "pid": 6,
+   "units": {
+    "39": {
+     "label": "Unit 2-2 · Studio · $1,195/mo",
+     "bedrooms": "studio"
+    },
+    "36": {
+     "label": "Unit 1-3 · 1 bed · $1,365/mo",
+     "bedrooms": "1"
+    },
+    "48": {
+     "label": "Unit 4-2 · Studio · $1,600/mo",
+     "bedrooms": "studio"
+    },
+    "34": {
+     "label": "Unit 1-1 · 1 bed · $1,750/mo",
+     "bedrooms": "1"
+    }
+   }
   },
   "water-street": {
    "name": "Water Street",
    "city": "Rochester",
-   "region": "rochester"
+   "region": "rochester",
+   "pid": 8,
+   "units": {
+    "62": {
+     "label": "Unit 103RV · Studio · $1,175/mo",
+     "bedrooms": "studio"
+    },
+    "64": {
+     "label": "Unit 105RV · Studio · $1,300/mo",
+     "bedrooms": "studio"
+    },
+    "90": {
+     "label": "Unit 601RV · 1 bed · $1,400/mo",
+     "bedrooms": "1"
+    },
+    "73": {
+     "label": "Unit 302RV · 1 bed · $1,590/mo",
+     "bedrooms": "1"
+    },
+    "87": {
+     "label": "Unit 504RV · 1 bed · $1,600/mo",
+     "bedrooms": "1"
+    },
+    "85": {
+     "label": "Unit 502RV · 1 bed · $1,625/mo",
+     "bedrooms": "1"
+    },
+    "94": {
+     "label": "Unit 605RV · 1 bed · $1,700/mo",
+     "bedrooms": "1"
+    }
+   }
   },
   "biltmore": {
    "name": "The Biltmore",
    "city": "Rochester",
-   "region": "rochester"
+   "region": "rochester",
+   "pid": 9,
+   "units": {
+    "128": {
+     "label": "Unit 10 · Studio · $1,595/mo",
+     "bedrooms": "studio"
+    }
+   }
   },
   "181-st-paul-street": {
    "name": "181 St. Paul",
    "city": "Rochester",
-   "region": "rochester"
+   "region": "rochester",
+   "pid": 11,
+   "units": {
+    "172": {
+     "label": "Unit 4E · Studio · $1,195/mo",
+     "bedrooms": "studio"
+    },
+    "185": {
+     "label": "Unit 6E · Studio · $1,200/mo",
+     "bedrooms": "studio"
+    }
+   }
   },
   "2215-james-street": {
    "name": "2215 James Street",
    "city": "Syracuse",
-   "region": "syracuse"
+   "region": "syracuse",
+   "pid": 2,
+   "units": {}
   },
   "121-park-drive": {
    "name": "121 Park Drive",
    "city": "Manlius",
-   "region": "syracuse"
+   "region": "syracuse",
+   "pid": 3,
+   "units": {
+    "26": {
+     "label": "Unit 4 · 1 bed · $1,695/mo",
+     "bedrooms": "1"
+    },
+    "27": {
+     "label": "Unit 5 · 2 bed · $1,895/mo",
+     "bedrooms": "2"
+    }
+   }
   },
   "379-south-main-street": {
    "name": "379 South Main",
    "city": "Geneva",
-   "region": "geneva"
+   "region": "geneva",
+   "pid": 10,
+   "units": {
+    "152": {
+     "label": "Unit 2 · 3 bed · $3,300/mo",
+     "bedrooms": "3"
+    }
+   }
   },
   "561-south-main-street": {
    "name": "561 South Main",
    "city": "Geneva",
-   "region": "geneva"
+   "region": "geneva",
+   "pid": 5,
+   "units": {
+    "55": {
+     "label": "Unit 5 · 2 bed · $1,425/mo",
+     "bedrooms": "2"
+    }
+   }
   },
   "31-genesee-street": {
    "name": "31 Genesee Street",
    "city": "Geneva",
-   "region": "geneva"
+   "region": "geneva",
+   "pid": 7,
+   "units": {}
+  }
+ },
+ "external": {
+  "charlotte-square": {
+   "name": "Charlotte Square",
+   "city": "Rochester"
   }
  },
  "interest": {
@@ -81,5 +191,9 @@
   "referral": "Friend or resident"
  },
  "general_tab": "General",
- "office_phone": "585-245-3071"
+ "site": "https://evolution24.net",
+ "office_phone": "585-245-3071",
+ "office_address": "176 N Water Street, Rochester, NY 14604",
+ "units_as_of": "2026-09-22",
+ "open_units": 19
 }

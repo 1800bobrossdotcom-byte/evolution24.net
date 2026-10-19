@@ -211,22 +211,34 @@
     });
   });
 
-  /* ---- Contact form: posts to /api/inquiry/, which puts it on the lead sheet and
-     emails the leasing team. Without JavaScript the same form posts natively and
-     the endpoint sends the browser back to #sent or #not-sent. */
-  const form = $('#contact-form');
-  if (form) {
-    const msg = $('#c-message', form), count = $('.count', form), status = $('.form-status', form);
-    const upd = () => { count.textContent = `${msg.value.length} / ${msg.maxLength}`; };
-    msg.addEventListener('input', upd); upd();
-    // ?property=water-street&interest=waitlist, from the property pages
+  /* ---- Enquiry forms: the contact page's and each building's own. Both post to
+     /api/inquiry/, which saves the enquiry, puts it on the building's tab of the
+     lead sheet and emails the leasing team. Without JavaScript the same forms post
+     natively and the endpoint sends the browser back to #sent or #not-sent. */
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  $$('form[data-lead]').forEach(form => {
+    const msg = $('textarea[name="message"]', form), count = $('.count', form), status = $('.form-status', form);
+    const upd = () => { if (msg && count) count.textContent = `${msg.value.length} / ${msg.maxLength}`; };
+    if (msg) { msg.addEventListener('input', upd); upd(); }
+    // Moving in: the next six months, between "As soon as possible" and "Later".
+    $$('select[data-months]', form).forEach(sel => {
+      const later = $('option[value="later"]', sel), now = new Date();
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const o = document.createElement('option');
+        o.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        o.textContent = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+        sel.insertBefore(o, later);
+      }
+    });
+    // ?property=water-street&interest=waitlist&unit=73, from links elsewhere on the site
     const q = new URLSearchParams(location.search);
-    ['property', 'interest'].forEach(k => {
-      const v = q.get(k), opt = v && $(`[name="${k}"] option[value="${CSS.escape(v)}"]`, form);
+    ['property', 'interest', 'unit'].forEach(k => {
+      const v = q.get(k), opt = v && $(`select[name="${k}"] option[value="${CSS.escape(v)}"]`, form);
       if (opt) opt.selected = true;
     });
     const src = visitSource();
-    Object.keys(src).forEach(k => { if (form.elements[k]) form.elements[k].value = src[k]; });
+    Object.keys(src).forEach(k => { if (form.elements[k] && form.elements[k].type === 'hidden') form.elements[k].value = src[k]; });
     const fail = text => { status.textContent = text; status.classList.add('is-error'); };
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -249,5 +261,5 @@
         form.classList.remove('is-sending');
       }
     });
-  }
+  });
 })();

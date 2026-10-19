@@ -8,3 +8,4 @@ _headers
 _redirects
 .nojekyll
 tools/
+.github/

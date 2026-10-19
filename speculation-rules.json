@@ -10,6 +10,9 @@
       "not": {
        "href_matches": [
         "/api/*",
+        "/admin/*",
+        "/r/*",
+        "/unsubscribe/*",
         "/property-detail/*",
         "/unit-detail/*",
         "/*.xml",

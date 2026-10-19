@@ -484,6 +484,7 @@ def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None
 <link rel="preload" href="/assets/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
 {pre}<style>{INLINE_CSS}</style>
 <script src="/assets/js/main.js?v={js_v}" defer></script>
+<script src="/assets/js/analytics.js?v={asset_version("assets/js/analytics.js")}" defer></script>
 {extra_head}<script type="application/ld+json">{ld}</script>
 </head>
 <body>
@@ -587,7 +588,7 @@ def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
         trs.append(f"""<tr data-tags="{unit_tag(u)} {p['region']}">
   {prop_cell}<td data-k="Unit">{esc(u['unit'])}</td><td>{unit_type(u)}{note}</td><td data-k="">{size}</td>
   <td class="u-rent">{money(u['rent'])}<small>/mo</small></td>
-  <td class="u-act"><a class="btn" href="{APPLY_UNIT.format(u['uid'])}" rel="noopener" aria-label="Apply for unit {esc(u['unit'])} at {esc(p['name'])}">Apply {icon('arrow')}</a></td>
+  <td class="u-act"><a class="btn" href="{APPLY_UNIT.format(u['uid'])}" rel="noopener" data-property="{p['slug']}" data-unit="{esc(u['unit'])}" aria-label="Apply for unit {esc(u['unit'])} at {esc(p['name'])}">Apply {icon('arrow')}</a></td>
 </tr>""")
     head_prop = "<th>Property</th>" if show_prop else ""
     return f"""<table class="units" data-filter-items="{group}">
@@ -829,6 +830,82 @@ def properties_index():
                 body=body, graph=graph, page_type="CollectionPage", crumbs=[("Home", "/"), ("Properties", "/properties/")])
 
 
+def choose(name, label, fid, options=None, first="Choose one", selected=""):
+    """A select from one of LEAD_OPTIONS (or the options given), as (value, words)."""
+    opts = "".join(f'<option value="{esc(v)}"{" selected" if v == selected else ""}>{esc(t)}</option>'
+                   for v, t in (options if options is not None else LEAD_OPTIONS[name]))
+    blank = f'<option value="">{esc(first)}</option>' if first else ""
+    return f'<div class="field"><label for="{fid}">{label}</label><select id="{fid}" name="{name}">{blank}{opts}</select></div>'
+
+
+def move_in_field(fid):
+    """Moving in: as soon as possible, one of the next six months (main.js adds them,
+    so they are always the coming ones), or later."""
+    opts = [("asap", "As soon as possible"), ("later", "Later than that")]
+    return (f'<div class="field"><label for="{fid}">Moving in</label><select id="{fid}" name="move_in" data-months>'
+            f'<option value="">Choose one</option>' + "".join(f'<option value="{v}">{t}</option>' for v, t in opts) + '</select></div>')
+
+
+ATTRIBUTION = "".join(f'<input type="hidden" name="{n}">' for n in ("ref", "utm_source", "utm_medium", "utm_campaign", "landing"))
+HONEYPOT = '<div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>'
+
+
+def enquiry_form(p):
+    """A building's own enquiry form: the homes it has open to pick from, a tour by default,
+    and everything landing on the building's tab of the lead sheet (api/inquiry.js)."""
+    slug, n = p["slug"], len(p["units"])
+    units = sorted(p["units"], key=lambda u: u["rent"])
+    if n:
+        interests = [(v, t) for v, t in LEAD_OPTIONS["interest"] if v != "waitlist"]
+        home = choose("unit", "Home you’d like to see", "q-unit", [(str(u["uid"]), unit_label(u)) for u in units], first="Any of them")
+        lead = (f"Book a tour, ask about a home, or ask anything about {esc(p['name'])}. "
+                "It goes straight to our leasing team.")
+        submit, picked = "Send to the leasing team", "tour"
+    else:
+        interests = LEAD_OPTIONS["interest"]
+        home = choose("bedrooms", "Bedrooms", "q-bedrooms")
+        lead = (f"Nothing is open at {esc(p['name'])} today. Tell us what you are looking for and "
+                "we will let you know as soon as something comes up.")
+        submit, picked = "Join the waitlist", "waitlist"
+    return f"""<section class="section" id="enquire" aria-labelledby="enquire-h">
+  <div class="wrap contact-grid">
+    <div>
+      <p class="label" data-reveal>Talk to us</p>
+      <h2 id="enquire-h" data-reveal class="i1">Ask about <em>{esc(p['name'])}.</em></h2>
+      <p class="lead" data-reveal>{lead}</p>
+      <p class="lead" data-reveal>Or call the office: <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+    </div>
+    <div class="contact-main">
+      <div class="form-flash" id="sent" tabindex="-1" role="status">
+        <h2>Thank you<span class="flash-name"></span>. Your message is with our team.</h2>
+        <p>A team member will reply soon, and you will get an email to say it arrived. For anything urgent, call <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+      </div>
+      <div class="form-flash form-flash--error" id="not-sent" tabindex="-1" role="alert">
+        <h2>Sorry, your message did not go through.</h2>
+        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+      </div>
+      <form class="form" id="enquiry-form" data-lead action="/api/inquiry/" method="post" data-reveal>
+        <input type="hidden" name="form" value="property"><input type="hidden" name="property" value="{slug}"><input type="hidden" name="page" value="{prop_url(p)}">
+        <div class="field"><label for="q-first">First name</label><input id="q-first" name="first_name" autocomplete="given-name" maxlength="80" required></div>
+        <div class="field"><label for="q-last">Last name</label><input id="q-last" name="last_name" autocomplete="family-name" maxlength="80" required></div>
+        <div class="field"><label for="q-email">Email</label><input id="q-email" name="email" type="email" autocomplete="email" maxlength="160" required></div>
+        <div class="field"><label for="q-phone">Phone</label><input id="q-phone" name="phone" type="tel" autocomplete="tel" maxlength="40"></div>
+        {choose('interest', 'I’m interested in', 'q-interest', interests, first='', selected=picked)}
+        {home}
+        {move_in_field('q-move-in')}
+        {choose('source', 'How did you hear about us?', 'q-source')}
+        <div class="field field--full"><label for="q-message">Anything we should know?</label><textarea id="q-message" name="message" maxlength="2000"></textarea><span class="count" aria-live="polite"></span></div>
+        {ATTRIBUTION}
+        {HONEYPOT}
+        <p class="form-note">Your message goes straight to our leasing team, who use it only to reply to you. <a href="/privacy/">Privacy</a>.</p>
+        <div><button class="btn btn--solid" type="submit">{submit} {icon('arrow')}</button></div>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</section>"""
+
+
 def property_page(p):
     slug, url = p["slug"], prop_url(p)
     photos = gallery_photos(slug)
@@ -838,7 +915,7 @@ def property_page(p):
     region = REGIONS[p["region"]]["name"]
     # Every "contact us" on this page names the building, so the enquiry lands on its own tab of the
     # lead sheet instead of General. Charlotte Square's go to its own site, form and lead sheet.
-    contact = CHARLOTTE_CONTACT if p.get("external") else f"/contact-us/?property={slug}"
+    contact = CHARLOTTE_CONTACT if p.get("external") else "#enquire"
     trail = [("Home", "/"), ("Properties", "/properties/"), (region, city_url(p["region"])), (p["name"], url)]
     crumbs = "".join(f'<li><a href="{u}">{esc(nm)}</a></li>' if i < 3 else f'<li aria-current="page">{esc(nm)}</li>' for i, (nm, u) in enumerate(trail))
     pills = [f'<span>{esc(p["type"])}</span>', f'<span>{esc(p["area"])}</span>']
@@ -850,8 +927,8 @@ def property_page(p):
         actions = (f'<a class="btn btn--solid" href="{p["external"]}" rel="noopener">Visit {esc(p["name"])} {icon("ext")}</a>'
                    f'<a class="btn" href="tel:+1{re.sub(r"[^0-9]", "", p["leasing"]["phone"])}">Call leasing</a>')
     else:
-        actions = (f'<a class="btn btn--solid" href="{APPLY_PROPERTY.format(p["pid"])}" rel="noopener">Apply now {icon("arrow")}</a>'
-                   + (f'<a class="btn" href="#units">See {n} available</a>' if n else f'<a class="btn" href="/contact-us/?property={esc(slug)}&amp;interest=waitlist">Join the waitlist</a>'))
+        actions = (f'<a class="btn btn--solid" href="{APPLY_PROPERTY.format(p["pid"])}" rel="noopener" data-property="{slug}">Apply now {icon("arrow")}</a>'
+                   + (f'<a class="btn" href="#units">See {n} available</a>' if n else f'<a class="btn" href="#enquire">Join the waitlist</a>'))
 
     # Gallery: up to five in a mosaic whose layout depends on how many there are;
     # every photo is one click away in the lightbox.
@@ -901,7 +978,7 @@ def property_page(p):
         units = f"""<section class="section ink" id="units"><div class="wrap">
   <p class="label" data-reveal>Availability</p><h2 data-reveal class="i1">Fully leased, <em>for now.</em></h2>
   <p class="lead" data-reveal>Nothing is open at {esc(p['name'])} today. Tell us what you are looking for and we will let you know as soon as something comes up.</p>
-  <div class="hero-actions" data-reveal><a class="btn btn--solid" href="/contact-us/?property={esc(slug)}&amp;interest=waitlist">Join the waitlist {icon('arrow')}</a><a class="btn" href="/properties/#available">See what’s available elsewhere</a></div>
+  <div class="hero-actions" data-reveal><a class="btn btn--solid" href="#enquire">Join the waitlist {icon('arrow')}</a><a class="btn" href="/properties/#available">See what’s available elsewhere</a></div>
 </div></section>"""
 
     if p.get("external"):
@@ -909,7 +986,7 @@ def property_page(p):
         call = "+1" + re.sub(r"[^0-9]", "", p["leasing"]["phone"])
     else:
         main_act = (f'<a class="btn btn--solid" href="#units">See {n} available</a>' if n else
-                    f'<a class="btn btn--solid" href="/contact-us/?property={esc(slug)}&amp;interest=waitlist">Join the waitlist</a>')
+                    f'<a class="btn btn--solid" href="#enquire">Join the waitlist</a>')
         call = PHONE_TEL
     mbar = (f'<div class="m-bar" data-mbar aria-label="Quick actions for {esc(p["name"])}" role="region" inert>'
             f'<a class="btn" href="tel:{call}">{icon("phone")} Call</a>{main_act}</div>')
@@ -947,6 +1024,7 @@ def property_page(p):
   </div>
 </section>
 {units}
+{'' if p.get('external') else enquiry_form(p)}
 <section class="section section--tight">
   <div class="wrap">
     <p class="label" data-reveal>Location</p>
@@ -1161,39 +1239,33 @@ def faqs():
 
 def contact():
     opts = "".join(f'<option value="{esc(p["slug"])}">{esc(p["name"])}, {esc(p["city"])}</option>' for p in LEAD_PROPS)
-
-    def choose(name, label):
-        options = "".join(f'<option value="{esc(v)}">{esc(t)}</option>' for v, t in LEAD_OPTIONS[name])
-        fid = "c-" + name.replace("_", "-")
-        return f'<div class="field"><label for="{fid}">{label}</label><select id="{fid}" name="{name}"><option value="">Choose one</option>{options}</select></div>'
-
-    attribution = "".join(f'<input type="hidden" name="{n}">' for n in ("ref", "utm_source", "utm_medium", "utm_campaign", "landing"))
     body = f"""{page_hero('Contact', 'Let’s find|your *place*.', 'Questions about an apartment, a tour, or your lease. Call, email, or send a note below.', [('Home', '/'), ('Contact', '/contact-us/')])}
 <section class="section">
   <div class="wrap contact-grid">
     <div class="contact-main">
       <div class="form-flash" id="sent" tabindex="-1" role="status">
         <h2>Thank you<span class="flash-name"></span>. Your message is with our team.</h2>
-        <p>A team member will reply soon. For anything urgent, call <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+        <p>A team member will reply soon, and you will get an email to say it arrived. For anything urgent, call <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
       </div>
       <div class="form-flash form-flash--error" id="not-sent" tabindex="-1" role="alert">
         <h2>Sorry, your message did not go through.</h2>
         <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
       </div>
-      <form class="form" id="contact-form" action="/api/inquiry/" method="post" data-reveal>
+      <form class="form" id="contact-form" data-lead action="/api/inquiry/" method="post" data-reveal>
+        <input type="hidden" name="form" value="contact"><input type="hidden" name="page" value="/contact-us/">
         <div class="field"><label for="c-first">First name</label><input id="c-first" name="first_name" autocomplete="given-name" maxlength="80" required></div>
         <div class="field"><label for="c-last">Last name</label><input id="c-last" name="last_name" autocomplete="family-name" maxlength="80" required></div>
         <div class="field"><label for="c-email">Email</label><input id="c-email" name="email" type="email" autocomplete="email" maxlength="160" required></div>
         <div class="field"><label for="c-phone">Phone</label><input id="c-phone" name="phone" type="tel" autocomplete="tel" maxlength="40"></div>
         <div class="field field--full"><label for="c-property">Property</label><select id="c-property" name="property"><option value="">Any, or not sure yet</option>{opts}</select>
           <p class="field-note">Looking at Charlotte Square? It has its own leasing team at <a href="{CHARLOTTE_CONTACT}" rel="noopener">charlottesquareroc.com</a>.</p></div>
-        {choose('interest', 'I’m interested in')}
-        {choose('bedrooms', 'Bedrooms')}
-        {choose('move_in', 'Moving in')}
-        {choose('source', 'How did you hear about us?')}
+        {choose('interest', 'I’m interested in', 'c-interest')}
+        {choose('bedrooms', 'Bedrooms', 'c-bedrooms')}
+        {move_in_field('c-move-in')}
+        {choose('source', 'How did you hear about us?', 'c-source')}
         <div class="field field--full"><label for="c-message">Message</label><textarea id="c-message" name="message" maxlength="2000"></textarea><span class="count" aria-live="polite"></span></div>
-        {attribution}
-        <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
+        {ATTRIBUTION}
+        {HONEYPOT}
         <p class="form-note">Your message goes straight to our leasing team, who use it only to reply to you. <a href="/privacy/">Privacy</a>.</p>
         <div><button class="btn btn--solid" type="submit">Send message {icon('arrow')}</button></div>
         <p class="form-status" role="status" aria-live="polite"></p>
@@ -1222,8 +1294,9 @@ def privacy():
 <h2>Fair housing</h2>
 <p>{NAME} is an Equal Housing Opportunity provider. We do not discriminate on the basis of race, color, religion, sex, disability, familial status or national origin, nor on any basis protected by New York State law, including age, sexual orientation, gender identity or expression, marital status, military status, and lawful source of income.</p>
 <h2>What this website collects</h2>
-<p>This site sets no cookies, runs no analytics and loads nothing from third parties.</p>
-<p>When you send the contact form, what you type goes to our leasing team by email, through our email provider, and into our enquiry list in Google Workspace. We use it only to reply to you and to follow up on what you asked about, and we do not sell or share it. The form also notes which website or ad link brought you to us, if any (a Google search, say), and the first page you opened; your browser keeps that for the length of your visit only, not in a cookie. To have an enquiry removed, call or email us.</p>
+<p>This site sets no cookies for visitors and loads nothing from third parties. It counts its own visits, on our own servers and nowhere else: which pages are viewed, which buttons are used (calling us, applying, the map), the website or ad link that brought you, your country as your connection shows it, and the kind of device. It never stores your IP address. Visits are grouped by a code made from your connection and browser that changes every day, so nobody can be recognised from one day to the next. If your browser sends Do Not Track or Global Privacy Control, nothing is counted at all.</p>
+<p>When you send one of our forms, what you type is saved in our enquiry records (a database we run, hosted by Turso), sent to our leasing team by email through our email provider, Resend, and added to our enquiry list in Google Workspace. If you asked about one of our buildings, it may also be added to that building’s records in our property management software, Rent Manager. We use it only to reply to you and to follow up on what you asked about, and we do not sell or share it. The form also notes which website or ad link brought you to us, if any (a Google search, say), and the first page you opened; your browser keeps that for the length of your visit only, not in a cookie.</p>
+<p>After you send a form we email you once to say it arrived. Every such email has a link to stop them, and we send no more than one in twelve hours. To have an enquiry removed, call or email us.</p>
 <p>Maps are only loaded from Google when you press “Show the map”, and are then subject to Google’s privacy policy. Applications and resident accounts are handled by our property management software, Rent Manager, in Tenant Web Access.</p>
 <h2>Accessibility</h2>
 <p>We want this site to work for everyone, including with a screen reader, a keyboard alone or reduced motion. If something is hard to use, call <a href="tel:{PHONE_TEL}">{PHONE}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a> and we will help and fix it.</p>
@@ -1231,7 +1304,7 @@ def privacy():
 <p>{NAME}, {OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}.</p>
 </div></section>"""
     return page(url="/privacy/", title="Privacy, Accessibility & Fair Housing | Evolution24 Properties",
-                desc="Evolution24 Properties is an Equal Housing Opportunity provider. This site sets no cookies and runs no analytics. Our privacy and accessibility statement.",
+                desc="Evolution24 Properties is an Equal Housing Opportunity provider. No cookies for visitors, and our own visit counts with no IP addresses kept. Our privacy and accessibility statement.",
                 body=body, crumbs=[("Home", "/"), ("Privacy", "/privacy/")])
 
 
@@ -1335,19 +1408,39 @@ CACHE_RULES = [("/assets/css/", YEAR), ("/assets/js/", YEAR), ("/assets/fonts/",
 VERCEL_HOST = "evolution24-net.vercel.app"     # Vercel's own alias for the production deployment
 
 
+def unit_label(u):
+    """A home as an enquiry names it: "Unit 302RV · 1 bed · $1,590/mo", and its date if it opens later."""
+    when = ""
+    if u.get("available"):
+        d = dt.date.fromisoformat(u["available"])
+        when = f" · from {d.strftime('%b')} {d.day}"
+    return f"Unit {u['unit']} · {beds_label(u)} · {money(u['rent'])}/mo{when}"
+
+
 def leads_config():
+    """What the server side needs to know about the site: the buildings (with their Rent Manager
+    IDs and open units, so a building's form can only name a home it lists), the forms' choices,
+    and the office. Read by every function in api/."""
     return json.dumps({
         "_about": "Generated by scripts/build.py from data/properties.json and LEAD_OPTIONS. Edit those, not this.",
-        "properties": {p["slug"]: {"name": p["name"], "city": p["city"], "region": p["region"]} for p in LEAD_PROPS},
+        "properties": {p["slug"]: {"name": p["name"], "city": p["city"], "region": p["region"], "pid": p["pid"],
+                                   "units": {str(u["uid"]): {"label": unit_label(u), "bedrooms": "studio" if u["beds"] == 0 else str(min(u["beds"], 3))}
+                                             for u in sorted(p["units"], key=lambda u: u["rent"])}}
+                       for p in LEAD_PROPS},
+        "external": {p["slug"]: {"name": p["name"], "city": p["city"]} for p in PROPS if p.get("external")},
         **{k: dict(v) for k, v in LEAD_OPTIONS.items()},
         "general_tab": GENERAL_TAB,
+        "site": SITE,
         "office_phone": PHONE,
+        "office_address": f"{OFFICE['street']}, {OFFICE['city']}, {OFFICE['region']} {OFFICE['zip']}",
+        "units_as_of": UNITS_AS_OF,
+        "open_units": len(ALL_UNITS),
     }, indent=1, ensure_ascii=False) + "\n"
 
 
 SPECULATION_RULES = {"prerender": [{"where": {"and": [
     {"href_matches": "/*"},
-    {"not": {"href_matches": ["/api/*", "/property-detail/*", "/unit-detail/*", "/*.xml", "/*.txt", "/*.json"]}},
+    {"not": {"href_matches": ["/api/*", "/admin/*", "/r/*", "/unsubscribe/*", "/property-detail/*", "/unit-detail/*", "/*.xml", "/*.txt", "/*.json"]}},
     {"not": {"selector_matches": "[rel~=nofollow], [target=_blank], [download], [href^='#']"}}]},
     "eagerness": "moderate"}]}
 
@@ -1385,10 +1478,17 @@ def vercel_json():
     # The vercel.app alias duplicates the real domain; keep it out of search results.
     headers.append({"source": "/(.*)", "has": [{"type": "host", "value": VERCEL_HOST}],
                     "headers": [{"key": "X-Robots-Tag", "value": "noindex"}]})
-    # The enquiry waits on Google and on the email provider, one after the other.
-    functions = {"api/inquiry.js": {"maxDuration": 30}}
+    # The dashboard, shared reports and unsubscribe pages stay out of search results.
+    for private in ("/admin/(.*)", "/r/(.*)", "/unsubscribe/(.*)"):
+        headers.append({"source": private, "headers": [{"key": "X-Robots-Tag", "value": "noindex, nofollow"},
+                                                         {"key": "Referrer-Policy", "value": "no-referrer"}]})
+    # The enquiry waits on Google, the email provider and Rent Manager; a report reads a month of numbers.
+    functions = {"api/inquiry.js": {"maxDuration": 30}, "api/reports.js": {"maxDuration": 30}, "api/stats.js": {"maxDuration": 20}}
+    # A shared report and an unsubscribe link are pages, served by functions.
+    rewrites = [{"source": "/r/:token/", "destination": "/api/r/?token=:token"},
+                {"source": "/unsubscribe/:token/", "destination": "/api/unsubscribe/?token=:token"}]
     return json.dumps({"$schema": "https://openapi.vercel.sh/vercel.json", "trailingSlash": True,
-                       "functions": functions, "redirects": redirects, "headers": headers}, indent=1) + "\n"
+                       "functions": functions, "redirects": redirects, "rewrites": rewrites, "headers": headers}, indent=1) + "\n"
 
 
 def redirects_file():
@@ -1475,7 +1575,7 @@ def main():
     write("sitemap.xml", sitemap(urls))
     # The old /property-detail/ and /unit-detail/ URLs stay crawlable: search engines must see
     # their redirects to move the old rankings onto the new pages.
-    write("robots.txt", "User-agent: *\nAllow: /\nDisallow: /api/\n\n"
+    write("robots.txt", "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /r/\nDisallow: /unsubscribe/\n\n"
                         "# Assistants that answer 'apartments near me' are a referral channel.\n"
                         "User-agent: GPTBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\n"
                         "User-agent: PerplexityBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\n"

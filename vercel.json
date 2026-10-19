@@ -4,6 +4,12 @@
  "functions": {
   "api/inquiry.js": {
    "maxDuration": 30
+  },
+  "api/reports.js": {
+   "maxDuration": 30
+  },
+  "api/stats.js": {
+   "maxDuration": 20
   }
  },
  "redirects": [
@@ -429,6 +435,16 @@
    "permanent": true
   }
  ],
+ "rewrites": [
+  {
+   "source": "/r/:token/",
+   "destination": "/api/r/?token=:token"
+  },
+  {
+   "source": "/unsubscribe/:token/",
+   "destination": "/api/unsubscribe/?token=:token"
+  }
+ ],
  "headers": [
   {
    "source": "/(.*)",
@@ -520,6 +536,45 @@
     {
      "key": "X-Robots-Tag",
      "value": "noindex"
+    }
+   ]
+  },
+  {
+   "source": "/admin/(.*)",
+   "headers": [
+    {
+     "key": "X-Robots-Tag",
+     "value": "noindex, nofollow"
+    },
+    {
+     "key": "Referrer-Policy",
+     "value": "no-referrer"
+    }
+   ]
+  },
+  {
+   "source": "/r/(.*)",
+   "headers": [
+    {
+     "key": "X-Robots-Tag",
+     "value": "noindex, nofollow"
+    },
+    {
+     "key": "Referrer-Policy",
+     "value": "no-referrer"
+    }
+   ]
+  },
+  {
+   "source": "/unsubscribe/(.*)",
+   "headers": [
+    {
+     "key": "X-Robots-Tag",
+     "value": "noindex, nofollow"
+    },
+    {
+     "key": "Referrer-Policy",
+     "value": "no-referrer"
     }
    ]
   }

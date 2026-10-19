@@ -171,6 +171,20 @@ const readBody = (req) => new Promise((resolve) => { let b = ''; req.on('data', 
     assert.strictEqual(post().ok, true); assert.strictEqual(post().duplicate, true);
     assert.strictEqual(leadRows(names[1]).filter((row) => row[col('Enquiry #')] === lead.id).length, 1);
   });
+  await test('a tab made before Home and Sent from gains them on its next enquiry, with the home asked about', async () => {
+    const [slug, p] = Object.entries(CONFIG.properties).find(([, x]) => Object.keys(x.units).length);
+    const tab = ss.getSheetByName(p.name);
+    tab.getRange(1, col('Home') + 1).setValue('');          // as an older setup left it
+    tab.getRange(1, col('Sent from') + 1).setValue('');
+    const [uid, unit] = Object.entries(p.units)[0];
+    const id = await send({ property: slug, unit: uid, form: 'property', page: `/properties/${slug}/` });
+    assert.strictEqual(tab.row(1)[col('Home')], 'Home');
+    assert.strictEqual(tab.row(1)[col('Sent from')], 'Sent from');
+    const row = tab.row(2);
+    assert.strictEqual(row[col('Enquiry #')], id);
+    assert.strictEqual(row[col('Home')], unit.label);
+    assert.strictEqual(row[col('Sent from')], 'Building page');
+  });
   await test('the Overview has a row for every tab, linked to it', async () => {
     const ov = ss.getSheetByName('Overview');
     const linked = [];

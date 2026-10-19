@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /admin/
+Disallow: /r/
+Disallow: /unsubscribe/
 
 # Assistants that answer 'apartments near me' are a referral channel.
 User-agent: GPTBot
