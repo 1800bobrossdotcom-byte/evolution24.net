@@ -1,0 +1,76 @@
+# Availability from Rent Manager: reads what each building has open and its rent,
+# rebuilds the pages, and publishes them (Vercel deploys every push).
+#
+# Needs two repository secrets (Settings → Secrets and variables → Actions):
+#   RM_USERNAME, RM_PASSWORD   the website's read-only Rent Manager user
+# and, only if they differ from the defaults, repository variables RM_COMPANY
+# ("evolution") and RM_LOCATION_ID.
+#
+# Runs at 7 and 10 am, 1, 4, 7 and 10 pm in Rochester (Eastern daylight time;
+# an hour earlier in winter), and from the Actions tab: "Run workflow". A failed
+# run emails the repository's owner; the site keeps its last good list.
+name: Availability from Rent Manager
+
+on:
+  schedule:
+    - cron: "17 11,14,17,20,23,2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only report what would change"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: availability
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Read Rent Manager
+        id: rm
+        env:
+          RM_USERNAME: ${{ secrets.RM_USERNAME }}
+          RM_PASSWORD: ${{ secrets.RM_PASSWORD }}
+          RM_COMPANY: ${{ vars.RM_COMPANY }}
+          RM_LOCATION_ID: ${{ vars.RM_LOCATION_ID }}
+        run: |
+          if [ -z "$RM_USERNAME" ] || [ -z "$RM_PASSWORD" ]; then
+            echo "::notice::Rent Manager is not set up yet: add the RM_USERNAME and RM_PASSWORD secrets."
+            exit 0
+          fi
+          node scripts/availability.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+          echo "read=yes" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild the pages
+        if: ${{ steps.rm.outputs.read == 'yes' && !inputs.dry_run }}
+        run: python3 scripts/build.py
+
+      - name: Publish if anything changed
+        if: ${{ steps.rm.outputs.read == 'yes' && !inputs.dry_run }}
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git config user.name "evolution24-availability[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Availability from Rent Manager, $(TZ=America/New_York date +%F)"
+          git push

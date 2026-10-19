@@ -581,6 +581,9 @@ def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
                      if show_prop else "")
         size = f'{u["sqft"]:,} sq ft' if u.get("sqft") else "—"
         note = f' · {esc(u["note"])}' if u.get("note") else ""
+        if u.get("available"):   # on notice or being readied: Rent Manager's move-out date
+            d = dt.date.fromisoformat(u["available"])
+            note += f' · <span class="u-when">From {d.strftime("%b")} {d.day}</span>'
         trs.append(f"""<tr data-tags="{unit_tag(u)} {p['region']}">
   {prop_cell}<td data-k="Unit">{esc(u['unit'])}</td><td>{unit_type(u)}{note}</td><td data-k="">{size}</td>
   <td class="u-rent">{money(u['rent'])}<small>/mo</small></td>
@@ -1491,7 +1494,13 @@ def main():
                                          "background_color": "#151613", "theme_color": "#151613",
                                          "icons": [{"src": "/assets/img/logo-192.png", "sizes": "192x192", "type": "image/png"},
                                                    {"src": "/assets/img/logo-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=1) + "\n")
+    # A year ahead, renewed only when under six months are left, so a rebuild on any
+    # given day (the availability job runs several a day) does not change the file.
     expires = (dt.date.today() + dt.timedelta(days=365)).isoformat()
+    sec = ROOT / ".well-known" / "security.txt"
+    kept = re.search(r"Expires: (\d{4}-\d{2}-\d{2})", sec.read_text()) if sec.exists() else None
+    if kept and dt.date.fromisoformat(kept.group(1)) - dt.date.today() > dt.timedelta(days=182):
+        expires = kept.group(1)
     write(".well-known/security.txt", f"Contact: {SITE}/contact-us/\nExpires: {expires}T00:00:00.000Z\nPreferred-Languages: en\nCanonical: {SITE}/.well-known/security.txt\n")
     write(".nojekyll", "")
     write("source/og/jobs.json", json.dumps(og_jobs(), indent=1) + "\n")
