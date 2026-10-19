@@ -422,7 +422,9 @@ Google gives you in the repository root and push it.
 
 `node scripts/test-analytics.cjs` runs every function in `api/` against a real SQLite
 database behind the same protocol as Turso, with stand-ins for Resend, the lead sheet and
-Rent Manager.
+Rent Manager. `node scripts/test-admin-ui.cjs` drives the dashboard itself in Chromium
+under the site's Content Security Policy: signing in, every panel, the building filter,
+marking an enquiry handled, light and dark, and a 360-pixel phone with no sideways scroll.
 
 ## Rent Manager
 

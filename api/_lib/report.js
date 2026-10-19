@@ -255,7 +255,7 @@ function renderReport(r) {
     ['Size interest', table(['Size', 'Times'], r.plans.map((x) => [x.plan, num(x.count)]), 'None in this period.')],
     ['Most viewed pages', table(['Page', 'Views'], r.pages.map((x) => [x.path, num(x.views)]), 'None in this period.')],
     ...(r.emails ? [['Emails', emailTable(r.emails)]] : []),
-  ].map(([h, body], i) => `<section class="card" aria-labelledby="s-${i}"><h2 id="s-${i}">${esc(h)}</h2>${body}</section>`).join('');
+  ].map(([h, body], i) => `<section class="card${i === 0 ? ' card--wide' : ''}" aria-labelledby="s-${i}"><h2 id="s-${i}">${esc(h)}</h2>${body}</section>`).join('');   // By building: the whole width
 
   return `<!doctype html>
 <html lang="en">
