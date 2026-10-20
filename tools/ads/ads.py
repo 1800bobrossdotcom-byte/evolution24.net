@@ -248,16 +248,16 @@ html,body{background:transparent}
 .ad{position:relative;width:%(W)dpx;height:%(H)dpx;overflow:hidden;color:var(--cream);font-family:Manrope}
 .panel{position:absolute;left:%(PX)dpx;top:%(PY)dpx;width:%(PW)dpx;height:%(PH)dpx;overflow:hidden}
 .photo{width:100%%;height:100%%;display:block;object-fit:cover}
-.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,22,19,.55),rgba(21,22,19,0) 230px),
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,22,19,.75),rgba(21,22,19,.35) 150px,rgba(21,22,19,0) 300px),
   linear-gradient(0deg,rgba(21,22,19,.45),rgba(21,22,19,0) 160px)}
 .story .shade{background:linear-gradient(0deg,rgba(21,22,19,.45),rgba(21,22,19,0) 160px)}
 .inkband{position:absolute;left:0;right:0;background:var(--ink)}
 .inkband.top{top:0;height:%(PY)dpx}
 .inkband.bottom{top:%(PB)dpx;bottom:0}
-.lockup{position:absolute;left:56px;top:48px;width:330px}
-.story .lockup{left:64px;top:282px;width:380px}
+.lockup{position:absolute;left:56px;top:48px;width:330px;filter:drop-shadow(0 1px 10px rgba(21,22,19,.5))}
+.story .lockup{left:64px;top:282px;width:380px;filter:none}
 .stamp{position:absolute;right:52px;top:44px;width:230px;height:230px;transform:rotate(-10deg)}
-.story .stamp{right:56px;top:320px;width:250px;height:250px}
+.story .stamp{right:56px;top:440px;width:250px;height:250px}   /* inside the panel, so the end card covers it */
 .stamp .disc{fill:var(--tan)} .stamp .rule{fill:none;stroke:var(--ink);stroke-width:2;opacity:.35}
 .stamp .ringt{font:800 25px Manrope;letter-spacing:.2em;text-transform:uppercase;fill:var(--ink)}
 .stamp .count{font:400 112px 'Instrument Serif';text-anchor:middle;fill:var(--ink)}
