@@ -685,6 +685,38 @@ Needs Pillow, numpy, scipy, Playwright and ffmpeg.
 - **Checking a moment:** `stills.cjs` draws single frames, which is quicker than a full
   render.
 
+## Facebook ads
+
+`tools/ads/ads.py` makes a *Now renting* ad for every building with homes open: a picture and a
+15-second video, each in two shapes, `feed` (4:5, 1080 × 1350) for the Facebook and Instagram
+feeds and `story` (9:16, 1080 × 1920) for Stories and Reels. Each names who to call, with their
+phone and email: Charlotte Square's its leasing agent, the rest the Evolution24 agent. It also
+writes `ads.md` and `ads.csv`, each ad's primary text, headline, description, button, link and
+alt text, with how to set the campaign up in Ads Manager, and `overview.jpg`, every feed ad on
+one sheet.
+
+```bash
+cp tools/ads/contacts.example.json tools/ads/contacts.json   # once: who to call (kept out of git)
+python3 tools/ads/ads.py                                    # all, into tools/ads/out/
+python3 tools/ads/ads.py --only water-street,biltmore --no-video
+```
+
+- **What is open** comes from `data/properties.json`, the site's "Available now" list: the kinds
+  of home, how many, the lowest rent, and the date it was listed, which every ad shows. A
+  building with nothing open is left out. Run it again after the list changes, and pause the ad
+  of any building that fills up.
+- **Housing.** Meta requires rental ads to run in the *Housing* special ad category: no
+  targeting by age, gender or ZIP code, and a radius of at least 15 miles. The words say what
+  the homes are, never who they are for, and every ad carries the Equal Housing Opportunity mark.
+- **Links** carry `utm_campaign=now-renting-<slug>`, so the dashboard's Campaigns panel shows
+  each building's ad on its own.
+- **The video:** the building's three photos, graded like the Instagram kit, drift and dissolve
+  in the picture, the line under the name changing with each, then an end card. Music: "Day
+  Trips" by HoliznaCC0 (CC0 1.0), the story video's track. Needs Pillow, numpy, Playwright and
+  ffmpeg.
+- **Where things are set:** the photos, lines and pitch for each building are the `ADS` table at
+  the top of `ads.py`; the two shapes are `FORMATS`.
+
 ## Structure
 
 ```
@@ -711,6 +743,8 @@ tools/rent-manager/      the Rent Manager client and connection check (Apps Scri
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it
 tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words;
                          leasing.py draws the Now renting nine, captions-leasing.md holds theirs
+tools/ads/                the Facebook and Instagram ads, pictures and videos (ads.py makes them);
+                         contacts.json, who each ad says to call, is kept out of git
 tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums;
                          Report.gs is the master labor report (Apps Script) that reads them all
 sitemap.xml robots.txt llms.txt speculation-rules.json site.webmanifest .well-known/security.txt

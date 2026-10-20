@@ -50,8 +50,8 @@ has five or fewer.
 
 Now available at 145 South Fitzhugh, Rochester.
 
-Modern studio and 1-bedroom apartments on a quiet street just outside downtown. Perfect for
-singles or couples, and close to shopping, dining, schools and hospitals.
+Modern studio and 1-bedroom apartments on a quiet street just outside downtown, close to
+shopping, dining, schools and hospitals.
 
 See what's free, with rents and photos, through the link in our bio.
 

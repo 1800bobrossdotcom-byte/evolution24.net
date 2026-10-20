@@ -1,6 +1,7 @@
 // Renders the pages make.py writes. Called by make.py; not meant to be run by hand.
 //   node tools/instagram/render.cjs jobs.json
-// jobs.json is a list of {html, png, width, height, scale}. Any console error or failed load
+// jobs.json is a list of {html, png, width, height, scale, transparent}; transparent keeps the page's
+// empty areas see-through, for layers laid over video. Any console error or failed load
 // (a missing font or photo) fails the run, so a broken post is never written.
 const path = require('path');
 const fs = require('fs');
@@ -20,7 +21,7 @@ try { pw = require('playwright'); } catch { pw = require(path.join(require('chil
     await p.evaluate(() => document.fonts.ready);
     const missing = await p.evaluate(() => [...document.fonts].filter((f) => f.status === 'error').map((f) => f.family));
     missing.forEach((f) => problems.push(`${j.html}: font ${f} did not load`));
-    await p.screenshot({ path: j.png, clip: { x: 0, y: 0, width: j.width, height: j.height } });
+    await p.screenshot({ path: j.png, clip: { x: 0, y: 0, width: j.width, height: j.height }, omitBackground: Boolean(j.transparent) });
     await p.close();
   }
   await b.close();

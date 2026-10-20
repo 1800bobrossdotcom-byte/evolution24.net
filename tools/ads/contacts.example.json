@@ -1,0 +1,5 @@
+{
+  "_about": "Who each ad says to call. Copy this to contacts.json (kept out of git) and fill it in. \"default\" is every building's; a building's slug overrides it for that building. short is the name the ad says (\"Call Sam\").",
+  "default": {"name": "Sam Example", "short": "Sam", "phone": "585-555-0100", "email": "leasing@example.com"},
+  "charlotte-square": {"name": "Alex Example", "short": "Alex", "phone": "585-555-0101", "email": "alex@example.com"}
+}

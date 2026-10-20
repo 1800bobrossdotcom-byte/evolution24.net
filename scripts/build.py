@@ -40,6 +40,7 @@ PROPS = DATA["properties"]
 REGIONS = DATA["regions"]
 UNITS_AS_OF = DATA["units_as_of"]
 BY_SLUG = {p["slug"]: p for p in PROPS}
+CS_LEASING = BY_SLUG["charlotte-square"]["leasing"]   # Charlotte Square's leasing contact, as its own site gives it
 
 FAQS = [
     ("How do I report a maintenance issue?",
@@ -1277,7 +1278,7 @@ def contact():
       <div><h3>Email</h3><p><a href="mailto:{EMAIL}">{EMAIL}</a></p></div>
       <div><h3>Office</h3><p>{OFFICE['street']}<br>{OFFICE['city']}, NY {OFFICE['zip']}</p></div>
       <div><h3>Residents</h3><p>Pay rent and request maintenance in <a href="{PORTAL}" rel="noopener">Tenant Web Access</a>.</p></div>
-      <div><h3>Charlotte Square</h3><p>Leasing: Vicki Barone, <a href="tel:+15857485588">(585) 748-5588</a>, or <a href="{CHARLOTTE_CONTACT}" rel="noopener">its contact page</a></p></div>
+      <div><h3>Charlotte Square</h3><p>Leasing: {esc(CS_LEASING['name'])}, <a href="tel:+1{re.sub(r'[^0-9]', '', CS_LEASING['phone'])}">{esc(CS_LEASING['phone'])}</a>, or <a href="{CHARLOTTE_CONTACT}" rel="noopener">its contact page</a></p></div>
     </div>
   </div>
 </section>"""
@@ -1387,7 +1388,7 @@ def llms():
         size = f", {u['sqft']} sq ft" if u.get("sqft") else ""
         lines.append(f"- {p['name']}, {p['city']}: unit {u['unit']}, {unit_type(u)}{size}, {money(u['rent'])}/mo. Apply: {APPLY_UNIT.format(u['uid'])}")
     lines += ["", "## Notes", "- Availability changes daily; the application confirms the current rent and move-in date.",
-              "- Charlotte Square (50 Charlotte Street) has its own site at https://www.charlottesquareroc.com/ with leasing by Vicki Barone, (585) 748-5588."]
+              f"- Charlotte Square (50 Charlotte Street) has its own site at https://www.charlottesquareroc.com/ with leasing by {CS_LEASING['name']}, {CS_LEASING['phone']}."]
     return "\n".join(lines) + "\n"
 
 
