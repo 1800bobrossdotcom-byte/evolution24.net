@@ -698,7 +698,7 @@ one sheet.
 ```bash
 cp tools/ads/contacts.example.json tools/ads/contacts.json   # once: who to call (kept out of git)
 python3 tools/ads/ads.py                                    # all, into tools/ads/out/
-python3 tools/ads/ads.py --only water-street,biltmore --no-video
+python3 tools/ads/ads.py --only water-street,biltmore --no-video   # redraw some; the words cover all
 ```
 
 - **What is open** comes from `data/properties.json`, the site's "Available now" list: the kinds

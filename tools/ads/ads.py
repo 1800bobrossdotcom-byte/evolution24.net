@@ -102,12 +102,13 @@ FORMATS = {
 }
 
 # Each building: three photos (file, where to keep when cropped) and two lines about it, taken
-# from its description and amenities on the website. pitch is the ad's opening sentence.
+# from its description and amenities on the website; in the video each line comes up with the
+# second and third photo, so it should fit it. pitch is the ad's opening sentence.
 ADS = {
     "charlotte-square": dict(
         photos=[("07-terrace.jpg", (0.5, 0.45)), ("01-exterior-facade.jpg", (0.55, 0.5)), ("03-living-room.jpg", (0.5, 0.5))],
         facts="1, 2 and 3 bedrooms · Garage parking included",
-        lines=["Luxury apartments in the East End", "LEED Gold certified · Terrace with fire pit"],
+        lines=["LEED Gold certified · Terrace with fire pit", "Luxury apartments in the East End"],
         pitch="luxury one-, two- and three-bedroom apartments a block from Main Street and East Avenue, with a space in the secure garage included",
         stamp=("1–3", "bed")),
     "301-central-avenue": dict(
@@ -124,11 +125,11 @@ ADS = {
         pitch="fully updated loft apartments close to downtown Rochester, with high ceilings and a gym on site"),
     "biltmore": dict(
         photos=[("01-lobby.png", (0.5, 0.5)), ("04-studio-living.jpg", (0.5, 0.5)), ("02-exterior.jpg", (0.5, 0.45))],
-        lines=["A restored mosaic lobby", "WiFi and appliances included · Pets welcome"],
+        lines=["Furnished studios · WiFi included", "Classic yellow brick · Pets welcome"],
         pitch="furnished studios in a classic yellow-brick building on Alexander Street, with a restored mosaic lobby, WiFi included and pets welcome"),
     "181-st-paul-street": dict(
         photos=[("01-exterior.jpg", (0.5, 0.4)), ("04-kitchen.jpg", (0.5, 0.5)), ("03-studio-brick.jpg", (0.5, 0.5))],
-        lines=["Tall windows · Exposed brick", "A short walk from the river"],
+        lines=["A short walk from the river", "Tall windows · Exposed brick"],
         pitch="loft studios in a seven-storey brick building on St. Paul Street, downtown, with tall windows and painted brick"),
     "121-park-drive": dict(
         photos=[("01-exterior.jpg", (0.5, 0.42)), ("01-exterior.jpg", (0.55, 0.62)), ("01-exterior.jpg", (0.35, 0.5))],
@@ -136,11 +137,11 @@ ADS = {
         pitch="apartments in a beautifully restored Victorian on a quiet street in Manlius, with a covered porch and a large backyard"),
     "379-south-main-street": dict(
         photos=[("09-bedroom-green.jpg", (0.5, 0.45)), ("02-living-room.jpg", (0.5, 0.5)), ("07-bedroom-fireplace.jpg", (0.5, 0.5))],
-        lines=["Original fireplaces · Chandeliers", "Washer and dryer · Central air"],
+        lines=["Washer and dryer · Central air", "Original fireplaces · Chandeliers"],
         pitch="a generous home on South Main Street in Geneva, a few blocks above Seneca Lake, with original fireplaces and a washer and dryer"),
     "561-south-main-street": dict(
         photos=[("04-bedroom.jpg", (0.5, 0.45)), ("05-kitchen.jpg", (0.5, 0.5)), ("03-bedroom-tin-ceiling.jpg", (0.6, 0.5))],
-        lines=["Original pressed-tin ceilings", "Gas range · New baths"],
+        lines=["Gas range · New baths", "Original pressed-tin ceilings"],
         pitch="apartments in a white Italianate house on South Main Street in Geneva, renovated under their original pressed-tin ceilings"),
 }
 
@@ -476,15 +477,12 @@ def main():
     who_all = contacts()
     slugs = [s for s in ADS if PROPS[s].get("external") or PROPS[s]["units"]]
     skipped = [p["name"] for p in build.PROPS if p["slug"] not in slugs and not p.get("external")]
-    if ONLY:
-        unknown = set(ONLY) - set(ADS)
-        if unknown:
-            sys.exit(f"No ad for {', '.join(sorted(unknown))}. Buildings: {', '.join(ADS)}")
-        slugs = [s for s in slugs if s in ONLY]
+    if ONLY and set(ONLY) - set(ADS):
+        sys.exit(f"No ad for {', '.join(sorted(set(ONLY) - set(ADS)))}. Buildings: {', '.join(ADS)}")
     WORK.mkdir(parents=True, exist_ok=True)
-    rows = []
-    feeds = []
-    for slug in slugs:
+    # --only draws some buildings again; the words and the overview still cover every one.
+    rows = [copy_for(s, facts_for(s, ADS[s]), who_all.get(s, who_all["default"])) for s in slugs]
+    for slug in [s for s in slugs if not ONLY or s in ONLY]:
         spec = ADS[slug]
         info = facts_for(slug, spec)
         who = who_all.get(slug, who_all["default"])
@@ -511,14 +509,11 @@ def main():
         for fmt in FORMATS:
             still = Image.open(WORK / f"{slug}-{fmt}-still.png").convert("RGB")
             kit.save_jpeg(still, out / f"{fmt}.jpg", quality=92)
-            if fmt == "feed":
-                feeds.append((slug, still))
             if VIDEO:
                 layers = {"frame": Image.open(WORK / f"{slug}-{fmt}-frame.png").convert("RGBA"),
                           "end": Image.open(WORK / f"{slug}-{fmt}-end.png").convert("RGBA"),
                           "lines": [Image.open(WORK / f"{slug}-{fmt}-line{k}.png").convert("RGBA") for k in range(3)]}
                 video(fmt, slug, shots[fmt], layers, out / f"{fmt}.mp4")
-        rows.append(copy_for(slug, info, who))
         print(f"{PROPS[slug]['name']}: {', '.join(sorted(f.name for f in out.iterdir()))}")
 
     # The words, for Ads Manager.
@@ -554,6 +549,7 @@ Files: `{r['slug']}/feed.jpg`, `{r['slug']}/story.jpg`, `{r['slug']}/feed.mp4`, 
         w.writerows(rows)
 
     # Every feed ad on one sheet, to look over.
+    feeds = [(s, Image.open(OUT / s / "feed.jpg")) for s in slugs if (OUT / s / "feed.jpg").exists()]
     if feeds:
         cols = 3
         tw, th = 360, 450
@@ -564,8 +560,11 @@ Files: `{r['slug']}/feed.jpg`, `{r['slug']}/story.jpg`, `{r['slug']}/feed.mp4`, 
 
     zpath = OUT / "evolution24-facebook-ads.zip"
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
-        for f in sorted(OUT.rglob("*")):
-            if f.is_file() and WORK not in f.parents and f != zpath:
+        # Only today's buildings: a folder left from one that has since filled up stays out.
+        files = [OUT / n for n in ("ads.md", "ads.csv", "overview.jpg")]
+        files += [f for s in slugs if (OUT / s).is_dir() for f in sorted((OUT / s).iterdir())]
+        for f in files:
+            if f.is_file():
                 z.write(f, Path("evolution24-facebook-ads") / f.relative_to(OUT))
     print(f"{zpath} {zpath.stat().st_size // 1024} KB")
 
