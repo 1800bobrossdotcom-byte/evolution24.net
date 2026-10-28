@@ -12,7 +12,7 @@ const { aiEnabled } = require('./_lib/ai.js');
 async function GET({ request, env }) {
   const denied = await requireSession(request, env);
   if (denied) return denied;
-  if (!env.DB) return json({ error: 'No database is connected (DB_URL and DB_TOKEN).' }, 503);
+  if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
   const asked = Number.parseInt(new URL(request.url).searchParams.get('days') || '30', 10);
   const days = Math.min(Math.max(Number.isFinite(asked) ? asked : 30, 1), 365);
   return json({ ...(await loadStats(env, rangeForDays(days))), ai: aiEnabled(env) });

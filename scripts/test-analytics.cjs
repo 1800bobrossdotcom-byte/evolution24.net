@@ -2,53 +2,35 @@
 // shared reports, confirmation emails, unsubscribing, Resend's delivery reports and the hand-off
 // of leads to Rent Manager.
 //   node scripts/test-analytics.cjs
-// No network, no dependencies. The functions in api/ run behind a local server laid out like
-// Vercel's, against stand-ins for Turso (a real SQLite database, node:sqlite, behind libSQL's
-// HTTP protocol), Resend, the lead sheet's web app and Rent Manager. Every person is made up.
+// No network. The functions in api/ run behind a local server laid out like Vercel's, against
+// a real Postgres (PGlite, in this process, behind a socket that speaks Postgres's own protocol,
+// so the site's driver talks to it as it talks to Supabase) and stand-ins for Resend, the lead
+// sheet's web app and Rent Manager. Every person is made up. Needs `npm ci --prefix scripts` once.
 'use strict';
 const http = require('http');
 const assert = require('assert');
 const path = require('path');
 const crypto = require('crypto');
-const { DatabaseSync } = require('node:sqlite');
 
 const API = path.join(__dirname, '..', 'api');
 const listen = (fn) => new Promise((resolve) => { const s = http.createServer(fn); s.listen(0, '127.0.0.1', () => resolve(s)); });
 const readBody = (req) => new Promise((resolve) => { let b = ''; req.on('data', (c) => { b += c; }); req.on('end', () => resolve(b)); });
 
-// ---- Turso stand-in: libSQL's /v2/pipeline over a real SQLite database ----------------
-let sqlite = new DatabaseSync(':memory:');
-const DB_TOKEN = 'db-token-test';
-const enc = (v) => (v === null || v === undefined ? { type: 'null' }
-  : typeof v === 'bigint' || Number.isInteger(v) ? { type: 'integer', value: String(v) }
-    : typeof v === 'number' ? { type: 'float', value: v } : { type: 'text', value: String(v) });
-const dec = (a) => (a.type === 'null' ? null : a.type === 'integer' ? Number(a.value) : a.type === 'float' ? Number(a.value) : a.value);
-let dbCalls = 0;
+let PGlite, PGLiteSocketServer;
+try {
+  ({ PGlite } = require('@electric-sql/pglite'));
+  ({ PGLiteSocketServer } = require('@electric-sql/pglite-socket'));
+} catch {
+  console.error('The test database is not installed: run  npm ci --prefix scripts  once.');
+  process.exit(1);
+}
+const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'));
 
 (async () => {
-  const turso = await listen(async (req, res) => {
-    if (req.headers.authorization !== `Bearer ${DB_TOKEN}`) { res.writeHead(401); res.end(); return; }
-    const body = JSON.parse(await readBody(req));
-    const results = body.requests.map((r) => {
-      if (r.type === 'close') return { type: 'ok', response: { type: 'close' } };
-      dbCalls++;
-      try {
-        const st = sqlite.prepare(r.stmt.sql);
-        const args = (r.stmt.args || []).map(dec);
-        if (/^\s*(SELECT|WITH|PRAGMA)/i.test(r.stmt.sql)) {
-          const rows = st.all(...args);
-          const cols = rows[0] ? Object.keys(rows[0]) : [];
-          return { type: 'ok', response: { type: 'execute', result: { cols: cols.map((name) => ({ name })), rows: rows.map((row) => cols.map((c) => enc(row[c]))), affected_row_count: 0, last_insert_rowid: null } } };
-        }
-        const info = st.run(...args);
-        return { type: 'ok', response: { type: 'execute', result: { cols: [], rows: [], affected_row_count: Number(info.changes), last_insert_rowid: String(info.lastInsertRowid) } } };
-      } catch (e) {
-        return { type: 'error', error: { message: e.message } };
-      }
-    });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ baton: null, results }));
-  });
+  // ---- Postgres: PGlite, reached over a socket like Supabase's pooler ---------------
+  const pg = await PGlite.create({ parsers: { 20: Number, 1700: Number } });
+  const pgServer = new PGLiteSocketServer({ db: pg, port: 0, host: '127.0.0.1' });
+  await pgServer.start();
 
   // ---- Resend, the lead sheet and Rent Manager ---------------------------------------
   const mails = [];
@@ -90,7 +72,7 @@ let dbCalls = 0;
   const salt = crypto.randomBytes(16);
   const hash = crypto.pbkdf2Sync(PASSWORD, salt, 1000, 32, 'sha256');
   Object.assign(process.env, {
-    DB_URL: `http://127.0.0.1:${turso.address().port}`, DB_TOKEN,
+    DATABASE_URL: `postgres://postgres:test@127.0.0.1:${pgServer.server.address().port}/postgres`,
     RESEND_API_KEY: 're_test', RESEND_API_URL: `http://127.0.0.1:${resend.address().port}/emails`,
     LEAD_TO: 'team@example.com', LEAD_FROM: 'Evolution24 Properties <leasing@example.com>',
     LEADS_SHEET_URL: `http://127.0.0.1:${sheet.address().port}/exec`, LEADS_SHEET_TOKEN: SHEET_TOKEN,
@@ -128,7 +110,7 @@ let dbCalls = 0;
     mails.length = 0; leads.length = 0; prospects.length = 0; rmMode = 'ok';
     try { await fn(); results.push(['ok  ', name]); } catch (e) { results.push(['FAIL', `${name}: ${e.message.replace(/\s*\n\s*/g, ' ')}`]); }
   };
-  const q = (sql, ...a) => sqlite.prepare(sql).all(...a).map((r) => ({ ...r }));
+  const q = async (sql, ...a) => (await pg.query(toPostgres(sql), a)).rows;
 
   const enquiry = {
     form: 'property', property: 'water-street', page: '/properties/water-street/', unit: '73',
@@ -140,7 +122,7 @@ let dbCalls = 0;
     const r = await call('/api/inquiry/', { method: 'POST', body: enquiry, ip: '10.9.9.1' });
     const out = await r.json();
     assert.strictEqual(r.status, 202); assert.match(out.id, /^E24-/);
-    const [row] = q('SELECT * FROM inquiries WHERE ref = ?', out.id);
+    const [row] = await q('SELECT * FROM inquiries WHERE ref = ?', out.id);
     assert.strictEqual(row.property, 'water-street'); assert.strictEqual(row.unit, 'Unit 302RV · 1 bed · $1,590/mo');
     assert.strictEqual(row.bedrooms, '1'); assert.strictEqual(row.move_in, '2026-11'); assert.strictEqual(row.form, 'property');
     assert.strictEqual(row.notified, 1); assert.strictEqual(row.rm_ok, 1); assert.ok(row.rm_id);
@@ -153,14 +135,14 @@ let dbCalls = 0;
     assert.ok(!conf.html.includes('parking'), 'the confirmation never repeats what they typed');
     assert.strictEqual(prospects[0].PropertyID, 8); assert.strictEqual(prospects[0].Contacts[0].Email, 'alex.test@example.com');
     assert.strictEqual(prospects[0].MoveInDate, '2026-11-01T00:00:00');
-    assert.strictEqual(q('SELECT ok FROM lead_sync WHERE inquiry_id = ?', row.id)[0].ok, 1);
-    assert.deepStrictEqual(q('SELECT kind, sent FROM emails WHERE inquiry_id = ? ORDER BY kind', row.id).map((e) => [e.kind, e.sent]), [['confirmation', 1], ['notification', 1]]);
+    assert.strictEqual((await q('SELECT ok FROM lead_sync WHERE inquiry_id = ?', row.id))[0].ok, 1);
+    assert.deepStrictEqual((await q('SELECT kind, sent FROM emails WHERE inquiry_id = ? ORDER BY kind', row.id)).map((e) => [e.kind, e.sent]), [['confirmation', 1], ['notification', 1]]);
   });
 
   await test('a unit the building does not list is dropped, not stored', async () => {
     const r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, unit: '6', email: 'other@example.com' } });
     const out = await r.json();
-    const [row] = q('SELECT unit, unit_id FROM inquiries WHERE ref = ?', out.id);
+    const [row] = await q('SELECT unit, unit_id FROM inquiries WHERE ref = ?', out.id);
     assert.strictEqual(row.unit, null); assert.strictEqual(row.unit_id, null);
   });
 
@@ -168,7 +150,7 @@ let dbCalls = 0;
     await call('/api/inquiry/', { method: 'POST', body: enquiry });
     assert.strictEqual(prospects.length, 0);
     assert.ok(!mails.some((m) => m.to.includes('alex.test@example.com')));
-    const [last] = q("SELECT rm_note FROM inquiries WHERE email = 'alex.test@example.com' ORDER BY id DESC LIMIT 1");
+    const [last] = await q("SELECT rm_note FROM inquiries WHERE email = 'alex.test@example.com' ORDER BY id DESC LIMIT 1");
     assert.match(last.rm_note, /Already in Rent Manager/);
   });
 
@@ -188,13 +170,13 @@ let dbCalls = 0;
   });
 
   await test('a pageview is counted under its building; a bot is not counted', async () => {
-    const before = q('SELECT COUNT(*) AS n FROM events')[0].n;
+    const before = (await q('SELECT COUNT(*) AS n FROM events'))[0].n;
     let r = await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/properties/water-street/?utm_source=x', ref: 'https://www.google.com/search?q=lofts', device: 'mobile', utm: { source: 'Google', medium: 'CPC', campaign: 'Fall 2026' } }, ip: '10.2.0.1' });
     assert.strictEqual(r.status, 202);
     r = await call('/api/collect/', { method: 'POST', body: { kind: 'apply_click', path: '/properties/', property: 'water-street', meta: { unit: '302RV' } }, ip: '10.2.0.1' });
     r = await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/' }, headers: { 'User-Agent': 'Googlebot/2.1' } });
-    const rows = q('SELECT kind, path, property, ref, utm_source, utm_medium, utm_campaign FROM events ORDER BY id DESC LIMIT 2');
-    assert.strictEqual(q('SELECT COUNT(*) AS n FROM events')[0].n, before + 2);
+    const rows = (await q('SELECT kind, path, property, ref, utm_source, utm_medium, utm_campaign FROM events ORDER BY id DESC LIMIT 2'));
+    assert.strictEqual((await q('SELECT COUNT(*) AS n FROM events'))[0].n, before + 2);
     assert.deepStrictEqual(rows[1], { kind: 'pageview', path: '/properties/water-street/', property: 'water-street', ref: 'google.com', utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'fall-2026' });
     assert.strictEqual(rows[0].property, 'water-street');
   });
@@ -203,7 +185,7 @@ let dbCalls = 0;
     await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/properties/biltmore/', ref: 'https://l.facebook.com/', utm: { source: 'facebook', medium: 'paid_social', campaign: 'biltmore-oct' } }, ip: '10.3.0.7' });
     const r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, property: 'biltmore', unit: '', email: 'pat.test@example.com', page: '/properties/biltmore/' }, ip: '10.3.0.7' });
     const out = await r.json();
-    const [row] = q('SELECT utm_source, utm_campaign, landing FROM inquiries WHERE ref = ?', out.id);
+    const [row] = await q('SELECT utm_source, utm_campaign, landing FROM inquiries WHERE ref = ?', out.id);
     assert.deepStrictEqual(row, { utm_source: 'facebook', utm_campaign: 'biltmore-oct', landing: '/properties/biltmore/' });
   });
 
@@ -251,10 +233,10 @@ let dbCalls = 0;
     r = await call('/api/inquiries/?property=water-street', { cookie });
     out = await r.json();
     assert.ok(!out.inquiries.some((i) => i.id === first.id));
-    const sam = q("SELECT id FROM inquiries WHERE email = 'sam.test@example.com'")[0];
+    const sam = (await q("SELECT id FROM inquiries WHERE email = 'sam.test@example.com'"))[0];
     r = await call('/api/inquiries/', { method: 'POST', cookie, body: { id: sam.id, rentmanager: true } });
     assert.strictEqual(r.status, 200);
-    assert.strictEqual(q('SELECT rm_ok FROM inquiries WHERE id = ?', sam.id)[0].rm_ok, 1);
+    assert.strictEqual((await q('SELECT rm_ok FROM inquiries WHERE id = ?', sam.id))[0].rm_ok, 1);
   });
 
   await test('a shared report: totals only, by building, readable without signing in, and switched off', async () => {
@@ -273,28 +255,28 @@ let dbCalls = 0;
   });
 
   await test('unsubscribing: a page first, then the button; no more confirmations', async () => {
-    const [pref] = q("SELECT token FROM email_prefs WHERE email = 'alex.test@example.com'");
+    const [pref] = await q("SELECT token FROM email_prefs WHERE email = 'alex.test@example.com'");
     let r = await call(`/unsubscribe/${pref.token}/`);
     let page = await r.text();
     assert.ok(page.includes('Stop emails from Evolution24?') && page.includes('a•••@example.com') && !page.includes('alex.test@'));
-    assert.strictEqual(q("SELECT unsubscribed_at FROM email_prefs WHERE email = 'alex.test@example.com'")[0].unsubscribed_at, null);
+    assert.strictEqual((await q("SELECT unsubscribed_at FROM email_prefs WHERE email = 'alex.test@example.com'"))[0].unsubscribed_at, null);
     r = await call(`/unsubscribe/${pref.token}/`, { method: 'POST', body: '' });
     page = await r.text();
     assert.ok(page.includes('You’re unsubscribed.'));
-    const ids = q("SELECT id FROM inquiries WHERE email = 'alex.test@example.com'").map((x) => x.id);
+    const ids = (await q("SELECT id FROM inquiries WHERE email = 'alex.test@example.com'")).map((x) => x.id);
     r = await call('/api/inquiries/', { method: 'POST', cookie, body: { id: ids[0], confirm: true } });
     assert.strictEqual(r.status, 502); assert.match((await r.json()).error, /unsubscribed/);
     assert.strictEqual((await call('/unsubscribe/not-a-real-token-at-all/')).status, 404);
   });
 
   await test('Resend’s delivery reports: signed ones stamp the email; unsigned ones are refused', async () => {
-    const [mail] = q("SELECT resend_id FROM emails WHERE kind = 'confirmation' AND sent = 1 LIMIT 1");
+    const [mail] = await q("SELECT resend_id FROM emails WHERE kind = 'confirmation' AND sent = 1 LIMIT 1");
     const body = JSON.stringify({ type: 'email.delivered', created_at: new Date().toISOString(), data: { email_id: mail.resend_id } });
     const id = 'msg_1'; const ts = String(Math.floor(Date.now() / 1000));
     const sig = crypto.createHmac('sha256', Buffer.from('webhook-secret-bytes')).update(`${id}.${ts}.${body}`).digest('base64');
     let r = await call('/api/email-events/', { method: 'POST', body, headers: { 'svix-id': id, 'svix-timestamp': ts, 'svix-signature': `v1,${sig}` } });
     assert.strictEqual(r.status, 200);
-    assert.ok(q('SELECT delivered_at FROM emails WHERE resend_id = ?', mail.resend_id)[0].delivered_at);
+    assert.ok((await q('SELECT delivered_at FROM emails WHERE resend_id = ?', mail.resend_id))[0].delivered_at);
     r = await call('/api/email-events/', { method: 'POST', body, headers: { 'svix-id': id, 'svix-timestamp': ts, 'svix-signature': 'v1,forged' } });
     assert.strictEqual(r.status, 401);
   });
@@ -304,20 +286,42 @@ let dbCalls = 0;
     assert.match(r.headers.get('set-cookie'), /Max-Age=0/);
   });
 
+  await test('the database layer: ? numbered outside quotes, Supabase addresses read, tables made again', async () => {
+    assert.strictEqual(toPostgres("SELECT ? AS a, '?' AS b, \"q?\" FROM t WHERE x = ? AND y = 'it''s ?'"),
+      "SELECT $1 AS a, '?' AS b, \"q?\" FROM t WHERE x = $2 AND y = 'it''s ?'");
+    const o = options('postgres://postgres.abcdefghij:p%40ss%2Fw0rd@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x');
+    assert.deepStrictEqual([o.host, o.port, o.database, o.username, o.password, o.ssl, o.prepare, o.max],
+      ['aws-0-us-east-1.pooler.supabase.com', 6543, 'postgres', 'postgres.abcdefghij', 'p@ss/w0rd', 'require', false, 1]);
+    assert.strictEqual(options('postgresql://u:p@localhost:5432/db').ssl, false);
+    process.env.DB_CA_CERT = '-----BEGIN CERTIFICATE-----\\nMIIB\\n-----END CERTIFICATE-----';
+    try {
+      const v = options('postgres://u:p@db.example.supabase.com:6543/postgres').ssl;
+      assert.deepStrictEqual([v.rejectUnauthorized, v.ca.split('\n').length, v.servername], [true, 3, 'db.example.supabase.com']);
+    } finally { delete process.env.DB_CA_CERT; }
+    // A second instance on a database that already has the tables: the schema runs again, harmlessly.
+    await forget();
+    const r = await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/faqs/' } });
+    assert.ok(r.status < 300, `collect answered ${r.status}`);
+    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM pg_tables WHERE schemaname = 'public' AND rowsecurity")).at(0).n, 9);
+  });
+
   await test('without a database the form still reaches the sheet and the inbox', async () => {
-    const saved = process.env.DB_URL;
-    delete process.env.DB_URL;
+    const saved = process.env.DATABASE_URL;
+    delete process.env.DATABASE_URL;
     try {
       const r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, email: 'nodb@example.com' } });
       assert.strictEqual(r.status, 202);
       assert.strictEqual(leads.length, 1); assert.ok(mails.some((m) => m.to.includes('team@example.com')));
       assert.ok(!mails.some((m) => m.to.includes('nodb@example.com')), 'no confirmation without an unsubscribe record');
-    } finally { process.env.DB_URL = saved; }
+    } finally { process.env.DATABASE_URL = saved; }
   });
 
-  [turso, resend, sheet, rm, site].forEach((s) => s.close());
+  [resend, sheet, rm, site].forEach((s) => s.close());
+  await forget();
+  await pgServer.stop();
+  await pg.close();
   results.forEach(([s, n]) => console.log(s, n));
   const failed = results.filter(([s]) => s === 'FAIL').length;
-  console.log(failed ? `${failed} FAILED` : `all ${results.length} passed (${dbCalls} database statements)`);
+  console.log(failed ? `${failed} FAILED` : `all ${results.length} passed`);
   process.exit(failed ? 1 : 0);
 })();

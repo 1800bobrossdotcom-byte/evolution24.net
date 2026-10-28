@@ -86,10 +86,10 @@ function throttledInMemory(ip, now) {
 async function throttled(db, ip, now) {
   if (!db) return throttledInMemory(ip, now);
   try {
-    const row = await db.prepare('SELECT count, window FROM inquiry_attempts WHERE ip = ?').bind(ip).first();
-    if (!row || now - row.window >= WINDOW_S) {
-      await db.prepare(`INSERT INTO inquiry_attempts (ip, count, window) VALUES (?, 1, ?)
-                        ON CONFLICT(ip) DO UPDATE SET count = 1, window = excluded.window`).bind(ip, now).run();
+    const row = await db.prepare('SELECT count, window_start FROM inquiry_attempts WHERE ip = ?').bind(ip).first();
+    if (!row || now - row.window_start >= WINDOW_S) {
+      await db.prepare(`INSERT INTO inquiry_attempts (ip, count, window_start) VALUES (?, 1, ?)
+                        ON CONFLICT(ip) DO UPDATE SET count = 1, window_start = excluded.window_start`).bind(ip, now).run();
       return false;
     }
     if (row.count >= MAX_PER_WINDOW) return true;
@@ -243,9 +243,9 @@ module.exports = async function handler(req, res) {
         const t = await firstTouch(db, ip, String(req.headers['user-agent'] || '')).catch(() => null);
         if (t) Object.assign(row, { utm_source: t.utm_source || '', utm_medium: t.utm_medium || '', utm_campaign: t.utm_campaign || '', referrer: t.ref || '', landing: row.landing || t.path || '' });
       }
-      const r = await db.prepare(`INSERT INTO inquiries (${COLUMNS.join(', ')}) VALUES (${COLUMNS.map(() => '?').join(', ')})`)
-        .bind(...COLUMNS.map((c) => (row[c] === '' ? null : row[c]))).run();
-      row.id = r.meta.last_row_id;
+      const r = await db.prepare(`INSERT INTO inquiries (${COLUMNS.join(', ')}) VALUES (${COLUMNS.map(() => '?').join(', ')}) RETURNING id`)
+        .bind(...COLUMNS.map((c) => (row[c] === '' ? null : row[c]))).first();
+      row.id = r.id;
       stored = Boolean(row.id);
     } catch (err) {
       console.error('inquiry', row.ref, 'database:', err.message);

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "What the tests in scripts/ need, and nothing the website does: an in-process Postgres (PGlite) and a socket in front of it, so api/ talks to it as it talks to Supabase. Install with `npm ci --prefix scripts`.",
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite-socket": "0.2.11"
+  }
+}

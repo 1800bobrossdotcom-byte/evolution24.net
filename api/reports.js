@@ -23,7 +23,7 @@ const linkFor = (request, token) => `${new URL(request.url).origin}/r/${token}/`
 async function GET({ request, env }) {
   const denied = await requireSession(request, env);
   if (denied) return denied;
-  if (!env.DB) return json({ error: 'No database is connected (DB_URL and DB_TOKEN).' }, 503);
+  if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
   try {
     const { results } = await env.DB.prepare('SELECT token, period, from_day, to_day, partial, label, ts FROM reports ORDER BY ts DESC LIMIT 20').all();
     return json({ reports: results.map((r) => ({ ...r, url: linkFor(request, r.token) })) });
@@ -35,7 +35,7 @@ async function GET({ request, env }) {
 async function POST({ request, env }) {
   const denied = await requireSession(request, env);
   if (denied) return denied;
-  if (!env.DB) return json({ error: 'No database is connected (DB_URL and DB_TOKEN).' }, 503);
+  if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Bad JSON.' }, 400); }
   const period = PERIODS.includes(body && body.period) ? body.period : null;
@@ -66,7 +66,7 @@ async function POST({ request, env }) {
 async function DELETE({ request, env }) {
   const denied = await requireSession(request, env);
   if (denied) return denied;
-  if (!env.DB) return json({ error: 'No database is connected (DB_URL and DB_TOKEN).' }, 503);
+  if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
   const token = new URL(request.url).searchParams.get('token') || '';
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return json({ error: 'Which report?' }, 400);
   try {

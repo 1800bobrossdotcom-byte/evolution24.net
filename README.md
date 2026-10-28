@@ -329,7 +329,7 @@ built.
 | `LEADS_SHEET_TOKEN` | The token from step 1 (Evolution24 menu → Show the connection token) |
 | `LEADS_SHEET_LINK` | Optional: the sheet's own address, linked from every email |
 | `REPLY_TO` | Optional: where replies to a visitor's confirmation go (the first `LEAD_TO` address if not set) |
-| `DB_URL`, `DB_TOKEN` | The database (see *Statistics and the dashboard*); without them the form still works |
+| `DATABASE_URL` | The database (see *Statistics and the dashboard*); without it the form still works |
 
 The inbox addresses live only in Vercel, never in this repository or the page source,
 because a published address is the first thing a harvester finds.
@@ -399,11 +399,25 @@ connection out for fifteen minutes; a sign-in lasts twelve hours). It shows the 
 
 ### Setup, once
 
-**1. The database.** A free Turso database (turso.tech; SQLite, like Charlotte Square's
-D1). Create one, then a token for it, and add `DB_URL` (the `libsql://…` address) and
-`DB_TOKEN` in Vercel. If Turso is offered in Vercel's Marketplace for the project, connecting
-it there sets `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`, which work the same. The tables
-are made on the first request; there is nothing to run.
+**1. The database: Postgres at Supabase.**
+
+- **A project of its own.** In Supabase → *New project*, name it e.g. `evolution24-website`,
+  pick the region nearest Vercel's (East US), and save the database password it makes in a
+  password manager. Its own project keeps its tables and credentials apart from anything
+  else in the account.
+- **The address.** The project → *Connect* → **Transaction pooler** (port 6543; not *Direct
+  connection*, which Vercel cannot reach). Copy the `postgres://…pooler.supabase.com:6543/postgres`
+  address, put the password where it says `[YOUR-PASSWORD]`, and add it in Vercel as
+  `DATABASE_URL`. A password with symbols in it must be URL-encoded there (`@` is `%40`).
+  If you connect Supabase through Vercel's Marketplace instead, it sets `POSTGRES_URL`,
+  which works the same.
+- **Optional, stricter.** The connection is encrypted either way. To have the server's
+  certificate checked too: Supabase → Database Settings → SSL Configuration → *Download
+  certificate*, and paste the whole file into Vercel as `DB_CA_CERT`.
+
+The tables are made on the first request; there is nothing to run. Each has row-level
+security on with no policies, so Supabase's public Data API cannot read or write them;
+the site connects as their owner, which row security does not apply to.
 
 **2. The dashboard's secrets.** Run `node scripts/hash-password.mjs` on your own computer.
 It makes a password (save it in a password manager) and prints `ADMIN_PASSWORD_HASH`,
@@ -420,9 +434,11 @@ and says that delivery counts start once this is connected.
 sitemap is `https://evolution24.net/sitemap.xml`. To verify with an HTML file, put the file
 Google gives you in the repository root and push it.
 
-`node scripts/test-analytics.cjs` runs every function in `api/` against a real SQLite
-database behind the same protocol as Turso, with stand-ins for Resend, the lead sheet and
-Rent Manager. `node scripts/test-admin-ui.cjs` drives the dashboard itself in Chromium
+`node scripts/test-analytics.cjs` runs every function in `api/` against a real Postgres
+(PGlite, in the test's own process, reached over a socket the way Supabase's pooler is, so
+the site's own driver is tested too), with stand-ins for Resend, the lead sheet and Rent
+Manager. It needs `npm ci --prefix scripts` once, which installs PGlite into
+`scripts/node_modules` and nothing into the site. `node scripts/test-admin-ui.cjs` drives the dashboard itself in Chromium
 under the site's Content Security Policy: signing in, every panel, the building filter,
 marking an enquiry handled, light and dark, and a 360-pixel phone with no sideways scroll.
 
@@ -744,10 +760,11 @@ data/page-dates.json     when each page's content last changed, for the sitemap 
 source/photos/           original photos, untouched, with manifest.json (alt text, source URL)
 source/logo/             the PSD and its traced vectors
 scripts/                 photos.py, build.py, availability.mjs, hash-password.mjs, render-og.cjs, render-icons.cjs,
-                         the test-*.cjs checks, compare-after-effects.cjs
+                         the test-*.cjs checks, compare-after-effects.cjs; package.json is the tests' own (PGlite)
 api/inquiry.js           the enquiry forms' endpoint (Vercel function); api/leads-config.json is generated
 api/collect.js …         the statistics and the dashboard's API: collect, login, logout, stats, inquiries,
-                         reports, r (a shared report), unsubscribe, email-events; api/_lib/ holds what they share
+                         reports, r (a shared report), unsubscribe, email-events; api/_lib/ holds what they share,
+                         with db.js and schema.js the database (Supabase) and postgres/ its driver
 admin/                   the dashboard (/admin/): admin.js and admin.css in assets/
 assets/js/analytics.js   the first-party statistics script     assets/css/report.css  shared reports
 .github/workflows/       availability.yml: Rent Manager's open units onto the site, six times a day

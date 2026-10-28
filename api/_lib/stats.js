@@ -41,10 +41,10 @@ function labels() {
 async function loadTotals(env, { from, to }) {
   const q = (sql) => env.DB.prepare(sql).bind(from, to);
   const [ev, ld] = await env.DB.batch([
-    q(`SELECT SUM(kind = 'pageview')         AS pageviews,
+    q(`SELECT COUNT(*) FILTER (WHERE kind = 'pageview')         AS pageviews,
               COUNT(DISTINCT day || visitor) AS visits,
-              SUM(kind = 'phone_click')      AS phone_clicks,
-              SUM(kind = 'apply_click')      AS apply_clicks,
+              COUNT(*) FILTER (WHERE kind = 'phone_click')      AS phone_clicks,
+              COUNT(*) FILTER (WHERE kind = 'apply_click')      AS apply_clicks,
               COUNT(DISTINCT CASE WHEN kind = 'form_start' THEN day || visitor END) AS starts
          FROM events WHERE day BETWEEN ? AND ?`),
     q('SELECT COUNT(*) AS leads FROM inquiries WHERE day BETWEEN ? AND ?'),
@@ -61,14 +61,14 @@ async function loadStats(env, { from, to }) {
   const q = (sql, ...bind) => env.DB.prepare(sql).bind(...bind);
 
   const [totals, daily, pages, referrers, countries, devices, events, sizes, buildings, units] = await env.DB.batch([
-    q(`SELECT SUM(kind = 'pageview')         AS pageviews,
+    q(`SELECT COUNT(*) FILTER (WHERE kind = 'pageview')         AS pageviews,
               COUNT(DISTINCT day || visitor) AS visits,
-              SUM(kind = 'phone_click')      AS phone_clicks,
-              SUM(kind = 'portal_click')     AS portal_clicks,
-              SUM(kind = 'apply_click')      AS apply_clicks,
-              SUM(kind = 'email_click')      AS email_clicks
+              COUNT(*) FILTER (WHERE kind = 'phone_click')      AS phone_clicks,
+              COUNT(*) FILTER (WHERE kind = 'portal_click')     AS portal_clicks,
+              COUNT(*) FILTER (WHERE kind = 'apply_click')      AS apply_clicks,
+              COUNT(*) FILTER (WHERE kind = 'email_click')      AS email_clicks
          FROM events WHERE day BETWEEN ? AND ?`, from, to),
-    q(`SELECT day, SUM(kind = 'pageview') AS pageviews, COUNT(DISTINCT visitor) AS visits
+    q(`SELECT day, COUNT(*) FILTER (WHERE kind = 'pageview') AS pageviews, COUNT(DISTINCT visitor) AS visits
          FROM events WHERE day BETWEEN ? AND ? GROUP BY day ORDER BY day`, from, to),
     q(`SELECT path, COUNT(*) AS views, COUNT(DISTINCT visitor) AS visits
          FROM events WHERE day BETWEEN ? AND ? AND kind = 'pageview'
@@ -87,20 +87,20 @@ async function loadStats(env, { from, to }) {
          FROM events WHERE day BETWEEN ? AND ? AND kind <> 'pageview'
         GROUP BY kind ORDER BY count DESC`, from, to),
     // Which size of home people filter to: the leasing-relevant number.
-    q(`SELECT json_extract(meta, '$.value') AS size, COUNT(*) AS count
+    q(`SELECT meta::jsonb ->> 'value' AS size, COUNT(*) AS count
          FROM events WHERE day BETWEEN ? AND ? AND kind = 'filter' AND meta IS NOT NULL
         GROUP BY size`, from, to),
     // Each building's page: views and visitors; its phone taps and Apply clicks
     // wherever they happened (an Apply link names its building).
     q(`SELECT property,
-              SUM(kind = 'pageview')                                                AS views,
+              COUNT(*) FILTER (WHERE kind = 'pageview')                                                AS views,
               COUNT(DISTINCT CASE WHEN kind = 'pageview' THEN day || visitor END)   AS visits,
-              SUM(kind = 'phone_click')                                             AS phone_clicks,
-              SUM(kind = 'apply_click')                                             AS apply_clicks
+              COUNT(*) FILTER (WHERE kind = 'phone_click')                                             AS phone_clicks,
+              COUNT(*) FILTER (WHERE kind = 'apply_click')                                             AS apply_clicks
          FROM events WHERE day BETWEEN ? AND ? AND property IS NOT NULL
         GROUP BY property`, from, to),
-    q(`SELECT property, json_extract(meta, '$.unit') AS unit, COUNT(*) AS clicks
-         FROM events WHERE day BETWEEN ? AND ? AND kind = 'apply_click' AND json_extract(meta, '$.unit') IS NOT NULL
+    q(`SELECT property, meta::jsonb ->> 'unit' AS unit, COUNT(*) AS clicks
+         FROM events WHERE day BETWEEN ? AND ? AND kind = 'apply_click' AND meta::jsonb ->> 'unit' IS NOT NULL
         GROUP BY property, unit ORDER BY clicks DESC LIMIT ?`, from, to, LIMIT),
   ]);
 
@@ -131,10 +131,10 @@ async function loadStats(env, { from, to }) {
   } catch { /* no inquiries yet */ }
   try {
     const { results } = await q(
-      `SELECT t.value AS topic, COUNT(*) AS count
-         FROM inquiries, json_each(json_extract(inquiries.ai, '$.topics')) AS t
+      `SELECT t.topic, COUNT(*) AS count
+         FROM inquiries, jsonb_array_elements_text(inquiries.ai::jsonb -> 'topics') AS t(topic)
         WHERE inquiries.day BETWEEN ? AND ? AND inquiries.ai IS NOT NULL
-        GROUP BY t.value ORDER BY count DESC`, from, to).all();
+        GROUP BY t.topic ORDER BY count DESC`, from, to).all();
     asked.topics = results;
   } catch { /* no summaries */ }
 
@@ -185,7 +185,7 @@ async function loadStats(env, { from, to }) {
       q(`SELECT channel, COUNT(*) AS visits FROM (
            SELECT ${src('ref')} AS channel,
                   ROW_NUMBER() OVER (PARTITION BY day, visitor ORDER BY (utm_source IS NULL AND ref IS NULL), ts) AS n
-             FROM events WHERE day BETWEEN ? AND ? AND kind = 'pageview')
+             FROM events WHERE day BETWEEN ? AND ? AND kind = 'pageview') AS firsts
           WHERE n = 1 GROUP BY channel`, from, to),
       q(`SELECT ${src('referrer')} AS channel, COUNT(*) AS leads
            FROM inquiries WHERE day BETWEEN ? AND ? GROUP BY channel`, from, to),
@@ -251,17 +251,17 @@ async function loadEmails(env, { from, to }) {
   const toTs = Date.parse(`${to}T00:00:00Z`) / 1000 + 86400;
   try {
     const [c, n, u] = await env.DB.batch([
-      q(`SELECT SUM(sent = 1)                               AS sent,
-                SUM(sent = 1 AND delivered_at IS NOT NULL)  AS delivered,
-                SUM(sent = 1 AND bounced_at IS NOT NULL)    AS bounced,
-                SUM(sent = 1 AND complained_at IS NOT NULL) AS complained,
-                SUM(sent = 1 AND opened_at IS NOT NULL)     AS opened,
-                SUM(sent = 1 AND clicked_at IS NOT NULL)    AS clicked,
-                SUM(sent = 0 AND reason = 'unsubscribed')   AS held_unsubscribed,
-                SUM(sent = 0 AND reason = 'recent')         AS held_recent,
-                SUM(sent = 0 AND reason = 'error')          AS failed
+      q(`SELECT COUNT(*) FILTER (WHERE sent = 1)                               AS sent,
+                COUNT(*) FILTER (WHERE sent = 1 AND delivered_at IS NOT NULL)  AS delivered,
+                COUNT(*) FILTER (WHERE sent = 1 AND bounced_at IS NOT NULL)    AS bounced,
+                COUNT(*) FILTER (WHERE sent = 1 AND complained_at IS NOT NULL) AS complained,
+                COUNT(*) FILTER (WHERE sent = 1 AND opened_at IS NOT NULL)     AS opened,
+                COUNT(*) FILTER (WHERE sent = 1 AND clicked_at IS NOT NULL)    AS clicked,
+                COUNT(*) FILTER (WHERE sent = 0 AND reason = 'unsubscribed')   AS held_unsubscribed,
+                COUNT(*) FILTER (WHERE sent = 0 AND reason = 'recent')         AS held_recent,
+                COUNT(*) FILTER (WHERE sent = 0 AND reason = 'error')          AS failed
            FROM emails WHERE kind = 'confirmation' AND day BETWEEN ? AND ?`, from, to),
-      q(`SELECT COUNT(*) AS leads, SUM(notified = 1) AS reached,
+      q(`SELECT COUNT(*) AS leads, COUNT(*) FILTER (WHERE notified = 1) AS reached,
                 (SELECT COUNT(*) FROM emails
                   WHERE kind = 'notification' AND sent = 1 AND bounced_at IS NOT NULL AND day BETWEEN ? AND ?) AS bounced
            FROM inquiries WHERE day BETWEEN ? AND ?`, from, to, from, to),

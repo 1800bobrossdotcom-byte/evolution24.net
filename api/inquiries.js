@@ -30,7 +30,7 @@ const DEFAULT_LIMIT = 50;
 async function GET({ request, env }) {
   const denied = await requireSession(request, env);
   if (denied) return denied;
-  if (!env.DB) return json({ error: 'No database is connected (DB_URL and DB_TOKEN).' }, 503);
+  if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
 
   const url = new URL(request.url);
   const asked = Number.parseInt(url.searchParams.get('limit') || String(DEFAULT_LIMIT), 10);
@@ -58,7 +58,7 @@ async function GET({ request, env }) {
         ORDER BY ts DESC, id DESC LIMIT ?`,
     ).bind(...binds).all();
     const c = (await env.DB.prepare(
-      `SELECT COUNT(*) AS total, SUM(handled = 0) AS open, SUM(notified = 0 AND handled = 0) AS unnotified,
+      `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE handled = 0) AS open, COUNT(*) FILTER (WHERE notified = 0 AND handled = 0) AS unnotified,
               (SELECT notify_err FROM inquiries WHERE notified = 0 AND handled = 0 AND notify_err IS NOT NULL
                 ORDER BY ts DESC LIMIT 1) AS last_error
          FROM inquiries`,
@@ -90,7 +90,7 @@ async function GET({ request, env }) {
 async function POST({ request, env }) {
   const denied = await requireSession(request, env);
   if (denied) return denied;
-  if (!env.DB) return json({ error: 'No database is connected (DB_URL and DB_TOKEN).' }, 503);
+  if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Bad JSON.' }, 400); }
   const id = Number.parseInt(body && body.id, 10);
