@@ -52,8 +52,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 
 
-def options(argv):
-    out, only, video = HERE / "out", None, True
+def options(argv, out=HERE / "out"):
+    only, video = None, True
     args = iter(argv)
     for a in args:
         if a == "--only" or a.startswith("--only="):
@@ -61,7 +61,7 @@ def options(argv):
         elif a == "--no-video":
             video = False
         elif a.startswith("--"):
-            sys.exit(f"Unknown option {a}. Usage: ads.py [out-dir] [--only slug,slug] [--no-video]")
+            sys.exit(f"Unknown option {a}. Usage: {Path(sys.argv[0]).name} [out-dir] [--only name,name] [--no-video]")
         else:
             out = Path(a).resolve()
     return out, only, video
@@ -132,7 +132,7 @@ ADS = {
         lines=["A short walk from the river", "Tall windows · Exposed brick"],
         pitch="loft studios in a seven-storey brick building on St. Paul Street, downtown, with tall windows and painted brick"),
     "121-park-drive": dict(
-        photos=[("01-exterior.jpg", (0.5, 0.42)), ("01-exterior.jpg", (0.55, 0.62)), ("01-exterior.jpg", (0.35, 0.5))],
+        photos=[("01-exterior.jpg", (0.5, 0.42)), ("03-living-room.jpg", (0.5, 0.5)), ("02-porch-view.jpg", (0.5, 0.5))],
         lines=["A restored Victorian in Manlius", "Covered porch · Large backyard"],
         pitch="apartments in a beautifully restored Victorian on a quiet street in Manlius, with a covered porch and a large backyard"),
     "379-south-main-street": dict(
@@ -179,56 +179,80 @@ def facts_for(slug, spec):
                 rent=low, count=len(units), kinds=kinds(units))
 
 
-def link_for(slug):
+def link_for(slug, campaign="now-renting"):
     """Where the ad's button goes, tagged so the dashboard counts each building's ad as its own campaign."""
     p = PROPS[slug]
     if p.get("external"):
-        return f"{p['external'].rstrip('/')}/?utm_source=facebook&utm_medium=paid_social&utm_campaign=now-renting"
-    return f"{build.SITE}{build.prop_url(p)}?utm_source=facebook&utm_medium=paid_social&utm_campaign=now-renting-{slug}"
+        return f"{p['external'].rstrip('/')}/?utm_source=facebook&utm_medium=paid_social&utm_campaign={campaign}"
+    return f"{build.SITE}{build.prop_url(p)}?utm_source=facebook&utm_medium=paid_social&utm_campaign={campaign}-{slug}"
+
+
+def city(slug):
+    return "Rochester’s East End" if slug == "charlotte-square" else PROPS[slug]["city"]
+
+
+def now_renting(slug, info, who):
+    """The Now renting ad for a building, in the shape ad_html and make take."""
+    p = PROPS[slug]
+    as_of = "" if p.get("external") else f" · Rents as listed {listed(build.UNITS_AS_OF)}"
+    return dict(key=slug, who=who, url=link_for(slug), photos=[(slug, f, focus) for f, focus in ADS[slug]["photos"]],
+                lines=[info["facts"], *ADS[slug]["lines"]], kicker=f"Now renting · {city(slug)}", name=p["name"],
+                stamp=(*info["stamp"], "Now renting"), small=f"Equal Housing Opportunity{as_of}",
+                end=("Tours by appointment", "Let’s find<br>your <em>place.</em>"))
+
+
+def panel(ad, fmt):
+    """Where the photos sit: the shape's own panel, unless the ad's words need more room."""
+    return ad.get("panel", {}).get(fmt, FORMATS[fmt]["panel"])
 
 
 # ---------------------------------------------------------------- the pages
 ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
 
 
-def stamp(big, small):
-    ring = " · ".join(["Now renting"] * 3) + " · "
+def stamp(big, small, ring="Now renting"):
+    ring = " · ".join([ring] * max(1, 48 // (len(ring) + 3))) + " · "
+    size = "" if len(big) <= 2 else " long" if len(big) <= 3 else " longer"
     return ('<svg class="stamp" viewBox="0 0 300 300" aria-hidden="true">'
             '<defs><path id="ring" d="M150 150m-112 0a112 112 0 1 1 224 0a112 112 0 1 1-224 0"/></defs>'
             '<circle cx="150" cy="150" r="148" class="disc"/><circle cx="150" cy="150" r="84" class="rule"/>'
             f'<text class="ringt"><textPath href="#ring" textLength="700" lengthAdjust="spacing">{ring}</textPath></text>'
-            f'<text x="150" y="{168 if len(big) <= 2 else 162}" class="count{" long" if len(big) > 2 else ""}">{build.esc(big)}</text>'
+            f'<text x="150" y="{168 if len(big) <= 2 else 162 if len(big) <= 3 else 156}" class="count{size}">{build.esc(big)}</text>'
             f'<text x="150" y="200" class="unit">{build.esc(small)}</text></svg>')
 
 
-def ad_html(fmt, slug, info, who, photo=None, layer=None, line=None):
-    """One ad. layer: None (the whole picture), "frame" (everything but the photo and the changing
-    line, for video), "line" (only the changing line, set to `line`), or "end" (the end card)."""
+def ad_html(fmt, ad, photo=None, layer=None, line=None):
+    """One ad, from its description (now_renting's, or deals.py's). layer: None (the whole picture),
+    "frame" (everything but the photo and the changing line, for video), "line" (only the changing
+    line, set to `line`), or "end" (the end card). offer and end[1] are HTML; the rest is text."""
     F = FORMATS[fmt]
-    p = PROPS[slug]
-    x0, y0, x1, y1 = F["panel"]
+    who = ad["who"]
+    x0, y0, x1, y1 = panel(ad, fmt)
     lockup = build.standalone_lockup().replace("<svg ", '<svg class="lockup" ', 1)
     photo_html = f'<img class="photo" src="{photo}" alt="">' if photo else ""
-    city = "Rochester’s East End" if slug == "charlotte-square" else p["city"]
-    as_of = "" if p.get("external") else f" · Rents as listed {listed(build.UNITS_AS_OF)}"
+    offer = f'<p class="offer">{ad["offer"]}</p>' if ad.get("offer") else ""
+    units = "".join(f'''<div class="unitrow"><div><p class="ulab">{build.esc(label)}</p>{f'<p class="udet">{build.esc(detail)}</p>' if detail else ""}</div>
+      <p class="price">{build.money(rent)}<small>/mo</small></p></div>''' for label, detail, rent in ad.get("units", []))
     end = f'''<div class="endcard">{build.standalone_logo("mark", kit.ON_LIGHT).replace("<svg ", '<svg class="endmark" ', 1)}
-      <p class="end-lab">Tours by appointment</p>
-      <p class="end-big">Let’s find<br>your <em>place.</em></p>
-      <p class="end-url">{build.esc(link_for(slug).split("?")[0].replace("https://", "").replace("www.", "").rstrip("/"))}</p></div>'''
+      <p class="end-lab">{build.esc(ad["end"][0])}</p>
+      <p class="end-big">{ad["end"][1]}</p>
+      <p class="end-url">{build.esc(ad["url"].split("?")[0].replace("https://", "").replace("www.", "").rstrip("/"))}</p></div>'''
     body = f'''<div class="ad {fmt}{f" layer-{layer}" if layer else ""}">
   <div class="panel">{photo_html}<div class="shade"></div></div>
   <div class="inkband top"></div><div class="inkband bottom"></div>
   {lockup}
-  {stamp(*info["stamp"])}
+  {stamp(*ad["stamp"])}
   <div class="words">
-    <p class="kicker">Now renting · {build.esc(city)}</p>
-    <h1 class="name">{build.esc(p["name"])}</h1>
-    <p class="facts">{build.esc(line if line is not None else info["facts"])}</p>
+    <p class="kicker">{build.esc(ad["kicker"])}</p>
+    <h1 class="name">{build.esc(ad["name"])}</h1>
+    {offer}
+    <p class="facts">{build.esc(line if line is not None else ad["lines"][0])}</p>
+    {f'<div class="units n{len(ad["units"])}">{units}</div>' if units else ""}
     <div class="contact">
       <div><p class="lab">Call {build.esc(who["short"])}</p><p class="phone">{build.esc(who["phone"])}</p></div>
       <div class="right"><p class="email">{build.esc(who["email"])}</p><p class="cta">Book a tour {ARROW}</p></div>
     </div>
-    <p class="small">{build.EHO}Equal Housing Opportunity{build.esc(as_of)}</p>
+    <p class="small">{build.EHO}<span>{build.esc(ad["small"])}</span></p>
   </div>
   {end if layer == "end" else ""}
 </div>'''
@@ -263,6 +287,7 @@ html,body{background:transparent}
 .stamp .ringt{font:800 25px Manrope;letter-spacing:.2em;text-transform:uppercase;fill:var(--ink)}
 .stamp .count{font:400 112px 'Instrument Serif';text-anchor:middle;fill:var(--ink)}
 .stamp .count.long{font-size:86px}
+.stamp .count.longer{font-size:60px}
 .stamp .unit{font:800 18px Manrope;letter-spacing:.28em;text-transform:uppercase;text-anchor:middle;fill:var(--ink)}
 .words{position:absolute;left:60px;right:60px;bottom:58px}
 .story .words{bottom:272px}
@@ -276,8 +301,18 @@ html,body{background:transparent}
 .email{font:600 26px/1.2 Manrope;color:var(--cream);white-space:nowrap}
 .cta{margin-top:12px;display:inline-flex;align-items:center;gap:10px;font:800 19px/1 Manrope;letter-spacing:.24em;text-transform:uppercase;color:var(--tan)}
 .cta svg{width:24px;height:24px}
-.small{margin-top:26px;display:flex;align-items:center;gap:10px;font:600 17px/1 Manrope;letter-spacing:.06em;color:rgba(238,234,223,.6)}
+.small{margin-top:26px;display:flex;align-items:flex-start;gap:10px;font:600 17px/1.35 Manrope;letter-spacing:.06em;color:rgba(238,234,223,.6)}
 .small svg{width:22px;height:22px;flex:none}
+.offer{margin-top:10px;font:italic 400 66px/1.05 'Instrument Serif';color:var(--tan);white-space:nowrap}
+.story .offer{font-size:74px}
+.units{margin-top:24px}
+.unitrow{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:14px 26px;background:rgba(222,187,146,.12);border-left:4px solid var(--tan)}
+.unitrow+.unitrow{margin-top:10px}
+.ulab{font:800 24px/1 Manrope;letter-spacing:.2em;text-transform:uppercase;color:var(--tan)}
+.udet{margin-top:8px;font:500 26px/1 Manrope;color:rgba(238,234,223,.85)}
+.price{font:400 88px/1 'Instrument Serif';white-space:nowrap}
+.units.n2 .price{font-size:66px}
+.price small{margin-left:6px;font:600 26px Manrope;color:rgba(238,234,223,.7)}
 .story .name{font-size:104px}
 .story .facts{font-size:33px}
 /* video layers: one part of the picture each, the rest left see-through */
@@ -343,12 +378,12 @@ def with_alpha(layer, k):
     return out
 
 
-def video(fmt, slug, shots, layers, dest):
+def video(fmt, shots, layers, dest, box):
     """15 seconds: three photos moving and dissolving in the panel, the line under the name
     changing with each, then the end card. Frames are piped to ffmpeg as raw RGB."""
     F = FORMATS[fmt]
     W, H = F["W"], F["H"]
-    x0, y0, x1, y1 = F["panel"]
+    x0, y0, x1, y1 = box
     pw, ph = x1 - x0, y1 - y0
     # Each shot: on screen from start to end; zoom in or out by 7%, drifting a little.
     plan = [(0.0, 4.4, 1.0, 1.07, (-0.02, -0.01)), (4.0, 8.4, 1.07, 1.0, (0.02, 0.0)), (8.0, 12.0, 1.0, 1.07, (0.0, 0.02))]
@@ -438,7 +473,7 @@ def copy_for(slug, info, who):
                f"Call {who['short']} at {who['phone']} or email {who['email']} to book a tour.")
     alt = (f"Ad for {p['name']} in {city}: a photo from the building with a Now renting stamp, "
            f"{info['facts'].replace(' · ', ', ')}, and Call {who['short']} {who['phone']}.")
-    return dict(slug=slug, building=p["name"], headline=f"Now renting: {p['name']}", primary=primary, description=desc,
+    return dict(key=slug, ad=p["name"], headline=f"Now renting: {p['name']}", primary=primary, description=desc,
                 button="Learn more", link=link_for(slug), contact=f"{who['name']}, {who['phone']}, {who['email']}", alt=alt)
 
 
@@ -473,61 +508,48 @@ ads, no credit required.
 """
 
 
-def main():
-    who_all = contacts()
-    slugs = [s for s in ADS if PROPS[s].get("external") or PROPS[s]["units"]]
-    skipped = [p["name"] for p in build.PROPS if p["slug"] not in slugs and not p.get("external")]
-    if ONLY and set(ONLY) - set(ADS):
-        sys.exit(f"No ad for {', '.join(sorted(set(ONLY) - set(ADS)))}. Buildings: {', '.join(ADS)}")
-    WORK.mkdir(parents=True, exist_ok=True)
-    # --only draws some buildings again; the words and the overview still cover every one.
-    rows = [copy_for(s, facts_for(s, ADS[s]), who_all.get(s, who_all["default"])) for s in slugs]
-    for slug in [s for s in slugs if not ONLY or s in ONLY]:
-        spec = ADS[slug]
-        info = facts_for(slug, spec)
-        who = who_all.get(slug, who_all["default"])
-        out = OUT / slug
-        out.mkdir(parents=True, exist_ok=True)
-        jobs = []
-        shots = {}
-        for fmt, F in FORMATS.items():
-            x0, y0, x1, y1 = F["panel"]
-            size = (x1 - x0, y1 - y0)
-            hero = f"{slug}-{fmt}-hero.jpg"
-            prep_photo(slug, *spec["photos"][0], size, hero)
-            shots[fmt] = [prep_photo(slug, f, focus, (size[0] * 1.12, size[1] * 1.12), f"{slug}-{fmt}-shot{i}.jpg")
-                          for i, (f, focus) in enumerate(spec["photos"])]
-            pages = {"still": ad_html(fmt, slug, info, who, photo=hero), "frame": ad_html(fmt, slug, info, who, layer="frame"),
-                     "end": ad_html(fmt, slug, info, who, layer="end")}
-            for k, text in enumerate([info["facts"], *spec["lines"]]):
-                pages[f"line{k}"] = ad_html(fmt, slug, info, who, layer="line", line=text)
-            for name, html in pages.items():
-                path = WORK / f"{slug}-{fmt}-{name}.html"
-                path.write_text(html)
-                jobs.append(dict(html=path, png=WORK / f"{slug}-{fmt}-{name}.png", width=F["W"], height=F["H"], transparent=name != "still"))
-        render(jobs)
-        for fmt in FORMATS:
-            still = Image.open(WORK / f"{slug}-{fmt}-still.png").convert("RGB")
-            kit.save_jpeg(still, out / f"{fmt}.jpg", quality=92)
-            if VIDEO:
-                layers = {"frame": Image.open(WORK / f"{slug}-{fmt}-frame.png").convert("RGBA"),
-                          "end": Image.open(WORK / f"{slug}-{fmt}-end.png").convert("RGBA"),
-                          "lines": [Image.open(WORK / f"{slug}-{fmt}-line{k}.png").convert("RGBA") for k in range(3)]}
-                video(fmt, slug, shots[fmt], layers, out / f"{fmt}.mp4")
-        print(f"{PROPS[slug]['name']}: {', '.join(sorted(f.name for f in out.iterdir()))}")
+def make(ad):
+    """Draw one ad: its picture and video in each shape, into OUT/<key>/."""
+    key = ad["key"]
+    out = OUT / key
+    out.mkdir(parents=True, exist_ok=True)
+    jobs = []
+    shots = {}
+    for fmt, F in FORMATS.items():
+        x0, y0, x1, y1 = panel(ad, fmt)
+        size = (x1 - x0, y1 - y0)
+        hero = f"{key}-{fmt}-hero.jpg"
+        prep_photo(*ad["photos"][0], size, hero)
+        shots[fmt] = [prep_photo(slug, f, focus, (size[0] * 1.12, size[1] * 1.12), f"{key}-{fmt}-shot{i}.jpg")
+                      for i, (slug, f, focus) in enumerate(ad["photos"])]
+        pages = {"still": ad_html(fmt, ad, photo=hero), "frame": ad_html(fmt, ad, layer="frame"), "end": ad_html(fmt, ad, layer="end")}
+        for k, text in enumerate(ad["lines"]):
+            pages[f"line{k}"] = ad_html(fmt, ad, layer="line", line=text)
+        for name, html in pages.items():
+            path = WORK / f"{key}-{fmt}-{name}.html"
+            path.write_text(html)
+            jobs.append(dict(html=path, png=WORK / f"{key}-{fmt}-{name}.png", width=F["W"], height=F["H"], transparent=name != "still"))
+    render(jobs)
+    for fmt in FORMATS:
+        still = Image.open(WORK / f"{key}-{fmt}-still.png").convert("RGB")
+        kit.save_jpeg(still, out / f"{fmt}.jpg", quality=92)
+        if VIDEO:
+            layers = {"frame": Image.open(WORK / f"{key}-{fmt}-frame.png").convert("RGBA"),
+                      "end": Image.open(WORK / f"{key}-{fmt}-end.png").convert("RGBA"),
+                      "lines": [Image.open(WORK / f"{key}-{fmt}-line{k}.png").convert("RGBA") for k in range(3)]}
+            video(fmt, shots[fmt], layers, out / f"{fmt}.mp4", panel(ad, fmt))
+    print(f"{key}: {', '.join(sorted(f.name for f in out.iterdir()))}")
 
-    # The words, for Ads Manager.
-    cs = who_all.get("charlotte-square", who_all["default"])
-    md = [GUIDE.format(cs=f"{cs['name']} ({cs['phone']}, {cs['email']})", default=f"{who_all['default']['name']} ({who_all['default']['phone']}, {who_all['default']['email']})",
-                       as_of=listed(build.UNITS_AS_OF))]
-    if skipped:
-        md.append(f"Not included, with nothing open today: {', '.join(skipped)}.\n\n")
+
+def package(guide, rows, zipname):
+    """The words for Ads Manager (ads.md, ads.csv), every feed ad on one sheet, and a zip of the lot."""
+    md = [guide]
     for r in rows:
         md.append(f"""---
 
-## {r['building']}
+## {r['ad']}
 
-Files: `{r['slug']}/feed.jpg`, `{r['slug']}/story.jpg`, `{r['slug']}/feed.mp4`, `{r['slug']}/story.mp4`
+Files: `{r['key']}/feed.jpg`, `{r['key']}/story.jpg`, `{r['key']}/feed.mp4`, `{r['key']}/story.mp4`
 
 **Primary text:** {r['primary']}
 
@@ -548,25 +570,46 @@ Files: `{r['slug']}/feed.jpg`, `{r['slug']}/story.jpg`, `{r['slug']}/feed.mp4`, 
         w.writeheader()
         w.writerows(rows)
 
-    # Every feed ad on one sheet, to look over.
-    feeds = [(s, Image.open(OUT / s / "feed.jpg")) for s in slugs if (OUT / s / "feed.jpg").exists()]
+    keys = [r["key"] for r in rows]
+    feeds = [Image.open(OUT / k / "feed.jpg") for k in keys if (OUT / k / "feed.jpg").exists()]
     if feeds:
         cols = 3
         tw, th = 360, 450
         sheet = Image.new("RGB", (cols * tw + (cols + 1) * 16, ((len(feeds) + cols - 1) // cols) * (th + 16) + 16), "#e7e2d6")
-        for i, (_, im) in enumerate(feeds):
+        for i, im in enumerate(feeds):
             sheet.paste(im.resize((tw, th), Image.LANCZOS), (16 + (i % cols) * (tw + 16), 16 + (i // cols) * (th + 16)))
         kit.save_jpeg(sheet, OUT / "overview.jpg", quality=90)
 
-    zpath = OUT / "evolution24-facebook-ads.zip"
+    zpath = OUT / zipname
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
-        # Only today's buildings: a folder left from one that has since filled up stays out.
+        # Only today's ads: a folder left from a building that has since filled up stays out.
         files = [OUT / n for n in ("ads.md", "ads.csv", "overview.jpg")]
-        files += [f for s in slugs if (OUT / s).is_dir() for f in sorted((OUT / s).iterdir())]
+        files += [f for k in keys if (OUT / k).is_dir() for f in sorted((OUT / k).iterdir())]
         for f in files:
             if f.is_file():
-                z.write(f, Path("evolution24-facebook-ads") / f.relative_to(OUT))
+                z.write(f, Path(zipname).with_suffix("") / f.relative_to(OUT))
     print(f"{zpath} {zpath.stat().st_size // 1024} KB")
+
+
+def main():
+    who_all = contacts()
+    slugs = [s for s in ADS if PROPS[s].get("external") or PROPS[s]["units"]]
+    skipped = [p["name"] for p in build.PROPS if p["slug"] not in slugs and not p.get("external")]
+    if ONLY and set(ONLY) - set(ADS):
+        sys.exit(f"No ad for {', '.join(sorted(set(ONLY) - set(ADS)))}. Buildings: {', '.join(ADS)}")
+    WORK.mkdir(parents=True, exist_ok=True)
+    who = {s: who_all.get(s, who_all["default"]) for s in slugs}
+    # --only draws some buildings again; the words and the overview still cover every one.
+    for s in slugs:
+        if not ONLY or s in ONLY:
+            make(now_renting(s, facts_for(s, ADS[s]), who[s]))
+    cs = who_all.get("charlotte-square", who_all["default"])
+    guide = GUIDE.format(cs=f"{cs['name']} ({cs['phone']}, {cs['email']})",
+                         default=f"{who_all['default']['name']} ({who_all['default']['phone']}, {who_all['default']['email']})",
+                         as_of=listed(build.UNITS_AS_OF))
+    if skipped:
+        guide += f"Not included, with nothing open today: {', '.join(skipped)}.\n\n"
+    package(guide, [copy_for(s, facts_for(s, ADS[s]), who[s]) for s in slugs], "evolution24-facebook-ads.zip")
 
 
 if __name__ == "__main__":

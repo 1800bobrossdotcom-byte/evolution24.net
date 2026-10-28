@@ -717,6 +717,18 @@ python3 tools/ads/ads.py --only water-street,biltmore --no-video   # redraw some
 - **Where things are set:** the photos, lines and pitch for each building are the `ADS` table at
   the top of `ads.py`; the two shapes are `FORMATS`.
 
+**Specials.** `tools/ads/deals.py` makes the same kind of ads for a leasing special, from
+`tools/ads/deals.json`: half off the first month on leases signed by a date, as an ad for every
+building and one for all of them, and a special rent on a home or two per building. The two are
+never combined, and every ad says so in its small print. The ads name the deadline and the date
+the special rents were set, and `ads.md` says to end the campaign on the deadline. For the next
+special, edit `deals.json` and run it again.
+
+```bash
+python3 tools/ads/deals.py                  # all, into tools/ads/out/deals/
+python3 tools/ads/deals.py --only special-biltmore,half-off-water-street --no-video
+```
+
 ## Structure
 
 ```
@@ -743,8 +755,8 @@ tools/rent-manager/      the Rent Manager client and connection check (Apps Scri
 tools/after-effects/     the animated logo as an After Effects script (make.py writes it) and the kit around it
 tools/instagram/         the Instagram launch kit: make.py draws it, captions.md holds its words;
                          leasing.py draws the Now renting nine, captions-leasing.md holds theirs
-tools/ads/                the Facebook and Instagram ads, pictures and videos (ads.py makes them);
-                         contacts.json, who each ad says to call, is kept out of git
+tools/ads/                the Facebook and Instagram ads, pictures and videos: ads.py the Now renting set,
+                         deals.py a special's (deals.json); contacts.json, who each ad names, is kept out of git
 tools/pay-log/           the staff pay logs (Excel for Google Sheets): make.py writes them, test.py checks the sums;
                          Report.gs is the master labor report (Apps Script) that reads them all
 sitemap.xml robots.txt llms.txt speculation-rules.json site.webmanifest .well-known/security.txt
