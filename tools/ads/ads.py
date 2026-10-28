@@ -101,14 +101,15 @@ FORMATS = {
     "story": dict(W=1080, H=1920, panel=(0, 400, 1080, 1200)),
 }
 
-# Each building: three photos (file, where to keep when cropped) and two lines about it, taken
+# Each building: three photos, inside the homes and the building (file, where to keep when
+# cropped; The Biltmore has two large enough, so one is used twice), and two lines about it, taken
 # from its description and amenities on the website; in the video each line comes up with the
 # second and third photo, so it should fit it. pitch is the ad's opening sentence.
 ADS = {
     "charlotte-square": dict(
-        photos=[("07-terrace.jpg", (0.5, 0.45)), ("01-exterior-facade.jpg", (0.55, 0.5)), ("03-living-room.jpg", (0.5, 0.5))],
+        photos=[("03-living-room.jpg", (0.5, 0.55)), ("04-kitchen.jpg", (0.5, 0.5)), ("05-lobby-lounge.jpg", (0.5, 0.5))],
         facts="1, 2 and 3 bedrooms · Garage parking included",
-        lines=["LEED Gold certified · Terrace with fire pit", "Luxury apartments in the East End"],
+        lines=["Luxury apartments in the East End", "Lobby lounge · LEED Gold certified"],
         pitch="luxury one-, two- and three-bedroom apartments a block from Main Street and East Avenue, with a space in the secure garage included",
         stamp=("1–3", "bed")),
     "301-central-avenue": dict(
@@ -124,11 +125,11 @@ ADS = {
         lines=["Loft apartments with high ceilings", "On-site gym · Elevator · Laundry"],
         pitch="fully updated loft apartments close to downtown Rochester, with high ceilings and a gym on site"),
     "biltmore": dict(
-        photos=[("01-lobby.png", (0.5, 0.5)), ("04-studio-living.jpg", (0.5, 0.5)), ("02-exterior.jpg", (0.5, 0.45))],
-        lines=["Furnished studios · WiFi included", "Classic yellow brick · Pets welcome"],
+        photos=[("04-studio-living.jpg", (0.5, 0.35)), ("01-lobby.png", (0.5, 0.5)), ("04-studio-living.jpg", (0.5, 0.8))],
+        lines=["A restored mosaic lobby", "Furnished · WiFi included · Pets welcome"],
         pitch="furnished studios in a classic yellow-brick building on Alexander Street, with a restored mosaic lobby, WiFi included and pets welcome"),
     "181-st-paul-street": dict(
-        photos=[("01-exterior.jpg", (0.5, 0.4)), ("04-kitchen.jpg", (0.5, 0.5)), ("03-studio-brick.jpg", (0.5, 0.5))],
+        photos=[("02-studio.jpg", (0.5, 0.5)), ("04-kitchen.jpg", (0.5, 0.5)), ("03-studio-brick.jpg", (0.5, 0.5))],
         lines=["A short walk from the river", "Tall windows · Exposed brick"],
         pitch="loft studios in a seven-storey brick building on St. Paul Street, downtown, with tall windows and painted brick"),
     "121-park-drive": dict(

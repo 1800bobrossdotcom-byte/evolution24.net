@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Facebook and Instagram ads for a leasing special, from tools/ads/deals.json: half off the first
-month at every building, and a home or two per building at a special rent. Same look, shapes and
-videos as ads.py's Now renting ads, which it borrows.
+month, and a home or two per building at a special rent, for the buildings in one area (AREA:
+Rochester). Same look, shapes and videos as ads.py's Now renting ads, which it borrows.
 
     python3 tools/ads/deals.py [out-dir] [--only special-biltmore,half-off-water-street] [--no-video]
 
 Default out-dir: tools/ads/out/deals. Writes, as ads.py does, a folder of four files per ad
 (feed.jpg, story.jpg, feed.mp4, story.mp4), ads.md and ads.csv with each ad's words and how to run
 the campaign, overview.jpg, and a zip:
-  half-off-every-property/   half off at every building, for the whole area
+  half-off-rochester/        half off at every building in the area
   special-<slug>/            the building's special-rent home(s)
   half-off-<slug>/           half off at that building
 
@@ -59,10 +59,12 @@ PANELS = {
     "special2": {"feed": (0, 0, 1080, 650), "story": (0, 400, 1080, 995)},
 }
 
-# The every-building ad: one photo from each part of the area, and the line that goes with each.
-EVERY = dict(photos=[("charlotte-square", "07-terrace.jpg", (0.5, 0.45)), ("121-park-drive", "01-exterior.jpg", (0.5, 0.42)),
-                     ("379-south-main-street", "09-bedroom-green.jpg", (0.5, 0.45))],
-             lines=[f"Leases signed by {BY}", "Rochester, Syracuse and Geneva", "Studios to 3 bedrooms"])
+# The area the ads are for: its buildings get ads, and one ad covers them all, with a photo from
+# inside three of them and the line that goes with each.
+AREA = dict(city="Rochester", key="half-off-rochester", url=f"{build.SITE}/apartments/rochester-ny/",
+            photos=[("charlotte-square", "03-living-room.jpg", (0.5, 0.55)), ("water-street", "03-loft-mezzanine.jpg", (0.5, 0.5)),
+                    ("301-central-avenue", "08-bedroom-brick.jpg", (0.5, 0.5))],
+            lines=[f"Leases signed by {BY}", "Studios to 3 bedrooms", "Downtown and the East End"])
 
 
 def bedrooms(slug):
@@ -109,11 +111,11 @@ def special(slug, who):
 
 
 def every(who):
-    return dict(key="half-off-every-property", who=who, photos=EVERY["photos"], lines=EVERY["lines"],
-                url=f"{build.SITE}/properties/?utm_source=facebook&utm_medium=paid_social&utm_campaign=half-off",
-                kicker="Limited time · Every Evolution24 property", name="Half off your first month",
+    return dict(key=AREA["key"], who=who, photos=AREA["photos"], lines=AREA["lines"],
+                url=f"{AREA['url']}?utm_source=facebook&utm_medium=paid_social&utm_campaign={AREA['key']}",
+                kicker=f"Limited time · Every {AREA['city']} property", name="Half off your first month",
                 stamp=HALF_STAMP, small=f"{EHO}Half off the first month’s rent on leases signed by {ads.listed(UNTIL.isoformat())}.{NOT_SPECIAL}",
-                end=("Every Evolution24 property", HALF_END))
+                end=(f"Every {AREA['city']} property", HALF_END))
 
 
 # ---------------------------------------------------------------- words to post with them
@@ -158,14 +160,13 @@ def special_copy(ad, slug):
 
 def every_copy(ad):
     who = ad["who"]
-    return row(ad, "Half off: every property", "Half off your first month",
-               f"Half off your first month at every Evolution24 property, in Rochester, Syracuse and Geneva: studios to "
-               f"three-bedroom apartments, from downtown lofts to restored Victorians. Sign a lease by {BY} and your first "
-               f"month’s rent is half off. {call(who)} Offer for leases signed by {ads.listed(UNTIL.isoformat())}; not combined "
-               f"with special-rent homes.",
-               f"Every property · sign by {BY_SHORT}",
-               f"Ad for Evolution24 Properties: a photo of Charlotte Square’s terrace with a stamp reading half off, the words "
-               f"Half off your first month, leases signed by {BY}, and Call {who['short']} {who['phone']}.")
+    return row(ad, f"Half off: every {AREA['city']} property", "Half off your first month",
+               f"Half off your first month at every Evolution24 property in {AREA['city']}: studios to three-bedroom "
+               f"apartments, from downtown lofts to the East End. Sign a lease by {BY} and your first month’s rent is half "
+               f"off. {call(who)} Offer for leases signed by {ads.listed(UNTIL.isoformat())}; not combined with special-rent homes.",
+               f"Every {AREA['city']} property · sign by {BY_SHORT}",
+               f"Ad for Evolution24 Properties in {AREA['city']}: a photo of a living room with a stamp reading half off, the "
+               f"words Half off your first month, leases signed by {BY}, and Call {who['short']} {who['phone']}.")
 
 
 GUIDE = """# Facebook and Instagram ads: half off the first month, and special rents
@@ -173,7 +174,7 @@ GUIDE = """# Facebook and Instagram ads: half off the first month, and special r
 Two deals, never combined:
 
 - **Half off the first month’s rent** on leases signed by **{until}**, at every building.
-  `half-off-every-property` covers them all; `half-off-<building>` is one building's.
+  `{area_key}` covers every {city} building; `half-off-<building>` is one building's.
 - **Special rents**, as of {as_of}, while available: `special-<building>`. {specials}
 
 Each is a picture and a 15-second video in two shapes: `feed` (4:5) for the Facebook and Instagram
@@ -188,8 +189,8 @@ feeds and `story` (9:16) for Stories and Reels. Charlotte Square's ads name {cs}
    the deadline. Pause the Now renting ads meanwhile (their rents are as listed {listed}), and turn
    them back on after.
 3. **One ad set per building**, with its half-off ad and its special-rent ad together, so Meta
-   shows whichever does better. `half-off-every-property` gets its own ad set, aimed at Rochester,
-   Syracuse and Geneva together.
+   shows whichever does better. `{area_key}` gets its own ad set. Aim them all at {city} +
+   15 miles.
 4. **Links** carry their own campaign tags (`half-off-<building>`, `special-<building>`), so the
    website's dashboard (`/admin/` → Campaigns) shows what each ad brings.
 {website}6. **Fair housing.** The words say what the homes and deals are, never who they are for; keep any
@@ -202,13 +203,14 @@ feeds and `story` (9:16) for Stories and Reels. Charlotte Square's ads name {cs}
 
 def main():
     who_all = ads.contacts()
-    slugs = [s for s in ADS if PROPS[s].get("external") or PROPS[s]["units"]]
+    here = [s for s in ADS if PROPS[s]["city"] == AREA["city"]]
+    slugs = [s for s in here if PROPS[s].get("external") or PROPS[s]["units"]]
     missing = sorted(set(SPECIAL) - set(ADS))
     if missing:
         sys.exit(f"deals.json names {', '.join(missing)}, which have no photos or lines in ads.py's ADS")
     who = lambda s: who_all.get(s, who_all["default"])
     made = [(every(who_all["default"]), None, every_copy)]
-    made += [(special(s, who(s)), s, special_copy) for s in ADS if s in SPECIAL]
+    made += [(special(s, who(s)), s, special_copy) for s in here if s in SPECIAL]
     made += [(half_off(s, who(s)), s, half_off_copy) for s in slugs]
     keys = [ad["key"] for ad, _, _ in made]
     if ads.ONLY and set(ads.ONLY) - set(keys):
@@ -219,14 +221,17 @@ def main():
             ads.make(ad)
 
     cs = who("charlotte-square")
-    skipped = [p["name"] for p in build.PROPS if p["slug"] not in slugs and not p.get("external")]
+    away = [p["name"] for p in build.PROPS if p["city"] != AREA["city"]]
+    empty = [p["name"] for p in build.PROPS if p["city"] == AREA["city"] and p["slug"] not in slugs]
     guide = GUIDE.format(
         until=ads.listed(UNTIL.isoformat()), as_of=ads.listed(DEALS["as_of"]), listed=ads.listed(build.UNITS_AS_OF), website="{website}",
-        specials="; ".join(f"{PROPS[s]['name']}: " + ", ".join(f"{l} at {build.money(r)}" for l, _, r in homes(s)) for s in SPECIAL) + ".",
+        specials="; ".join(f"{PROPS[s]['name']}: " + ", ".join(f"{l} at {build.money(r)}" for l, _, r in homes(s)) for s in here if s in SPECIAL) + ".",
+        area_key=AREA["key"], city=AREA["city"],
         cs=f"{cs['name']} ({cs['phone']}, {cs['email']})",
         default=f"{who_all['default']['name']} ({who_all['default']['phone']}, {who_all['default']['email']})",
-        skipped=(f"No building ad for {' or '.join(skipped)}, with nothing listed open; the every-property ad covers them.\n\n"
-                 if skipped else ""))
+        skipped=(f"{AREA['city']} only: no ads for {', '.join(away)}."
+                 + (f" No building ad for {' or '.join(empty)}, with nothing listed open; `{AREA['key']}` covers it." if empty else "")
+                 + "\n\n"))
     # A special-rent home the website lists at another rent: someone who clicks through sees that one.
     stale = [f"{PROPS[s]['name']}’s unit {h['unit']} at {build.money(u['rent'])}" for s in SPECIAL for h in SPECIAL[s]
              for u in PROPS[s].get("units", []) if u["unit"] == h["unit"] and u["rent"] != h["rent"]]
