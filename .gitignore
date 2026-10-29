@@ -7,3 +7,4 @@ tools/pay-log/people.json
 tools/ads/out/
 tools/ads/contacts.json
 node_modules/
+tools/google-business/
