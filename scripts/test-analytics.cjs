@@ -85,10 +85,6 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
   // their own one-bedroom at Water Street instead of counting on a real one staying open.
   const { CONFIG } = require(path.join(API, '_lib', 'leads.js'));
   CONFIG.properties['water-street'].units['73'] = { label: 'Unit 302RV · 1 bed · $1,590/mo', bedrooms: '1' };
-  // The site's list of homes follows Rent Manager, so it changes by the day: the tests bring
-  // their own one-bedroom at Water Street instead of counting on a real one staying open.
-  const { CONFIG } = require(path.join(API, '_lib', 'leads.js'));
-  CONFIG.properties['water-street'].units['73'] = { label: 'Unit 302RV · 1 bed · $1,590/mo', bedrooms: '1' };
   const routes = {};
   for (const name of ['inquiry', 'collect', 'login', 'logout', 'stats', 'inquiries', 'reports', 'r', 'unsubscribe', 'email-events']) {
     routes[`/api/${name}/`] = require(path.join(API, `${name}.js`));
@@ -224,7 +220,7 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
     assert.deepStrictEqual(s.units[0], { property: 'Water Street', slug: 'water-street', unit: '302RV', clicks: 1 });
     assert.ok(s.sources.some((x) => x.channel === 'google / cpc'));
     assert.ok(s.plans.some((x) => x.plan === '1 bedroom' && x.count >= 2));
-    assert.strictEqual(s.availability.open, 19); assert.ok(s.emails.confirmations.sent >= 1);
+    assert.strictEqual(s.availability.open, CONFIG.open_units);   // the site's own count, whatever Rent Manager says today assert.ok(s.emails.confirmations.sent >= 1);
     assert.strictEqual(s.daily.length, 30);
   });
 
