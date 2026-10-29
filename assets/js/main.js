@@ -254,9 +254,9 @@
           form.reset(); upd(); status.textContent = '';
           location.hash = 'sent';
           sent.focus();
-        } else fail(out.error || 'Sorry, your message did not go through. Please call us on 585-245-3071.');
+        } else fail(out.error || 'Sorry, your message did not go through. Please call us on 585-759-7117.');
       } catch {
-        fail('Sorry, your message did not go through. Please check your connection, or call us on 585-245-3071.');
+        fail('Sorry, your message did not go through. Please check your connection, or call us on 585-759-7117.');
       } finally {
         form.classList.remove('is-sending');
       }
@@ -270,7 +270,7 @@
   if (deal && typeof deal.showModal === 'function') {
     const until = deal.dataset.until;
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
-    if (today > until) { deal.remove(); $$('.deal-note, [data-deal-open]').forEach(n => n.remove()); }
+    if (today > until) { deal.remove(); $$('.deal-note, [data-deal-open], .u-special').forEach(n => n.remove()); }
     else {
       const days = Math.round((Date.parse(until) - Date.parse(today)) / 864e5);
       const left = days === 0 ? 'Last day: ends tonight' : days === 1 ? 'Ends tomorrow' : `${days} days left`;

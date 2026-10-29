@@ -1,5 +1,5 @@
 {
-  "_about": "The leasing special. The website shows it (scripts/build.py: a popup on every page until the last day, Eastern time, and each special rent as that home's rent, whatever Rent Manager says) and tools/ads/deals.py makes its ads. half_off: half off the first month's rent on leases signed by `until`, at every building. special: one home (or two) per building at a special rent, as of `as_of`; `detail` is optional (e.g. Furnished), and a home on the website's list also gets its kind (Studio, 1-bedroom). The two deals are not combined, and every ad says so.",
+  "_about": "The leasing special. The website shows it (scripts/build.py: a popup on every page until the last day, Eastern time, and each special rent as that home's rent, whatever Rent Manager says) and tools/ads/deals.py makes its ads. half_off: half off the first month's rent on leases signed by `until`, at every building. special: one home (or two) per building at a special rent, as of `as_of`; `detail` is optional (e.g. Furnished), and a home on the website's list also gets its kind (Studio, 1-bedroom). The two deals are not combined, and every ad says so. Both end after half_off.until (Rochester's date): the special rents go back to Rent Manager's then.",
   "as_of": "2026-10-27",
   "half_off": {"until": "2026-11-15"},
   "special": {

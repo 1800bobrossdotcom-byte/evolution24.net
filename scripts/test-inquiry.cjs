@@ -118,7 +118,7 @@ const readJson = (req) => new Promise((resolve) => { let b = ''; req.on('data', 
   await test('both failing asks the visitor to call', async () => {
     resendMode = 'fail'; env({ LEADS_SHEET_TOKEN: 'b'.repeat(64) });
     const r = await send(good); const out = await r.json();
-    assert.strictEqual(r.status, 502); assert.match(out.error, /585-245-3071/);
+    assert.strictEqual(r.status, 502); assert.match(out.error, /585-759-7117/);
   });
   await test('nothing configured says so, and records nothing', async () => {
     env({ RESEND_API_KEY: undefined, LEADS_SHEET_URL: undefined, LEADS_SHEET_TOKEN: undefined });

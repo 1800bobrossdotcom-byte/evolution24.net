@@ -16,14 +16,15 @@ import json
 import re
 import shutil
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 
 # ---------------------------------------------------------------- constants
 SITE = "https://evolution24.net"          # the old site's canonical host; keep it
 NAME = "Evolution24 Properties"
-PHONE = "585-245-3071"
-PHONE_TEL = "+15852453071"
+PHONE = "585-759-7117"
+PHONE_TEL = "+15857597117"
 EMAIL = "tesacoleman9@gmail.com"          # the address the old site published
 OFFICE = {"street": "176 N Water Street", "city": "Rochester", "region": "NY", "zip": "14604"}
 OFFICE_GEO = (43.15981, -77.61129)        # from OpenStreetMap, matched to the house number
@@ -42,11 +43,13 @@ BY_SLUG = {p["slug"]: p for p in PROPS}
 # The leasing special, from data/deals.json (the Facebook ads read it too): half off the first
 # month on leases signed by a date, and a special rent on named homes. A special rent is the rent
 # the site shows for that home, whatever Rent Manager says, so the site and the ads agree.
-# Charlotte Square's own site shows its own. The popup goes once the date has passed.
+# Charlotte Square's own site shows its own. Both end with that date, Rochester's: the build
+# after it (the Rent Manager job rebuilds every morning) shows neither, and main.js takes
+# the popup down at midnight on a page built before.
 DEALS = json.loads((ROOT / "data" / "deals.json").read_text())
 HALF_OFF_UNTIL = dt.date.fromisoformat(DEALS["half_off"]["until"]) if DEALS.get("half_off") else None
-DEAL_ON = bool(HALF_OFF_UNTIL and dt.date.today() <= HALF_OFF_UNTIL)
-for _slug, _homes in DEALS.get("special", {}).items():
+DEAL_ON = bool(HALF_OFF_UNTIL and dt.datetime.now(ZoneInfo("America/New_York")).date() <= HALF_OFF_UNTIL)
+for _slug, _homes in (DEALS.get("special", {}) if DEAL_ON else {}).items():
     for _h in _homes:
         for _u in BY_SLUG[_slug].get("units", []):
             if _u["unit"] == _h["unit"]:
@@ -375,14 +378,14 @@ def org_node():
         "url": f"{SITE}/",
         "logo": {"@type": "ImageObject", "url": f"{SITE}/assets/img/logo-512.png", "width": 512, "height": 512},
         "image": f"{SITE}/assets/img/og.png",
-        "telephone": PHONE_TEL.replace("+1", "+1-").replace("5852453071", "585-245-3071"),
+        "telephone": f"+1-{PHONE}",
         "email": EMAIL,
         "foundingDate": str(FOUNDED),
         "description": "Family-owned property management company with apartments in Rochester, Syracuse, Manlius and Geneva, New York.",
         "address": {"@type": "PostalAddress", "streetAddress": OFFICE["street"], "addressLocality": OFFICE["city"],
                     "addressRegion": OFFICE["region"], "postalCode": OFFICE["zip"], "addressCountry": "US"},
         "geo": {"@type": "GeoCoordinates", "latitude": OFFICE_GEO[0], "longitude": OFFICE_GEO[1]},
-        "contactPoint": {"@type": "ContactPoint", "telephone": "+1-585-245-3071", "contactType": "leasing",
+        "contactPoint": {"@type": "ContactPoint", "telephone": f"+1-{PHONE}", "contactType": "leasing",
                          "areaServed": "US-NY", "availableLanguage": "English"},
         "areaServed": [{"@type": "City", "name": n, "containedInPlace": {"@type": "State", "name": "New York"}}
                        for n in ("Rochester", "Syracuse", "Manlius", "Geneva")],
@@ -1363,9 +1366,9 @@ def contact():
     </div>
   </div>
 </section>"""
-    graph = [{"@type": "ContactPoint", "@id": f"{SITE}/contact-us/#contact", "telephone": "+1-585-245-3071", "email": EMAIL,
+    graph = [{"@type": "ContactPoint", "@id": f"{SITE}/contact-us/#contact", "telephone": f"+1-{PHONE}", "email": EMAIL,
               "contactType": "customer service", "areaServed": "US-NY", "availableLanguage": "English"}]
-    return page(url="/contact-us/", title="Contact Evolution24 Properties | 585-245-3071",
+    return page(url="/contact-us/", title=f"Contact Evolution24 Properties | {PHONE}",
                 desc=f"Contact Evolution24 Properties about an apartment in Rochester, Syracuse or Geneva, NY. Call {PHONE}, email us, or visit {OFFICE['street']}, Rochester.",
                 body=body, graph=graph, page_type="ContactPage", crumbs=[("Home", "/"), ("Contact", "/contact-us/")])
 

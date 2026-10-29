@@ -69,7 +69,7 @@ Apply online.
 
 Every available apartment on evolution24.net has an Apply button that opens our secure
 application, and you can start it from your phone. Questions first? Call the office on
-585-245-3071.
+585-759-7117.
 
 Evolution24 Properties is an Equal Housing Opportunity provider.
 
@@ -103,7 +103,7 @@ See what's free, with rents and photos, through the link in our bio.
 Now touring.
 
 See it in person before you sign. Ask for a tour through the link in our bio, or call the office
-on 585-245-3071, and we'll find a time that works.
+on 585-759-7117, and we'll find a time that works.
 
 #RochesterNY #SyracuseNY #GenevaNY #NowLeasing
 

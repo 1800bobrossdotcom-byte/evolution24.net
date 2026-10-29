@@ -16,7 +16,7 @@ README asks for them to be confirmed before the site launches:
 - **Name:** Evolution24 Properties
 - **Category:** Property Management Company. If Instagram doesn't list it, use Real Estate.
 - **Links:** https://evolution24.net first. Instagram allows up to five, so add https://www.charlottesquareroc.com as the second, titled Charlotte Square.
-- **Contact buttons:** phone 585-245-3071, and the office at 176 N Water Street, Rochester, NY 14604 (this adds a Directions button).
+- **Contact buttons:** phone 585-759-7117, and the office at 176 N Water Street, Rochester, NY 14604 (this adds a Directions button).
 
 **Bio** (134 of Instagram's 150 characters; keep the line breaks):
 
@@ -30,7 +30,7 @@ Evolution24 Properties is a family-owned property management company with apartm
 
 Our homes run from downtown lofts and furnished studios to a restored Victorian in the village of Manlius and houses above Seneca Lake, with studios to three bedrooms. We renovate with care, keep what makes an old building special, and answer when you call.
 
-As a family-owned company we keep things approachable: real people, quick answers, and homes we would be happy to live in ourselves. You deal with the owners and a small team, not a call center. To see what’s available, book a tour or apply, visit evolution24.net, or call us on 585-245-3071.
+As a family-owned company we keep things approachable: real people, quick answers, and homes we would be happy to live in ourselves. You deal with the owners and a small team, not a call center. To see what’s available, book a tour or apply, visit evolution24.net, or call us on 585-759-7117.
 
 Evolution24 Properties is an Equal Housing Opportunity provider.
 
@@ -98,7 +98,7 @@ Details and applications: link in bio.
 
 Let’s find your place.
 
-Every Evolution24 home is on evolution24.net. See what’s available, book a tour and apply online, or call us on 585-245-3071. We’re a small, family-owned team, so a real person picks up.
+Every Evolution24 home is on evolution24.net. See what’s available, book a tour and apply online, or call us on 585-759-7117. We’re a small, family-owned team, so a real person picks up.
 
 Link in bio.
 
@@ -106,7 +106,7 @@ Evolution24 Properties is an Equal Housing Opportunity provider.
 
 #ApartmentHunting #RochesterNY #SyracuseNY #GenevaNY
 
-**Alt text:** Graphic: Let’s find your place. Tours and applications at evolution24.net, or call 585-245-3071
+**Alt text:** Graphic: Let’s find your place. Tours and applications at evolution24.net, or call 585-759-7117
 
 ## 05 · center · Charlotte Square
 

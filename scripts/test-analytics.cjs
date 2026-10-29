@@ -81,6 +81,10 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
     RM_PROSPECTS: 'on', RM_USERNAME: 'web-leads', RM_PASSWORD: 'rm-pass', RM_BASE_URL: `http://127.0.0.1:${rm.address().port}`,
     RESEND_WEBHOOK_SECRET: `whsec_${Buffer.from('webhook-secret-bytes').toString('base64')}`,
   });
+  // The site's list of homes follows Rent Manager, so it changes by the day: the tests bring
+  // their own one-bedroom at Water Street instead of counting on a real one staying open.
+  const { CONFIG } = require(path.join(API, '_lib', 'leads.js'));
+  CONFIG.properties['water-street'].units['73'] = { label: 'Unit 302RV · 1 bed · $1,590/mo', bedrooms: '1' };
   const routes = {};
   for (const name of ['inquiry', 'collect', 'login', 'logout', 'stats', 'inquiries', 'reports', 'r', 'unsubscribe', 'email-events']) {
     routes[`/api/${name}/`] = require(path.join(API, `${name}.js`));
