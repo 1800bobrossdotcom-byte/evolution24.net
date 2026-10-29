@@ -737,7 +737,7 @@ python3 tools/ads/ads.py --only water-street,biltmore --no-video   # redraw some
   the top of `ads.py`; the two shapes are `FORMATS`.
 
 **Specials.** `tools/ads/deals.py` makes the same kind of ads for a leasing special, from
-`tools/ads/deals.json`: half off the first month on leases signed by a date, as an ad for each
+`data/deals.json`: half off the first month on leases signed by a date, as an ad for each
 building in one area (`AREA` in `deals.py`: Rochester) and one for all of them, and a special rent
 on a home or two per building. The two are
 never combined, and every ad says so in its small print. The ads name the deadline and the date

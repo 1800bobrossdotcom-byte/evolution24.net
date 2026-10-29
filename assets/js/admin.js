@@ -688,6 +688,7 @@
     apply_click: 'Clicked Apply on a home', portal_click: 'Went to the resident portal',
     map_click: 'Opened a map', gallery_open: 'Opened a photo',
     outbound: 'Followed a link off the site', form_start: 'Started the enquiry form',
+    deal_open: 'Saw the leasing special', deal_click: 'Clicked through the leasing special',
     filter: 'Filtered the homes',
   };
 

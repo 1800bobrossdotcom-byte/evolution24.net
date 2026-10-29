@@ -263,6 +263,40 @@
     });
   });
 
+  /* ---- The leasing special: a dialog once a visit, a little after the page (and the intro)
+     has settled; the header's "½ off" brings it back. It counts down to its last day and goes,
+     Eastern time, even on a page built before that day. */
+  const deal = $('#deal');
+  if (deal && typeof deal.showModal === 'function') {
+    const until = deal.dataset.until;
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    if (today > until) { deal.remove(); $$('.deal-note, [data-deal-open]').forEach(n => n.remove()); }
+    else {
+      const days = Math.round((Date.parse(until) - Date.parse(today)) / 864e5);
+      const left = days === 0 ? 'Last day: ends tonight' : days === 1 ? 'Ends tomorrow' : `${days} days left`;
+      $$('[data-deal-left]').forEach(el => { el.textContent = left; });
+      const track = kind => { if (window.e24track) window.e24track(kind); };
+      const KEY = 'e24-deal';
+      let seen = true;
+      try { seen = sessionStorage.getItem(KEY) === '1'; } catch { /* no storage: never nag; the header's button stays */ }
+      const open = () => { if (deal.open) return; deal.showModal(); track('deal_open'); };
+      deal.addEventListener('close', () => { try { sessionStorage.setItem(KEY, '1'); } catch { /* fine */ } });
+      deal.addEventListener('click', e => {
+        if (e.target === deal) deal.close();                 // the backdrop
+        else if (e.target.closest('a')) { track('deal_click'); deal.close(); }
+      });
+      $$('[data-deal-open]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); open(); }));
+      if (!seen) {
+        const later = () => setTimeout(() => {
+          if (!doc.classList.contains('is-intro') && !document.body.classList.contains('menu-open') && !$('dialog[open]')) open();
+          else later();
+        }, 2500);
+        if (document.prerendering) document.addEventListener('prerenderingchange', later, { once: true });
+        else later();
+      }
+    }
+  }
+
   /* ---- Apply, on the building's own page: chooses the home and "Applying" in its form
      and goes there, without loading the page again. From anywhere else the link loads
      the building's page, whose form reads the same choices from the address. */

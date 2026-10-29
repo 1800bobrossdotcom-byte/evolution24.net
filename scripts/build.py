@@ -38,6 +38,21 @@ PROPS = DATA["properties"]
 REGIONS = DATA["regions"]
 UNITS_AS_OF = DATA["units_as_of"]
 BY_SLUG = {p["slug"]: p for p in PROPS}
+
+# The leasing special, from data/deals.json (the Facebook ads read it too): half off the first
+# month on leases signed by a date, and a special rent on named homes. A special rent is the rent
+# the site shows for that home, whatever Rent Manager says, so the site and the ads agree.
+# Charlotte Square's own site shows its own. The popup goes once the date has passed.
+DEALS = json.loads((ROOT / "data" / "deals.json").read_text())
+HALF_OFF_UNTIL = dt.date.fromisoformat(DEALS["half_off"]["until"]) if DEALS.get("half_off") else None
+DEAL_ON = bool(HALF_OFF_UNTIL and dt.date.today() <= HALF_OFF_UNTIL)
+for _slug, _homes in DEALS.get("special", {}).items():
+    for _h in _homes:
+        for _u in BY_SLUG[_slug].get("units", []):
+            if _u["unit"] == _h["unit"]:
+                _u.update(rent=_h["rent"], special=True)
+                if _h.get("detail") and not _u.get("note"):
+                    _u["note"] = _h["detail"]
 CS_LEASING = BY_SLUG["charlotte-square"]["leasing"]   # Charlotte Square's leasing contact, as its own site gives it
 
 FAQS = [
@@ -495,6 +510,7 @@ def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None
     <a class="brand" href="/" aria-label="{NAME}, home">{logo_lockup()}</a>
     <nav class="nav" aria-label="Main">{nav}</nav>
     <div class="header-cta">
+      {deal_chip() if url not in ("/privacy/", "/404.html") else ""}
       <a class="btn" href="{PORTAL}" rel="noopener">Residents</a>
       <button class="menu-btn" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><span></span><span></span></button>
     </div>
@@ -512,6 +528,7 @@ def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None
 {body}
 </main>
 {footer()}
+{"" if url in ("/privacy/", "/404.html") else deal_dialog()}
 </body>
 </html>
 """
@@ -581,6 +598,65 @@ def apply_url(p, u=None):
     return f"{prop_url(p)}?{unit}interest=apply#enquire"
 
 
+def deal_day(d=None):
+    d = d or HALF_OFF_UNTIL
+    return f"{d.strftime('%B')} {d.day}"
+
+
+def deal_note():
+    if not DEAL_ON:
+        return ""
+    return (f'<p class="deal-note"><b>Half off your first month</b> on leases signed by {deal_day()}. '
+            f'<span data-deal-left></span></p>')
+
+
+def deal_chip():
+    """In the header, while the special runs: opens its dialog (or, without JavaScript, the homes)."""
+    if not DEAL_ON:
+        return ""
+    return ('<a class="deal-chip" href="/properties/#available" data-deal-open aria-controls="deal">'
+            '<b>½ off</b><span> first month</span></a>')
+
+
+def deal_dialog():
+    """The special, as a dialog main.js opens once a visit (the header's deal_chip brings it back).
+    Off once its last day has passed, in the build and again in the browser."""
+    if not DEAL_ON:
+        return ""
+    rows = []
+    for slug, homes in DEALS.get("special", {}).items():
+        p = BY_SLUG[slug]
+        for h in homes:
+            if p.get("external"):
+                href = f'{p["external"].rstrip("/")}/?utm_source=evolution24&utm_medium=website&utm_campaign=special'
+                what, attrs = f"Unit {esc(h['unit'])}", f'href="{href}" rel="noopener" data-deal-link'
+            else:
+                u = next((x for x in p.get("units", []) if x["unit"] == h["unit"]), None)
+                if not u:
+                    continue                           # leased since: not offered
+                what = f"Unit {esc(u['unit'])} · {unit_type(u).split(' · ')[0]}" + (f" · {esc(u['note'])}" if u.get("note") else "")
+                attrs = f'href="{apply_url(p, u)}" data-apply data-deal-link data-property="{slug}" data-unit="{esc(u["unit"])}"'
+            rows.append(f'<li><a {attrs}><span class="ds-where"><b>{esc(p["name"])}</b>{what}</span>'
+                        f'<span class="ds-rent">{money(h["rent"])}<small>/mo</small></span>{icon("ext" if p.get("external") else "arrow")}</a></li>')
+    specials = (f'<div class="deal-specials"><h3>Or take a special rent</h3><ul>{"".join(rows)}</ul></div>' if rows else "")
+    last = HALF_OFF_UNTIL
+    return f"""<dialog class="deal" id="deal" aria-labelledby="deal-title" data-until="{last.isoformat()}">
+  <div class="deal-box">
+    <form method="dialog"><button class="deal-x" aria-label="Close">{icon("close")}</button></form>
+    <p class="label">Limited time · Every Evolution24 property</p>
+    <h2 id="deal-title">Half off your <em>first month.</em></h2>
+    <p class="deal-lead">Sign a lease by <b>{deal_day()}</b> and your first month’s rent is half off.</p>
+    <p class="deal-clock"><span data-deal-left>Ends {deal_day()}</span></p>
+    {specials}
+    <div class="deal-actions">
+      <a class="btn btn--solid" href="/properties/#available" data-deal-link>See homes available now {icon("arrow")}</a>
+      <a class="btn" href="tel:{PHONE_TEL}" data-deal-link>Call {PHONE}</a>
+    </div>
+    <p class="deal-small">Half off the first month’s rent on leases signed by {deal_day()}, {last.year}. Special rents while available; not combined with half off. Equal Housing Opportunity.</p>
+  </div>
+</dialog>"""
+
+
 def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
     trs = []
     for p, u in rows:
@@ -593,11 +669,11 @@ def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
             note += f' · <span class="u-when">From {d.strftime("%b")} {d.day}</span>'
         trs.append(f"""<tr data-tags="{unit_tag(u)} {p['region']}">
   {prop_cell}<td data-k="Unit">{esc(u['unit'])}</td><td>{unit_type(u)}{note}</td><td data-k="">{size}</td>
-  <td class="u-rent">{money(u['rent'])}<small>/mo</small></td>
+  <td class="u-rent">{money(u['rent'])}<small>/mo</small>{'<span class="u-special">Special</span>' if u.get('special') else ''}</td>
   <td class="u-act"><a class="btn" href="{apply_url(p, u)}" data-apply data-property="{p['slug']}" data-unit="{esc(u['unit'])}" aria-label="Apply for unit {esc(u['unit'])} at {esc(p['name'])}">Apply {icon('arrow')}</a></td>
 </tr>""")
     head_prop = "<th>Property</th>" if show_prop else ""
-    return f"""<table class="units" data-filter-items="{group}">
+    return f"""{deal_note()}<table class="units" data-filter-items="{group}">
 <caption>Availability and rents as listed on {fmt_date(UNITS_AS_OF)}. Our leasing team confirms the current rent and move-in date.</caption>
 <thead><tr>{head_prop}<th>Unit</th><th>Type</th><th>Size</th><th>Rent</th><th><span class="sr-only">Apply</span></th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
@@ -1392,6 +1468,10 @@ def llms():
     for p, u in ALL_UNITS:
         size = f", {u['sqft']} sq ft" if u.get("sqft") else ""
         lines.append(f"- {p['name']}, {p['city']}: unit {u['unit']}, {unit_type(u)}{size}, {money(u['rent'])}/mo. Apply: {SITE}{apply_url(p, u)}")
+    if DEAL_ON:
+        lines += ["", "## Leasing special", f"- Half off the first month's rent on leases signed by {deal_day()}, {HALF_OFF_UNTIL.year}, at every property.",
+                  "- Special rents, while available, not combined with half off: " + "; ".join(
+                      f"{BY_SLUG[s]['name']} unit {h['unit']} at {money(h['rent'])}/mo" for s, hs in DEALS.get("special", {}).items() for h in hs) + "."]
     lines += ["", "## Notes", "- Availability changes daily; the leasing team confirms the current rent and move-in date.",
               f"- Charlotte Square (50 Charlotte Street) has its own site at https://www.charlottesquareroc.com/ with leasing by {CS_LEASING['name']}, {CS_LEASING['phone']}."]
     return "\n".join(lines) + "\n"

@@ -14,7 +14,7 @@ const { visitorHash, today } = require('./_lib/auth.js');
 const CONFIG = require('./leads-config.json');
 
 const KINDS = new Set(['pageview', 'phone_click', 'email_click', 'apply_click', 'portal_click', 'map_click',
-  'gallery_open', 'outbound', 'form_start', 'filter']);
+  'gallery_open', 'outbound', 'form_start', 'filter', 'deal_open', 'deal_click']);
 const DEVICES = new Set(['mobile', 'tablet', 'desktop']);
 const BOTS = /bot|crawl|spider|slurp|preview|headless|lighthouse|pingdom|monitor|curl|wget|python-requests/i;
 

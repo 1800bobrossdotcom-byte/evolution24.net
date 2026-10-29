@@ -1,0 +1,13 @@
+{
+  "_about": "The leasing special. The website shows it (scripts/build.py: a popup on every page until the last day, Eastern time, and each special rent as that home's rent, whatever Rent Manager says) and tools/ads/deals.py makes its ads. half_off: half off the first month's rent on leases signed by `until`, at every building. special: one home (or two) per building at a special rent, as of `as_of`; `detail` is optional (e.g. Furnished), and a home on the website's list also gets its kind (Studio, 1-bedroom). The two deals are not combined, and every ad says so.",
+  "as_of": "2026-10-27",
+  "half_off": {"until": "2026-11-15"},
+  "special": {
+    "181-st-paul-street": [{"unit": "6D", "rent": 1500}],
+    "charlotte-square": [{"unit": "212", "rent": 2295}],
+    "biltmore": [{"unit": "10", "rent": 1150}],
+    "145-south-fitzhugh-street": [{"unit": "2-2", "rent": 1020}],
+    "water-street": [{"unit": "602RV", "rent": 1495}],
+    "301-central-avenue": [{"unit": "5", "rent": 1295}, {"unit": "4", "rent": 1795, "detail": "Furnished"}]
+  }
+}

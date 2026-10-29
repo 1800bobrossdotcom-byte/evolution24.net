@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Facebook and Instagram ads for a leasing special, from tools/ads/deals.json: half off the first
+"""Facebook and Instagram ads for a leasing special, from data/deals.json: half off the first
 month, and a home or two per building at a special rent, for the buildings in one area (AREA:
 Rochester). Same look, shapes and videos as ads.py's Now renting ads, which it borrows.
 
@@ -13,7 +13,8 @@ the campaign, overview.jpg, and a zip:
   half-off-<slug>/           half off at that building
 
 The two deals are not combined: a half-off ad says it does not apply to the special-rent homes,
-and a special-rent ad says it does not come with half off. Change deals.json for the next special;
+and a special-rent ad says it does not come with half off. Change data/deals.json (the website
+reads it too: its popup and its special rents) for the next special;
 nothing here names a date, a rent or a unit. Who to call comes from contacts.json, as for ads.py.
 """
 import datetime as dt
@@ -42,7 +43,7 @@ build, PROPS, ADS = ads.build, ads.PROPS, ads.ADS
 ads.OUT, ads.ONLY, ads.VIDEO = ads.options(sys.argv[1:], out=HERE / "out" / "deals")
 ads.WORK = ads.OUT / "work"
 
-DEALS = json.loads((HERE / "deals.json").read_text())
+DEALS = json.loads((ads.ROOT / "data" / "deals.json").read_text())   # the website reads it too
 UNTIL = dt.date.fromisoformat(DEALS["half_off"]["until"])
 SPECIAL = DEALS["special"]
 BY = f"{UNTIL:%B} {UNTIL.day}"                   # November 15

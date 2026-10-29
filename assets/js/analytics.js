@@ -91,7 +91,10 @@
 
   // Which size of home a visitor filtered to: the leasing-relevant number.
   // main.js calls this from its filter chips.
-  window.e24track = (kind, meta) => { if (kind === 'filter' && meta && meta.value) send('filter', { value: String(meta.value).slice(0, 20) }); };
+  window.e24track = (kind, meta) => {
+    if (kind === 'filter' && meta && meta.value) send('filter', { value: String(meta.value).slice(0, 20) });
+    else if (kind === 'deal_open' || kind === 'deal_click') send(kind);     // the leasing special's popup
+  };
 
   // The first time they touch an enquiry form: the step between reading and
   // asking, which shows whether a page loses people at the form.
