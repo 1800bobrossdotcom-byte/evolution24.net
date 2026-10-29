@@ -25,7 +25,13 @@ SITE = "https://evolution24.net"          # the old site's canonical host; keep 
 NAME = "Evolution24 Properties"
 PHONE = "585-759-7117"
 PHONE_TEL = "+15857597117"
-EMAIL = "tesacoleman9@gmail.com"          # the address the old site published
+EMAILS = ("vicki@evolution24.net", "tesa@evolution24.net")   # the leasing team, as the site shows it
+EMAIL = EMAILS[0]                          # where one address must stand for both: structured data
+MAILTO = "mailto:" + ",".join(EMAILS)      # one tap writes to both
+
+
+def emails_html(sep=" or "):
+    return sep.join(f'<a href="mailto:{e}">{e}</a>' for e in EMAILS)
 OFFICE = {"street": "176 N Water Street", "city": "Rochester", "region": "NY", "zip": "14604"}
 OFFICE_GEO = (43.15981, -77.61129)        # from OpenStreetMap, matched to the house number
 PORTAL = "https://evolution.twa.rentmanager.com/"
@@ -548,7 +554,7 @@ def footer():
       <div class="foot-brand">
         <a href="/" aria-label="{NAME}, home">{logo_stacked(False)}</a>
         <p>A family-owned property management company with apartments across Rochester, Syracuse and Geneva, New York.</p>
-        <p><a href="tel:{PHONE_TEL}">{PHONE}</a><br><a href="mailto:{EMAIL}">{EMAIL}</a><br>{OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}</p>
+        <p><a href="tel:{PHONE_TEL}">{PHONE}</a><br>{emails_html("<br>")}<br>{OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}</p>
       </div>
       {by_region}
     </div>
@@ -967,7 +973,7 @@ def enquiry_form(p):
       </div>
       <div class="form-flash form-flash--error" id="not-sent" tabindex="-1" role="alert">
         <h2>Sorry, your message did not go through.</h2>
-        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email {emails_html()}.</p>
       </div>
       <form class="form" id="enquiry-form" data-lead action="/api/inquiry/" method="post" data-reveal>
         <input type="hidden" name="form" value="property"><input type="hidden" name="property" value="{slug}"><input type="hidden" name="page" value="{prop_url(p)}">
@@ -1313,7 +1319,7 @@ def faqs():
     <div class="tiles">
       <a class="tile" href="{PORTAL}" rel="noopener">{icon('key')}<h3>Resident portal</h3><p>Pay rent and submit work orders in Tenant Web Access.</p></a>
       <a class="tile" href="tel:{PHONE_TEL}">{icon('phone')}<h3>{PHONE}</h3><p>Call the office.</p></a>
-      <a class="tile" href="mailto:{EMAIL}">{icon('mail')}<h3>Email</h3><p>{EMAIL}</p></a>
+      <a class="tile" href="{MAILTO}">{icon('mail')}<h3>Email</h3><p>{"<br>".join(EMAILS)}</p></a>
     </div>
   </div>
 </section>"""
@@ -1334,7 +1340,7 @@ def contact():
       </div>
       <div class="form-flash form-flash--error" id="not-sent" tabindex="-1" role="alert">
         <h2>Sorry, your message did not go through.</h2>
-        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email {emails_html()}.</p>
       </div>
       <form class="form" id="contact-form" data-lead action="/api/inquiry/" method="post" data-reveal>
         <input type="hidden" name="form" value="contact"><input type="hidden" name="page" value="/contact-us/">
@@ -1359,7 +1365,7 @@ def contact():
     <div class="contact-cards" data-reveal>
       <h2 class="sr-only">Other ways to reach us</h2>
       <div><h3>Call</h3><a class="big" href="tel:{PHONE_TEL}">{PHONE}</a></div>
-      <div><h3>Email</h3><p><a href="mailto:{EMAIL}">{EMAIL}</a></p></div>
+      <div><h3>Email</h3><p>{emails_html("<br>")}</p></div>
       <div><h3>Office</h3><p>{OFFICE['street']}<br>{OFFICE['city']}, NY {OFFICE['zip']}</p></div>
       <div><h3>Residents</h3><p>Pay rent and request maintenance in <a href="{PORTAL}" rel="noopener">Tenant Web Access</a>.</p></div>
       <div><h3>Charlotte Square</h3><p>Leasing: {esc(CS_LEASING['name'])}, <a href="tel:+1{re.sub(r'[^0-9]', '', CS_LEASING['phone'])}">{esc(CS_LEASING['phone'])}</a>, or <a href="{CHARLOTTE_CONTACT}" rel="noopener">its contact page</a></p></div>
@@ -1384,7 +1390,7 @@ def privacy():
 <p>After you send a form we email you once to say it arrived. Every such email has a link to stop them, and we send no more than one in twelve hours. To have an enquiry removed, call or email us.</p>
 <p>Maps are only loaded from Google when you press “Show the map”, and are then subject to Google’s privacy policy. Applications and resident accounts are handled by our property management software, Rent Manager, in Tenant Web Access.</p>
 <h2>Accessibility</h2>
-<p>We want this site to work for everyone, including with a screen reader, a keyboard alone or reduced motion. If something is hard to use, call <a href="tel:{PHONE_TEL}">{PHONE}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a> and we will help and fix it.</p>
+<p>We want this site to work for everyone, including with a screen reader, a keyboard alone or reduced motion. If something is hard to use, call <a href="tel:{PHONE_TEL}">{PHONE}</a> or email {emails_html()} and we will help and fix it.</p>
 <h2>Contact</h2>
 <p>{NAME}, {OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}.</p>
 </div></section>"""
@@ -1457,7 +1463,7 @@ def llms():
              "## Contact",
              f"- Office: {OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}",
              f"- Phone: {PHONE}",
-             f"- Email: {EMAIL}",
+             f"- Email: {', '.join(EMAILS)}",
              f"- Residents pay rent and request maintenance at {PORTAL}",
              f"- Pets: up to two per apartment; ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet.",
              "- Rent is paid by check, money order or online. Cash is not accepted.", "",
