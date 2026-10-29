@@ -28,6 +28,8 @@ PHONE_TEL = "+15857597117"
 EMAILS = ("vicki@evolution24.net", "tesa@evolution24.net")   # the leasing team, as the site shows it
 EMAIL = EMAILS[0]                          # where one address must stand for both: structured data
 MAILTO = "mailto:" + ",".join(EMAILS)      # one tap writes to both
+INSTAGRAM = "evolution24properties"
+INSTAGRAM_URL = f"https://www.instagram.com/{INSTAGRAM}/"
 
 
 def emails_html(sep=" or "):
@@ -224,6 +226,7 @@ def icon(name):
         "paw": '<circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="6.5" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 12c-3 0-5.5 4-5.5 6s2 2 5.5 1 5.5 1 5.5-1-2.5-6-5.5-6z"/>',
         "box": '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
         "mail": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+        "instagram": '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
         "pin": '<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
         "ext": '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
         "grid": '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
@@ -396,7 +399,7 @@ def org_node():
         "areaServed": [{"@type": "City", "name": n, "containedInPlace": {"@type": "State", "name": "New York"}}
                        for n in ("Rochester", "Syracuse", "Manlius", "Geneva")],
         "knowsAbout": ["Apartment rentals", "Property management", "Furnished apartments", "Loft apartments"],
-        "sameAs": ["https://www.charlottesquareroc.com/"],
+        "sameAs": ["https://www.charlottesquareroc.com/", INSTAGRAM_URL],
     }
 
 
@@ -555,6 +558,7 @@ def footer():
         <a href="/" aria-label="{NAME}, home">{logo_stacked(False)}</a>
         <p>A family-owned property management company with apartments across Rochester, Syracuse and Geneva, New York.</p>
         <p><a href="tel:{PHONE_TEL}">{PHONE}</a><br>{emails_html("<br>")}<br>{OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}</p>
+        <p><a class="foot-social" href="{INSTAGRAM_URL}" rel="noopener">{icon('instagram')}<span>@{INSTAGRAM}</span></a></p>
       </div>
       {by_region}
     </div>
@@ -889,12 +893,17 @@ def home():
                 preload=(slides[0][0], photo(*slides[0])), graph=faq_graph, extra_head=italic)
 
 
+# The big three lead the Properties page, in this order; the rest follow as in properties.json.
+FEATURED = ("charlotte-square", "181-st-paul-street", "water-street")
+
+
 def properties_index():
+    order = [BY_SLUG[s] for s in FEATURED] + [p for p in PROPS if p["slug"] not in FEATURED]
     chips = [('all', 'All', len(PROPS))] + [(k, r["name"], sum(1 for p in PROPS if p["region"] == k)) for k, r in REGIONS.items()]
     chips.append(("available", "Available now", sum(1 for p in PROPS if p["units"])))
     chip_html = "".join(f'<button class="chip" type="button" data-value="{k}" aria-pressed="{str(k == "all").lower()}">{esc(n)} <small>{c}</small></button>' for k, n, c in chips)
-    cards = "".join(card(p, i) for i, p in enumerate(PROPS))
-    items = [{"@type": "ListItem", "position": i + 1, "url": SITE + prop_url(p), "name": p["name"]} for i, p in enumerate(PROPS)]
+    cards = "".join(card(p, i) for i, p in enumerate(order))
+    items = [{"@type": "ListItem", "position": i + 1, "url": SITE + prop_url(p), "name": p["name"]} for i, p in enumerate(order)]
     body = f"""{page_hero('Properties', f'{len(PROPS)} places|to call *home*.', f'Every Evolution24 property in Rochester, Syracuse, Manlius and Geneva. {len(ALL_UNITS)} apartments are available now, from {money(RENT_FROM)} a month.', [('Home', '/'), ('Properties', '/properties/')])}
 <section class="section section--tight">
   <div class="wrap">
@@ -1320,6 +1329,7 @@ def faqs():
       <a class="tile" href="{PORTAL}" rel="noopener">{icon('key')}<h3>Resident portal</h3><p>Pay rent and submit work orders in Tenant Web Access.</p></a>
       <a class="tile" href="tel:{PHONE_TEL}">{icon('phone')}<h3>{PHONE}</h3><p>Call the office.</p></a>
       <a class="tile" href="{MAILTO}">{icon('mail')}<h3>Email</h3><p>{"<br>".join(EMAILS)}</p></a>
+      <a class="tile" href="{INSTAGRAM_URL}" rel="noopener">{icon('instagram')}<h3>Instagram</h3><p>@{INSTAGRAM}: new homes as they open.</p></a>
     </div>
   </div>
 </section>"""
@@ -1367,6 +1377,7 @@ def contact():
       <div><h3>Call</h3><a class="big" href="tel:{PHONE_TEL}">{PHONE}</a></div>
       <div><h3>Email</h3><p>{emails_html("<br>")}</p></div>
       <div><h3>Office</h3><p>{OFFICE['street']}<br>{OFFICE['city']}, NY {OFFICE['zip']}</p></div>
+      <div><h3>Instagram</h3><p><a href="{INSTAGRAM_URL}" rel="noopener">@{INSTAGRAM}</a></p></div>
       <div><h3>Residents</h3><p>Pay rent and request maintenance in <a href="{PORTAL}" rel="noopener">Tenant Web Access</a>.</p></div>
       <div><h3>Charlotte Square</h3><p>Leasing: {esc(CS_LEASING['name'])}, <a href="tel:+1{re.sub(r'[^0-9]', '', CS_LEASING['phone'])}">{esc(CS_LEASING['phone'])}</a>, or <a href="{CHARLOTTE_CONTACT}" rel="noopener">its contact page</a></p></div>
     </div>
@@ -1464,6 +1475,7 @@ def llms():
              f"- Office: {OFFICE['street']}, {OFFICE['city']}, NY {OFFICE['zip']}",
              f"- Phone: {PHONE}",
              f"- Email: {', '.join(EMAILS)}",
+             f"- Instagram: {INSTAGRAM_URL}",
              f"- Residents pay rent and request maintenance at {PORTAL}",
              f"- Pets: up to two per apartment; ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet.",
              "- Rent is paid by check, money order or online. Cash is not accepted.", "",

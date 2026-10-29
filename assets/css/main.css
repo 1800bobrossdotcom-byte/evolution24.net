@@ -633,6 +633,9 @@ body.lb-open { overflow: hidden; }
 }
 @media print { .site-header, .intro, .drawer, .hero-media, .lightbox { display: none !important; } }
 
+.foot-social { display: inline-flex; align-items: center; gap: 8px; line-height: 1; }
+.foot-social svg { width: 18px; height: 18px; flex: none; }
+
 /* ---------- The leasing special (data/deals.json): a dialog once a visit, a header button that brings
    it back, a line above the units tables and a tag on each special rent. ---------- */
 .u-special { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 999px; background: var(--tan); color: var(--ink);
