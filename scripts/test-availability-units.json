@@ -1,0 +1,169 @@
+{
+ "_about": "What data/properties.json listed as open before Rent Manager was connected (22 September 2026): test-availability.cjs starts from this, so the live list changing never breaks it.",
+ "units_as_of": "2026-09-22",
+ "units": {
+  "301-central-avenue": [
+   {
+    "uid": 6,
+    "unit": "6",
+    "beds": 2,
+    "baths": 1,
+    "rent": 1900
+   }
+  ],
+  "145-south-fitzhugh-street": [
+   {
+    "uid": 34,
+    "unit": "1-1",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 650,
+    "rent": 1750
+   },
+   {
+    "uid": 36,
+    "unit": "1-3",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 650,
+    "rent": 1365
+   },
+   {
+    "uid": 39,
+    "unit": "2-2",
+    "beds": 0,
+    "baths": 1,
+    "sqft": 450,
+    "rent": 1195
+   },
+   {
+    "uid": 48,
+    "unit": "4-2",
+    "beds": 0,
+    "baths": 1,
+    "sqft": 450,
+    "rent": 1600
+   }
+  ],
+  "water-street": [
+   {
+    "uid": 62,
+    "unit": "103RV",
+    "beds": 0,
+    "baths": 1,
+    "sqft": 348,
+    "rent": 1175
+   },
+   {
+    "uid": 64,
+    "unit": "105RV",
+    "beds": 0,
+    "baths": 1,
+    "sqft": 483,
+    "rent": 1300
+   },
+   {
+    "uid": 73,
+    "unit": "302RV",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 619,
+    "rent": 1590
+   },
+   {
+    "uid": 85,
+    "unit": "502RV",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 619,
+    "rent": 1625
+   },
+   {
+    "uid": 87,
+    "unit": "504RV",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 505,
+    "rent": 1600
+   },
+   {
+    "uid": 90,
+    "unit": "601RV",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 597,
+    "rent": 1400
+   },
+   {
+    "uid": 94,
+    "unit": "605RV",
+    "beds": 1,
+    "baths": 1,
+    "sqft": 807,
+    "rent": 1700
+   }
+  ],
+  "biltmore": [
+   {
+    "uid": 128,
+    "unit": "10",
+    "beds": 0,
+    "baths": 1,
+    "sqft": 365,
+    "rent": 1595,
+    "note": "Furnished"
+   }
+  ],
+  "181-st-paul-street": [
+   {
+    "uid": 172,
+    "unit": "4E",
+    "beds": 0,
+    "sqft": 470,
+    "rent": 1195
+   },
+   {
+    "uid": 185,
+    "unit": "6E",
+    "beds": 0,
+    "sqft": 520,
+    "rent": 1200
+   }
+  ],
+  "2215-james-street": [],
+  "121-park-drive": [
+   {
+    "uid": 26,
+    "unit": "4",
+    "beds": 1,
+    "baths": 1,
+    "rent": 1695
+   },
+   {
+    "uid": 27,
+    "unit": "5",
+    "beds": 2,
+    "rent": 1895
+   }
+  ],
+  "379-south-main-street": [
+   {
+    "uid": 152,
+    "unit": "2",
+    "beds": 3,
+    "baths": 1,
+    "rent": 3300
+   }
+  ],
+  "561-south-main-street": [
+   {
+    "uid": 55,
+    "unit": "5",
+    "beds": 2,
+    "baths": 1,
+    "rent": 1425
+   }
+  ],
+  "31-genesee-street": []
+ }
+}

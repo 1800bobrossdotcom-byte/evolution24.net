@@ -28,6 +28,9 @@ PHONE_TEL = "+15857597117"
 EMAILS = ("vicki@evolution24.net", "tesa@evolution24.net")   # the leasing team, as the site shows it
 EMAIL = EMAILS[0]                          # where one address must stand for both: structured data
 MAILTO = "mailto:" + ",".join(EMAILS)      # one tap writes to both
+# IndexNow (Bing, and the assistants that search with it): the key is public by design; it
+# only proves the pings in scripts/indexnow.py come from this site. Served at /<key>.txt.
+INDEXNOW_KEY = "09eb2f4f51d43e29a627de21d0fdfacf"
 INSTAGRAM = "evolution24properties"
 INSTAGRAM_URL = f"https://www.instagram.com/{INSTAGRAM}/"
 
@@ -1253,6 +1256,7 @@ def city_page(key):
       <p class="label" data-reveal>Where they are</p>
       <h2 data-reveal class="i1">Every address <em>in {esc(name)}.</em></h2>
       <ul class="places" data-reveal>{places}</ul>
+      {search_links(key)}
     </div>
     <div>
       <p class="label" data-reveal>Questions</p>
@@ -1428,7 +1432,149 @@ def not_found():
 # 301s for the path-only URLs.
 LEGACY_PIDS = {str(p["pid"]): prop_url(p) for p in PROPS}
 LEGACY_UIDS = {str(u["uid"]): prop_url(p) + "#units" for p in PROPS for u in p["units"]}
-REDIRECTS = [("/careers/", "/about-us/"), ("/home/", "/"), ("/feed/", "/"), ("/comments/feed/", "/")]
+# Pages for what renters type ("studio apartments rochester ny"): one city's homes of one kind,
+# from the same Rent Manager list as every other page, so they fill and empty by themselves.
+# A page with nothing open stays up, with its buildings and the waitlist: a page that came
+# and went would leave search engines a dead link. Each kind: (slug, the words, a home
+# that counts, a building that offers it).
+def beds_offered(p):
+    """The sizes a building has, from its "bedrooms" line: "Studios to 3 bedrooms" is 0 to 3."""
+    t = (p.get("bedrooms") or "").lower()
+    nums = [int(x) for x in re.findall(r"\d", t)]
+    out = {0} if "studio" in t else set()
+    if nums and ("to" in t or "–" in t or "-" in t):
+        out |= set(range(0 if "studio" in t and "to" in t else min(nums), max(nums) + 1))
+    return out | set(nums)
+
+
+def furnished_unit(u):
+    return "furnished" in (u.get("note") or "").lower()
+
+
+def says(p, word):
+    return word in f'{p.get("bedrooms", "")} {p.get("desc", "")} {p["name"]}'.lower()
+
+
+SEARCHES = {"rochester": [
+    ("studios", "Studio apartments", lambda p, u: u["beds"] == 0, lambda p: 0 in beds_offered(p)),
+    ("one-bedroom", "One-bedroom apartments", lambda p, u: u["beds"] == 1, lambda p: 1 in beds_offered(p)),
+    ("two-bedroom", "Two-bedroom apartments", lambda p, u: u["beds"] == 2, lambda p: 2 in beds_offered(p)),
+    ("furnished", "Furnished apartments", lambda p, u: furnished_unit(u), lambda p: says(p, "furnish") or any(furnished_unit(u) for u in p["units"])),
+    ("lofts", "Loft apartments", lambda p, u: says(p, "loft"), lambda p: says(p, "loft")),
+    # Charlotte Square sets its own pet rules; everywhere else, two pets per home.
+    ("pet-friendly", "Pet-friendly apartments", lambda p, u: not p.get("external"), lambda p: not p.get("external")),
+]}
+
+
+def search_label(words):
+    """A search's short name, for breadcrumbs and links: "Studios", "One-bedroom", "Lofts"."""
+    short = words.split(" apart")[0]
+    return {"Studio": "Studios", "Loft": "Lofts"}.get(short, short)
+
+
+def listed_names(names):
+    names = list(names)
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1] if names else ""
+
+
+def search_url(key, slug):
+    return f"{city_url(key)}{slug}/"
+
+
+def search_links(key, here=None):
+    current = ' aria-current="page"'
+    links = [f'<a href="{search_url(key, s)}"{current if s == here else ""}>{esc(search_label(words))}</a>'
+             for s, words, _, _ in SEARCHES.get(key, [])]
+    return f'<p class="by-city">Looking for: {" · ".join(links)}</p>' if links else ""
+
+
+def search_page(key, slug, words, home, building):
+    r = REGIONS[key]
+    name = r["name"]
+    url = search_url(key, slug)
+    props = [p for p in PROPS if p["region"] == key and building(p)]
+    rows = [(p, u) for p, u in ALL_UNITS if p["region"] == key and home(p, u)]
+    k = len(rows)
+    rents = sorted(u["rent"] for _, u in rows)
+    lower = words[0].lower() + words[1:]
+    one = lower.replace("apartments", "apartment")
+    at = sorted(dict.fromkeys(p["name"] for p, _ in rows))
+    lead = (f"{k} {one if k == 1 else lower} open now in {name}, from {money(rents[0])} a month, at {listed_names(at)}."
+            if k else f"None open in {name} today. Tell us what you are looking for and we will let you know first.")
+    if slug == "pet-friendly":
+        lead += f" Up to two pets per home: a ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet."
+    h1 = f"{words}|in *{name}*, NY."
+    if rows:
+        avail = f"""<section class="section ink" id="available">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{k} {'home' if k == 1 else 'homes'}, <em>ready.</em></h2></div>
+      <p class="lead" data-reveal>Sorted by rent. Press Apply on any apartment to ask for it; our leasing team sends the application.</p>
+    </div>
+    <div data-reveal>{units_table(rows, group=f'{slug}-units')}</div>
+  </div>
+</section>"""
+    else:
+        avail = f"""<section class="section ink" id="available"><div class="wrap">
+  <p class="label" data-reveal>Availability</p><h2 data-reveal class="i1">Leased, <em>for now.</em></h2>
+  <p class="lead" data-reveal>Nothing of this kind is open in {esc(name)} today. Join the waitlist and we will call you first.</p>
+  <div class="hero-actions" data-reveal><a class="btn btn--solid" href="/contact-us/?interest=waitlist">Join the waitlist {icon('arrow')}</a><a class="btn" href="{city_url(key)}#available">Everything open in {esc(name)}</a></div>
+</div></section>"""
+    faqs = [(f"How many {lower} are available in {name}?",
+             (f"{k}, as listed on {fmt_date(UNITS_AS_OF)}: " + "; ".join(f"{len([1 for q, _ in rows if q is p])} at {p['name']}" for p in PROPS if any(q is p for q, _ in rows))
+              + ". Availability changes often, and our leasing team confirms the current rent and move-in date.") if k
+             else f"None are listed as of {fmt_date(UNITS_AS_OF)}. Join the waitlist and we will let you know when one opens.")]
+    if k:
+        faqs.append((f"How much is a {one.replace('apartment', '').strip() or 'home'} in {name}?",
+                     f"At Evolution24, {money(rents[0])} to {money(rents[-1])} a month, as listed on {fmt_date(UNITS_AS_OF)}." if rents[0] != rents[-1]
+                     else f"{money(rents[0])} a month at Evolution24, as listed on {fmt_date(UNITS_AS_OF)}."))
+    if props:
+        faqs.append((f"Which Evolution24 buildings have {lower}?", "; ".join(f"{p['name']}, {p['street']} ({p['area']})" for p in props) + "."))
+    faqs += [("Can I bring a pet?", f"Yes: up to two pets per home, with a ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet."),
+             ("How do I apply?", f"Choose an apartment and press Apply. It opens a short form for that home, and our leasing team gets back to you with the application. Questions first? Call {PHONE}.")]
+    faq_html = "".join(f'<details data-reveal><summary>{esc(q)}<span class="pm" aria-hidden="true"></span></summary><div class="ans"><p>{esc(a)}</p></div></details>' for q, a in faqs)
+    cards = f"""<section class="section section--tight">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="label" data-reveal>Where</p><h2 data-reveal class="i1">{len(props)} {'building' if len(props) == 1 else 'buildings'} <em>to see.</em></h2></div>
+      <p class="lead" data-reveal>{esc(r['blurb'])}</p>
+    </div>
+    <div class="cards">{''.join(card(p, i) for i, p in enumerate(props))}</div>
+  </div>
+</section>""" if props else ""
+    body = f"""{page_hero(f"{esc(name)}, New York", h1, esc(lead), [('Home', '/'), ('Properties', '/properties/'), (name, city_url(key)), (search_label(words), url)])}
+{avail}
+{cards}
+<section class="section">
+  <div class="wrap p-intro">
+    <div>
+      <p class="label" data-reveal>More in {esc(name)}</p>
+      <h2 data-reveal class="i1">Other <em>searches.</em></h2>
+      {search_links(key, slug)}
+      <p class="lead"><a href="{city_url(key)}">Every Evolution24 apartment in {esc(name)}</a></p>
+    </div>
+    <div>
+      <p class="label" data-reveal>Questions</p>
+      <div class="faq">{faq_html}</div>
+    </div>
+  </div>
+</section>
+{cta_block(f"Find your place in *{esc(name)}*.")}"""
+    items = [{"@type": "ListItem", "position": i + 1, "url": SITE + prop_url(p), "name": p["name"]} for i, p in enumerate(props)]
+    graph = [{"@type": "ItemList", "@id": f"{SITE}{url}#list", "name": f"{words} in {name}, NY", "numberOfItems": len(props), "itemListElement": items},
+             {"@type": "FAQPage", "@id": f"{SITE}{url}#faq", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faqs]}]
+    title = f"{' '.join(w[:1].upper() + w[1:] for w in words.split())} for Rent in {name}, NY | Evolution24"
+    desc = fit(*[x for x in (f"{k} {one if k == 1 else lower} for rent in {name}, NY, from {money(rents[0])} a month." if k
+                             else f"{words} in {name}, NY, from a family-owned landlord.",
+                             "Up to two pets per home." if slug == "pet-friendly" else "",
+                             f"At {listed_names(p['name'] for p in props)}." if props else "", "Tours by appointment.") if x])
+    return page(url=url, title=title, desc=desc, body=body, graph=graph, page_type="CollectionPage",
+                crumbs=[("Home", "/"), ("Properties", "/properties/"), (name, city_url(key)), (search_label(words), url)],
+                og=og_for(f"city-{key}", f"{words} in {name}, New York"), preload=None)
+
+
+REDIRECTS = [("/careers/", "/about-us/"), ("/home/", "/"), ("/feed/", "/"), ("/comments/feed/", "/"),
+             ("/apartments/", "/properties/"), ("/about/", "/about-us/"), ("/contact/", "/contact-us/")]
 
 
 def legacy_stub(kind):
@@ -1661,6 +1807,8 @@ def main():
         write(f"properties/{p['slug']}/index.html", property_page(p))
     for key in REGIONS:
         write(f"{city_url(key).strip('/')}/index.html", city_page(key))
+        for slug, words, home_, building in SEARCHES.get(key, []):
+            write(f"{search_url(key, slug).strip('/')}/index.html", search_page(key, slug, words, home_, building))
     write("about-us/index.html", about())
     write("faqs/index.html", faqs())
     write("contact-us/index.html", contact())
@@ -1675,7 +1823,7 @@ def main():
     # crawl surface
     urls = [("/", [(src(s, photo(s, i), 1600 if 1600 in photo(s, i)["widths"] else photo(s, i)["widths"][-1]), photo(s, i)["alt"])
                    for s, i in (("561-south-main-street", "03-bedroom-tin-ceiling"), ("biltmore", "01-lobby"))]),
-            ("/properties/", [])] + [(city_url(k), []) for k in REGIONS]
+            ("/properties/", [])] + [(city_url(k), []) for k in REGIONS] + [(search_url(k, s[0]), []) for k in REGIONS for s in SEARCHES.get(k, [])]
     for p in PROPS:
         urls.append((prop_url(p), [(src(p["slug"], ph, ph["widths"][-1]), ph["alt"]) for ph in gallery_photos(p["slug"])]))
     urls += [("/about-us/", []), ("/faqs/", []), ("/contact-us/", []), ("/privacy/", [])]
@@ -1689,6 +1837,7 @@ def main():
                         f"Sitemap: {SITE}/sitemap.xml\n")
     write("speculation-rules.json", json.dumps(SPECULATION_RULES, indent=1) + "\n")
     write("llms.txt", llms())
+    write(f"{INDEXNOW_KEY}.txt", INDEXNOW_KEY + "\n")
     write("_headers", headers())
     write("_redirects", redirects_file())
     write("vercel.json", vercel_json())

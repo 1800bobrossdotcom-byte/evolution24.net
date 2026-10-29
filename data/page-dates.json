@@ -12,15 +12,39 @@
   "date": "2026-10-29"
  },
  "/apartments/geneva-ny/": {
-  "hash": "4fbf0c208ed49718",
+  "hash": "f569588b97502f3a",
   "date": "2026-10-29"
  },
  "/apartments/rochester-ny/": {
-  "hash": "f21cf5bc8a055c4e",
+  "hash": "768dbe7c9cf24bb5",
+  "date": "2026-10-29"
+ },
+ "/apartments/rochester-ny/furnished/": {
+  "hash": "65dcd4f81c53a047",
+  "date": "2026-10-29"
+ },
+ "/apartments/rochester-ny/lofts/": {
+  "hash": "b38f0caea4ebc330",
+  "date": "2026-10-29"
+ },
+ "/apartments/rochester-ny/one-bedroom/": {
+  "hash": "7bf61b2e1fbda9c7",
+  "date": "2026-10-29"
+ },
+ "/apartments/rochester-ny/pet-friendly/": {
+  "hash": "208d5ee340086c38",
+  "date": "2026-10-29"
+ },
+ "/apartments/rochester-ny/studios/": {
+  "hash": "65f07fe25004232b",
+  "date": "2026-10-29"
+ },
+ "/apartments/rochester-ny/two-bedroom/": {
+  "hash": "6bf48e67ff729888",
   "date": "2026-10-29"
  },
  "/apartments/syracuse-ny/": {
-  "hash": "e8f38a0bd8e83296",
+  "hash": "a9e466b2d7c74873",
   "date": "2026-10-29"
  },
  "/contact-us/": {

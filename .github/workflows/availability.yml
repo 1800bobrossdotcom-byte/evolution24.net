@@ -63,6 +63,7 @@ jobs:
         run: python3 scripts/build.py
 
       - name: Publish if anything changed
+        id: publish
         if: ${{ steps.rm.outputs.read == 'yes' && !inputs.dry_run }}
         run: |
           if [ -z "$(git status --porcelain)" ]; then
@@ -74,3 +75,12 @@ jobs:
           git add -A
           git commit -m "Availability from Rent Manager, $(TZ=America/New_York date +%F)"
           git push
+          echo "published=yes" >> "$GITHUB_OUTPUT"
+
+      # Once Vercel has the new pages (it deploys a push in under a minute), tell
+      # Bing and the assistants that search with it which ones changed.
+      - name: Tell search engines
+        if: ${{ steps.publish.outputs.published == 'yes' }}
+        run: |
+          sleep 75
+          python3 scripts/indexnow.py HEAD~1 HEAD

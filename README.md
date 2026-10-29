@@ -209,6 +209,20 @@ After launch:
    with this URL. For "apartments in Rochester" it is worth more than anything on the page.
 3. Check that `curl -sI https://www.evolution24.net/` returns a single 301 to the apex.
 
+
+**Pages for what renters search.** `SEARCHES` in `build.py` gives Rochester six more pages, one
+per kind of home people type into Google: `/apartments/rochester-ny/studios/`, `one-bedroom/`,
+`two-bedroom/`, `furnished/`, `lofts/` and `pet-friendly/`. Each lists that kind of home from the
+same Rent Manager list as every other page, with its buildings, an FAQ and its own title, and
+the Rochester page links to them all. A page with nothing open stays up with the waitlist, so a
+search engine never finds it gone. To add one (or one for Geneva), add a line to `SEARCHES`.
+
+**IndexNow.** After the availability job publishes, `scripts/indexnow.py` tells Bing (and the
+assistants that search with it: ChatGPT search, Copilot, DuckDuckGo) which pages changed, so
+they read them again at once. The key, public by design, is `INDEXNOW_KEY` in `build.py` and is
+served at `/<key>.txt`. `python3 scripts/indexnow.py --all` sends every page in the sitemap.
+Google does not take part; it reads the sitemap's dates.
+
 ## Deploy
 
 **Live on Vercel:** <https://evolution24-net.vercel.app/>. Vercel deploys every push, with no

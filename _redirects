@@ -5,10 +5,16 @@ https://www.evolution24.net/* https://evolution24.net/:splat 301!
 /home/ / 301
 /feed/ / 301
 /comments/feed/ / 301
+/apartments/ /properties/ 301
+/about/ /about-us/ 301
+/contact/ /contact-us/ 301
 /careers /about-us/ 301
 /home / 301
 /feed / 301
 /comments/feed / 301
+/apartments /properties/ 301
+/about /about-us/ 301
+/contact /contact-us/ 301
 /about-us /about-us/ 301
 /contact-us /contact-us/ 301
 /faqs /faqs/ 301

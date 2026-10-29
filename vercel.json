@@ -65,6 +65,36 @@
    "permanent": true
   },
   {
+   "source": "/apartments",
+   "destination": "/properties/",
+   "permanent": true
+  },
+  {
+   "source": "/apartments/",
+   "destination": "/properties/",
+   "permanent": true
+  },
+  {
+   "source": "/about",
+   "destination": "/about-us/",
+   "permanent": true
+  },
+  {
+   "source": "/about/",
+   "destination": "/about-us/",
+   "permanent": true
+  },
+  {
+   "source": "/contact",
+   "destination": "/contact-us/",
+   "permanent": true
+  },
+  {
+   "source": "/contact/",
+   "destination": "/contact-us/",
+   "permanent": true
+  },
+  {
    "source": "/property-detail/",
    "has": [
     {

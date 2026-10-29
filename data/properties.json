@@ -30,7 +30,8 @@
      "unit": "4",
      "beds": 2,
      "baths": 1,
-     "rent": 1795
+     "rent": 1795,
+     "note": "Furnished"
     },
     {
      "uid": 5,

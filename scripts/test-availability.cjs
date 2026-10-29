@@ -96,6 +96,10 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e24-avail-'));
     const file = path.join(dir, 'properties.json');
     const data = JSON.parse(fs.readFileSync(REAL, 'utf8'));
+    // The live list changes with Rent Manager; the tests start from the one they were written against.
+    const before = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-availability-units.json'), 'utf8'));
+    data.units_as_of = before.units_as_of;
+    for (const p of data.properties) if (before.units[p.slug]) p.units = JSON.parse(JSON.stringify(before.units[p.slug]));
     data.properties.find((p) => p.slug === '121-park-drive').hide_units = ['5'];
     data.properties.find((p) => p.slug === 'biltmore').units[0].note = 'Furnished';
     fs.writeFileSync(file, `${JSON.stringify(data, null, 1)}\n`);
