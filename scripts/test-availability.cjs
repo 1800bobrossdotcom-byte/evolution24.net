@@ -44,6 +44,9 @@ const UNITS = [
   [73, 8, '302RV', 1, 1, 619, 1590, vacant, 'Ready'],
   [85, 8, '502RV', 1, 1, 619, 1625, occupied, 'Occupied'],                     // leased since the last copy
   [12001, 12, '101', 2, 2, 1100, 2400, vacant, 'Ready'],                       // Charlotte Square: never touched
+  [2101, 2, 'Garage 1', 0, 0, 0, 100, vacant, 'Ready'],                         // 2215 James: a garage, never a home
+  [2102, 2, 'P4', 0, 0, 0, 150, vacant, 'Ready'],                               // parking by another name: too cheap
+  [9, 1, '9', 1, 1, 0, 1395, { OccupancyType: 'Notice', ExpectedMoveOutDate: '2027-05-31T00:00:00' }, 'Notice-Unrented'],   // free in 7 months
 ];
 // Plenty of leased units, so the open share stays under a quarter.
 for (let i = 0; i < 80; i++) UNITS.push([5000 + i, 8, `X${i}`, 1, 1, 600, 1500, occupied, 'Occupied']);
@@ -151,6 +154,17 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
     const d = read(file);
     assert.deepEqual(units(d, '121-park-drive').map((u) => u.unit), ['4']);
     assert.ok(log.some((l) => /Left off: The Biltmore unit 12: open, but no market rent/.test(l)));
+  });
+
+  test('only homes, and only soon: no garage, nothing under $300, nothing more than 90 days off', async () => {
+    const file = copy();
+    await run(file);
+    const james = units(read(file), '2215-james-street').map((u) => u.unit);
+    assert.deepStrictEqual(james, ['1']);
+    assert.ok(!log.some((l) => /Garage/.test(l)), 'a garage is not even reported');
+    assert.ok(log.some((l) => /Left off: 2215 James Street unit P4: open at \$150 a month, too little for a home/.test(l)));
+    assert.ok(!units(read(file), '301-central-avenue').some((u) => u.unit === '9'));
+    assert.ok(log.some((l) => /Left off: 301 Central Avenue unit 9: free from 2027-05-31, more than 90 days off/.test(l)));
   });
 
   test('Charlotte Square, with its own site, is never touched', async () => {

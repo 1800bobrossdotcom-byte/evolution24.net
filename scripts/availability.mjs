@@ -35,6 +35,11 @@
      - Open means vacant, being made ready, or on notice with a move-out date
        still to come; those last two carry "available": the date.
      - A unit with no market rent is left off and named in the report.
+     - Only homes: a garage, parking space, storage unit or the like (by its name
+       or unit type) is never listed, and anything open at under $300 a month is
+       left off and named, in case it is one under another name.
+     - A home free more than 90 days from now is left off, and named, until it
+       comes within 90 days: "Available now" should mean soon.
      - Nothing is written when the answer looks wrong: no open units anywhere
        while the site has some, or more open than a quarter of all units (and
        more than ten). Either is far likelier a permissions problem or a misread
@@ -241,6 +246,9 @@ function fromTypeName(type, part) {
   return m ? Number(m[part]) : undefined;
 }
 const NOT_FOR_RENT = /model|\bdown\b|offline|admin|employee|unavailable|not available|hold/;
+const NOT_A_HOME = /garage|parking|carport|storage|locker|\bshed\b|\bspace\b|\bstall\b|commercial|retail/i;
+const MIN_RENT = 300;          // a month; under it, parking or storage by another name
+const SOON_DAYS = 90;
 const RENTED = /rented|leased/;
 
 /** One Rent Manager unit, read: its number, rooms, size, rent, and whether and when it is open. */
@@ -284,9 +292,11 @@ export function normalize(u, today) {
     .find((o) => o && typeof o === 'object' && !Array.isArray(o)) || {};
   const available = occDate || toDay(pick(u.AvailableDate, u.ReadyDate, u.DateAvailable, u.VacateDate, u.ExpectedMoveOutDate,
     statusObj.AvailableDate, statusObj.ReadyDate, statusObj === u.CurrentOccupancyStatus ? undefined : statusObj.EndDate, statusObj.Date));
+  const name = String(pick(u.Name, u.UnitName, u.Number, id)).trim();
   return {
     id,
-    unit: String(pick(u.Name, u.UnitName, u.Number, id)).trim(),
+    unit: name,
+    home: !NOT_A_HOME.test(`${name} ${type.Name || ''} ${type.Description || ''}`),
     beds: pick(pos(u.Bedrooms), pos(u.Beds), pos(type.Bedrooms), fromTypeName(type, 1)) ?? 0,
     baths: pick(pos(u.Bathrooms), pos(u.Baths), pos(type.Bathrooms), fromTypeName(type, 2)) ?? null,
     sqft: pick(pos(u.SquareFootage), pos(u.SqFt), pos(type.SquareFootage)) ?? null,
@@ -325,16 +335,20 @@ export function apply(data, unitsByPid, today) {
   const skipped = [];
   let total = 0;
   let open = 0;
+  const soon = new Date(Date.parse(`${today}T12:00:00Z`) + SOON_DAYS * 86400000).toISOString().slice(0, 10);
   for (const p of data.properties) {
     if (p.external || !p.pid || !unitsByPid.has(p.pid)) continue;
-    const read = unitsByPid.get(p.pid).map((u) => normalize(u, today)).filter(Boolean);
+    const read = unitsByPid.get(p.pid).map((u) => normalize(u, today)).filter((n) => n && n.home);
     total += read.length;
     const hidden = new Set((p.hide_units || []).map(String));
     const kept = new Map((p.units || []).map((u) => [u.uid, u]));
     const units = [];
     for (const n of read.filter((x) => isOpen(x, today))) {
       if (hidden.has(n.unit.replace(FURNISHED, ''))) continue;
-      if (!n.rent) { skipped.push(`${p.name} unit ${n.unit.replace(FURNISHED, '')}: open, but no market rent in Rent Manager`); continue; }
+      const label = `${p.name} unit ${n.unit.replace(FURNISHED, '')}`;
+      if (!n.rent) { skipped.push(`${label}: open, but no market rent in Rent Manager`); continue; }
+      if (n.rent < MIN_RENT) { skipped.push(`${label}: open at ${money(n.rent)} a month, too little for a home (parking or storage?)`); continue; }
+      if (n.available && n.available > soon) { skipped.push(`${label}: free from ${n.available}, more than ${SOON_DAYS} days off; listed once it is nearer`); continue; }
       units.push(siteUnit(n, kept.get(n.id), today));
     }
     units.sort((a, b) => (natural(a.unit) < natural(b.unit) ? -1 : 1));
