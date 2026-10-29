@@ -119,7 +119,9 @@ export function client(env) {
   }
 
   async function signIn() {
-    const body = { Username: env.RM_USERNAME, Password: env.RM_PASSWORD };
+    // A secret pasted into GitHub or Vercel often brings a line break with it, which Rent
+    // Manager refuses; no username or password ends in one.
+    const body = { Username: String(env.RM_USERNAME).trim(), Password: String(env.RM_PASSWORD).replace(/^[\r\n]+|[\r\n]+$/g, '') };
     if (env.RM_LOCATION_ID) body.LocationID = Number(env.RM_LOCATION_ID);
     const r = await send('POST', '/Authentication/AuthorizeUser', body);
     if (!r.ok) throw new RMError(explain(r, 'a login'), r.status);

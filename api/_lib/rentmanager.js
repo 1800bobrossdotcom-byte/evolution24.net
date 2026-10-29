@@ -62,7 +62,9 @@ const said = (env, r) => {
 async function signIn(env) {
   const key = `${base(env)}|${env.RM_USERNAME}|${env.RM_LOCATION_ID || ''}`;
   if (cached.key === key && cached.token) return cached.token;
-  const body = { Username: env.RM_USERNAME, Password: env.RM_PASSWORD };
+  // A secret pasted into GitHub or Vercel often brings a line break with it, which Rent
+  // Manager refuses; no username or password ends in one.
+  const body = { Username: String(env.RM_USERNAME).trim(), Password: String(env.RM_PASSWORD).replace(/^[\r\n]+|[\r\n]+$/g, '') };
   if (env.RM_LOCATION_ID) body.LocationID = Number(env.RM_LOCATION_ID);
   const r = await call(env, '/Authentication/AuthorizeUser', { method: 'POST', body });
   const token = typeof r.data === 'string' ? r.data : r.data && (r.data.Token || r.data.ApiToken || r.data.token);
