@@ -262,4 +262,24 @@
       }
     });
   });
+
+  /* ---- Apply, on the building's own page: chooses the home and "Applying" in its form
+     and goes there, without loading the page again. From anywhere else the link loads
+     the building's page, whose form reads the same choices from the address. */
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[data-apply]');
+    if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const to = new URL(a.href, location.href), form = $('#enquire form[data-lead]');
+    if (to.pathname !== location.pathname || !form) return;
+    e.preventDefault();
+    to.searchParams.forEach((v, k) => {
+      const opt = $(`select[name="${k}"] option[value="${CSS.escape(v)}"]`, form);
+      if (opt) opt.selected = true;
+    });
+    history.replaceState(null, '', `${location.pathname}${location.search}#enquire`);
+    $('#enquire').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    // A keyboard on a phone would cover the choices just made, so only where there is a mouse.
+    const first = $('input:not([type="hidden"])', form);
+    if (first && matchMedia('(hover: hover)').matches) first.focus({ preventScroll: true });
+  });
 })();

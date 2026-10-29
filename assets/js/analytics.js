@@ -69,7 +69,7 @@
       const href = a.getAttribute('href') || '';
       if (href.startsWith('tel:')) return send('phone_click');
       if (href.startsWith('mailto:')) return send('email_click');
-      if (/rentmanager\.com\/ApplyNow/i.test(href)) {
+      if (a.hasAttribute('data-apply')) {   // Apply: the building's form, with the home chosen
         return send('apply_click', a.dataset.unit ? { unit: a.dataset.unit.slice(0, 20) } : undefined, a.dataset.property);
       }
       if (href.includes('rentmanager.com')) return send('portal_click');

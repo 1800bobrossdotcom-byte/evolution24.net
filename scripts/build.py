@@ -28,8 +28,6 @@ EMAIL = "tesacoleman9@gmail.com"          # the address the old site published
 OFFICE = {"street": "176 N Water Street", "city": "Rochester", "region": "NY", "zip": "14604"}
 OFFICE_GEO = (43.15981, -77.61129)        # from OpenStreetMap, matched to the house number
 PORTAL = "https://evolution.twa.rentmanager.com/"
-APPLY_PROPERTY = "https://evolution.twa.rentmanager.com/ApplyNow?locations=&propertyID={}"
-APPLY_UNIT = "https://evolution.twa.rentmanager.com/ApplyNow?locations=&unitID={}"
 FOUNDED = 2024
 BUILD_DATE = dt.date.today().isoformat()
 PET_DEPOSIT, PET_FEE = 300, 45
@@ -56,8 +54,8 @@ FAQS = [
      "Additional storage varies by property. If you are interested, ask the property manager during your application.",
      "Additional storage varies by property. If you are interested, ask the property manager during your application."),
     ("How do I apply?",
-     f'Every property and every available apartment on this site has an Apply button that opens our secure application. You can also start from the <a href="/properties/">properties page</a> or call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>.',
-     f"Every property and every available apartment on this site has an Apply button that opens our secure application. You can also call us on {PHONE}."),
+     f'Every property and every available apartment on this site has an Apply button. It opens a short form for that home; send it, and our leasing team gets back to you with the application and next steps. You can also start from the <a href="/properties/">properties page</a> or call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>.',
+     f"Every property and every available apartment on this site has an Apply button. It opens a short form for that home; send it, and our leasing team gets back to you with the application and next steps. You can also call us on {PHONE}."),
     ("Where are your properties?",
      "In and around three cities in upstate New York: Rochester, Syracuse (including Manlius) and Geneva in the Finger Lakes.",
      "In and around three cities in upstate New York: Rochester, Syracuse (including Manlius) and Geneva in the Finger Lakes."),
@@ -576,6 +574,13 @@ def card(p, i=0, sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1200p
 </a>"""
 
 
+# Apply goes to the building's own enquiry form, with the home and "Applying" chosen; the
+# leasing team sends the application from there. data-apply marks it for the statistics.
+def apply_url(p, u=None):
+    unit = f"unit={u['uid']}&" if u else ""
+    return f"{prop_url(p)}?{unit}interest=apply#enquire"
+
+
 def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
     trs = []
     for p, u in rows:
@@ -589,11 +594,11 @@ def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
         trs.append(f"""<tr data-tags="{unit_tag(u)} {p['region']}">
   {prop_cell}<td data-k="Unit">{esc(u['unit'])}</td><td>{unit_type(u)}{note}</td><td data-k="">{size}</td>
   <td class="u-rent">{money(u['rent'])}<small>/mo</small></td>
-  <td class="u-act"><a class="btn" href="{APPLY_UNIT.format(u['uid'])}" rel="noopener" data-property="{p['slug']}" data-unit="{esc(u['unit'])}" aria-label="Apply for unit {esc(u['unit'])} at {esc(p['name'])}">Apply {icon('arrow')}</a></td>
+  <td class="u-act"><a class="btn" href="{apply_url(p, u)}" data-apply data-property="{p['slug']}" data-unit="{esc(u['unit'])}" aria-label="Apply for unit {esc(u['unit'])} at {esc(p['name'])}">Apply {icon('arrow')}</a></td>
 </tr>""")
     head_prop = "<th>Property</th>" if show_prop else ""
     return f"""<table class="units" data-filter-items="{group}">
-<caption>Availability and rents as listed on {fmt_date(UNITS_AS_OF)}. Applications confirm the current rent and move-in date.</caption>
+<caption>Availability and rents as listed on {fmt_date(UNITS_AS_OF)}. Our leasing team confirms the current rent and move-in date.</caption>
 <thead><tr>{head_prop}<th>Unit</th><th>Type</th><th>Size</th><th>Rent</th><th><span class="sr-only">Apply</span></th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
 <p class="lead" data-filter-empty="{group}" hidden>Nothing of that size is open right now. <a href="{contact}">Tell us what you are looking for</a> and we will be in touch.</p>"""
@@ -627,7 +632,7 @@ def building_index():
 def cta_block(title="Find your *place*.", text=None, contact="/contact-us/"):
     """contact: where "Send a message" goes. A building's page passes its own
     /contact-us/?property=<slug>, so the enquiry lands on that building's tab."""
-    text = text or f"Call the office, send us a note, or start an application online. We are a small team and we answer."
+    text = text or f"Call the office or send us a note, about a tour, a home or an application. We are a small team and we answer."
     external = contact.startswith("https://")
     return f"""<section class="section cta ink">
   {logo_mark()}
@@ -748,7 +753,7 @@ def home():
   <div class="wrap">
     <div class="section-head">
       <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{n_units} homes, <em>ready.</em></h2></div>
-      <p class="lead i2" data-reveal>Studios from {money(RENT_FROM)} to three bedrooms above Seneca Lake. Pick one and apply online in a few minutes.</p>
+      <p class="lead i2" data-reveal>Studios from {money(RENT_FROM)} to three bedrooms above Seneca Lake. Pick one, press Apply, and our leasing team takes it from there.</p>
     </div>
     <div data-reveal>{unit_filters(ALL_UNITS)}{units_table(ALL_UNITS)}</div>
   </div>
@@ -818,7 +823,7 @@ def properties_index():
   <div class="wrap">
     <div class="section-head">
       <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{len(ALL_UNITS)} homes, <em>ready.</em></h2></div>
-      <p class="lead" data-reveal>Sorted by rent. Every Apply button opens our secure application for that exact apartment.</p>
+      <p class="lead" data-reveal>Sorted by rent. Press Apply on any apartment to ask for it; our leasing team sends the application.</p>
     </div>
     <div data-reveal>{unit_filters(ALL_UNITS, 'all-units')}{units_table(ALL_UNITS, group='all-units')}</div>
   </div>
@@ -928,7 +933,7 @@ def property_page(p):
         actions = (f'<a class="btn btn--solid" href="{p["external"]}" rel="noopener">Visit {esc(p["name"])} {icon("ext")}</a>'
                    f'<a class="btn" href="tel:+1{re.sub(r"[^0-9]", "", p["leasing"]["phone"])}">Call leasing</a>')
     else:
-        actions = (f'<a class="btn btn--solid" href="{APPLY_PROPERTY.format(p["pid"])}" rel="noopener" data-property="{slug}">Apply now {icon("arrow")}</a>'
+        actions = (f'<a class="btn btn--solid" href="{apply_url(p)}" data-apply data-property="{slug}">Apply now {icon("arrow")}</a>'
                    + (f'<a class="btn" href="#units">See {n} available</a>' if n else f'<a class="btn" href="#enquire">Join the waitlist</a>'))
 
     # Gallery: up to five in a mosaic whose layout depends on how many there are;
@@ -963,7 +968,7 @@ def property_page(p):
   <div class="wrap">
     <div class="section-head">
       <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{n} {'home' if n == 1 else 'homes'} at <em>{esc(p['name'])}.</em></h2></div>
-      <p class="lead" data-reveal>Choose an apartment to start its application. Questions first? Call {PHONE}.</p>
+      <p class="lead" data-reveal>Press Apply on an apartment and tell us a little about yourself; our leasing team sends the application. Questions first? Call {PHONE}.</p>
     </div>
     <div data-reveal>{units_table([(p, u) for u in sorted(p['units'], key=lambda u: u['rent'])], show_prop=False, group='p-units', contact=contact)}</div>
   </div>
@@ -1089,7 +1094,7 @@ def property_page(p):
     if not p["name"][0].isdigit():  # "Water Street: studios to 3 bedrooms at 168–176 North Water Street, …"
         where = f"{p['name']}: {what[0].lower()}{what[1:]} at {p['street']}, {p['city']}, NY."
     avail = f"{n} available now from {money(rf)} a month." if n else (f"Rents from {money(rf)} a month." if rf else "Fully leased; join the waitlist.")
-    desc = fit(f"{where} {avail}", "Managed by Evolution24, a family-owned landlord.", "Photos, amenities and online applications.", "Apply online.")
+    desc = fit(f"{where} {avail}", "Managed by Evolution24, a family-owned landlord.", "Photos, amenities and tours by appointment.", "Tours by appointment.")
     return page(url=url, title=title, desc=desc, body=body, graph=[node], crumbs=trail,
                 og=og_for(slug, f"{p['name']}, {full_addr(p)}"), preload=(slug, cover),
                 contact="/contact-us/" if p.get("external") else contact)
@@ -1117,7 +1122,7 @@ def city_page(key):
   <div class="wrap">
     <div class="section-head">
       <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{k} {'home' if k == 1 else 'homes'} in <em>{esc(name)}.</em></h2></div>
-      <p class="lead" data-reveal>Sorted by rent. Every Apply button opens our secure application for that exact apartment.</p>
+      <p class="lead" data-reveal>Sorted by rent. Press Apply on any apartment to ask for it; our leasing team sends the application.</p>
     </div>
     <div data-reveal>{unit_filters(rows, 'city-units')}{units_table(rows, group='city-units')}</div>
   </div>
@@ -1130,12 +1135,12 @@ def city_page(key):
 </div></section>"""
     faqs = [(f"How many apartments are available in {name} right now?",
              (f"{k}, as listed on {fmt_date(UNITS_AS_OF)}: " + "; ".join(f"{len([u for q, u in rows if q is p])} at {p['name']}" for p in props if any(q is p for q, _ in rows))
-              + ". Availability changes often, and every application confirms the current rent and move-in date.") if k else
+              + ". Availability changes often, and our leasing team confirms the current rent and move-in date.") if k else
              f"None are listed as of {fmt_date(UNITS_AS_OF)}. Join the waitlist and we will let you know when something opens."),
             (f"Where are Evolution24’s {name} apartments?",
              "; ".join(f"{p['name']}, {p['street']}, {p['city']} ({p['area']})" for p in props) + "."),
             ("Can I bring a pet?", f"Yes: up to two pets per home, with a ${PET_DEPOSIT} non-refundable deposit and ${PET_FEE} a month per pet."),
-            ("How do I apply?", f"Choose an apartment and press Apply. It opens our secure online application for that exact home. Questions first? Call {PHONE}.")]
+            ("How do I apply?", f"Choose an apartment and press Apply. It opens a short form for that home, and our leasing team gets back to you with the application. Questions first? Call {PHONE}.")]
     faq_html = "".join(f'<details data-reveal><summary>{esc(q)}<span class="pm" aria-hidden="true"></span></summary><div class="ans"><p>{esc(a)}</p></div></details>' for q, a in faqs)
     body = f"""{page_hero(f"{esc(name)}, New York", h1, lead, [('Home', '/'), ('Properties', '/properties/'), (name, url)])}
 <section class="section section--tight">
@@ -1168,7 +1173,7 @@ def city_page(key):
     title = f"Apartments for Rent in {name}, NY | Evolution24"
     desc = fit(f"{k} {'apartment' if k == 1 else 'apartments'} for rent in {name}, NY, from {money(rf)} a month." if k
                else f"Apartments in {name}, NY, from a family-owned landlord.",
-               r["blurb"], " and ".join(f"{p['street']} in {p['city']}" for p in props) + ".", "Family-owned; apply online.")
+               r["blurb"], " and ".join(f"{p['street']} in {p['city']}" for p in props) + ".", "Family-owned; tours by appointment.")
     return page(url=url, title=title, desc=desc, body=body, graph=graph, page_type="CollectionPage",
                 crumbs=[("Home", "/"), ("Properties", "/properties/"), (name, url)],
                 og=og_for(f"city-{key}", f"Evolution24 apartments in {name}, New York"), preload=None)
@@ -1386,8 +1391,8 @@ def llms():
     lines += ["", f"## Available apartments (as of {fmt_date(UNITS_AS_OF)})"]
     for p, u in ALL_UNITS:
         size = f", {u['sqft']} sq ft" if u.get("sqft") else ""
-        lines.append(f"- {p['name']}, {p['city']}: unit {u['unit']}, {unit_type(u)}{size}, {money(u['rent'])}/mo. Apply: {APPLY_UNIT.format(u['uid'])}")
-    lines += ["", "## Notes", "- Availability changes daily; the application confirms the current rent and move-in date.",
+        lines.append(f"- {p['name']}, {p['city']}: unit {u['unit']}, {unit_type(u)}{size}, {money(u['rent'])}/mo. Apply: {SITE}{apply_url(p, u)}")
+    lines += ["", "## Notes", "- Availability changes daily; the leasing team confirms the current rent and move-in date.",
               f"- Charlotte Square (50 Charlotte Street) has its own site at https://www.charlottesquareroc.com/ with leasing by {CS_LEASING['name']}, {CS_LEASING['phone']}."]
     return "\n".join(lines) + "\n"
 

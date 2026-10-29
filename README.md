@@ -602,8 +602,10 @@ PREVIEW=out node scripts/test-pay-report.cjs      # and a picture of each tab (P
 **Rents and availability come from Rent Manager** once the availability job has its two
 secrets (see *Rent Manager*). Until then they are the snapshot read from the Rent Manager
 listing on **22 September 2026** (`units_as_of` in `data/properties.json`), and every
-table says so. Every Apply button goes to Rent Manager's live application for that exact
-unit, so an applicant always sees the current price there.
+table says so. Every Apply button opens that building's enquiry form with the home and
+"Applying" chosen (`?unit=<id>&interest=apply#enquire`; on the building's own page it fills the
+form in place), so an application starts with the leasing team, who send Rent Manager's
+application and confirm the current rent.
 
 **Five descriptions were written, not copied.** The old site had no description for
 379 South Main, 561 South Main, 31 Genesee Street, the Biltmore and 181 St. Paul. These
