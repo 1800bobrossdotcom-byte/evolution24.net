@@ -202,7 +202,43 @@
     {
      "type": "query",
      "key": "uid",
+     "value": "4"
+    }
+   ],
+   "destination": "/properties/301-central-avenue/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "5"
+    }
+   ],
+   "destination": "/properties/301-central-avenue/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
      "value": "6"
+    }
+   ],
+   "destination": "/properties/301-central-avenue/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "11"
     }
    ],
    "destination": "/properties/301-central-avenue/#units",
@@ -250,7 +286,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "48"
+     "value": "50"
     }
    ],
    "destination": "/properties/145-south-fitzhugh-street/#units",
@@ -262,7 +298,19 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "62"
+     "value": "54"
+    }
+   ],
+   "destination": "/properties/145-south-fitzhugh-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "102"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -274,7 +322,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "64"
+     "value": "68"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -286,7 +334,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "73"
+     "value": "70"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -298,7 +346,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "85"
+     "value": "79"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -310,7 +358,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "87"
+     "value": "82"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -322,7 +370,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "90"
+     "value": "88"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -334,7 +382,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "94"
+     "value": "91"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -358,7 +406,43 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "172"
+     "value": "131"
+    }
+   ],
+   "destination": "/properties/biltmore/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "138"
+    }
+   ],
+   "destination": "/properties/biltmore/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "132"
+    }
+   ],
+   "destination": "/properties/biltmore/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "157"
     }
    ],
    "destination": "/properties/181-st-paul-street/#units",
@@ -370,10 +454,46 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "185"
+     "value": "162"
     }
    ],
    "destination": "/properties/181-st-paul-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "171"
+    }
+   ],
+   "destination": "/properties/181-st-paul-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "184"
+    }
+   ],
+   "destination": "/properties/181-st-paul-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "23"
+    }
+   ],
+   "destination": "/properties/121-park-drive/#units",
    "permanent": true
   },
   {
@@ -410,18 +530,6 @@
     }
    ],
    "destination": "/properties/379-south-main-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "55"
-    }
-   ],
-   "destination": "/properties/561-south-main-street/#units",
    "permanent": true
   },
   {

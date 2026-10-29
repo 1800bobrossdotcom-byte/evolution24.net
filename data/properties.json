@@ -1,6 +1,6 @@
 {
  "_about": "Facts about each building. Everything here was read off evolution24.net and its Rent Manager listings on 22 September 2026 unless a field says otherwise. 'desc_source' is 'site' when the words are the old site's own, 'written' when the old site had no description and one was written from the listing facts and photos only. Review every 'written' one.",
- "units_as_of": "2026-09-22",
+ "units_as_of": "2026-10-29",
  "properties": [
   {
    "slug": "301-central-avenue",
@@ -26,11 +26,32 @@
    ],
    "units": [
     {
+     "uid": 4,
+     "unit": "4",
+     "beds": 2,
+     "baths": 1,
+     "rent": 1795
+    },
+    {
+     "uid": 5,
+     "unit": "5",
+     "beds": 1,
+     "baths": 1,
+     "rent": 1295
+    },
+    {
      "uid": 6,
      "unit": "6",
      "beds": 2,
      "baths": 1,
-     "rent": 1900
+     "rent": 1895
+    },
+    {
+     "uid": 11,
+     "unit": "11",
+     "beds": 1,
+     "baths": 1,
+     "rent": 1710
     }
    ],
    "geo": [
@@ -82,15 +103,23 @@
      "beds": 0,
      "baths": 1,
      "sqft": 450,
-     "rent": 1195
+     "rent": 1020
     },
     {
-     "uid": 48,
-     "unit": "4-2",
+     "uid": 50,
+     "unit": "4-4",
      "beds": 0,
      "baths": 1,
      "sqft": 450,
-     "rent": 1600
+     "rent": 1220
+    },
+    {
+     "uid": 54,
+     "unit": "5-4",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 650,
+     "rent": 1365
     }
    ],
    "geo": [
@@ -124,60 +153,60 @@
    ],
    "units": [
     {
-     "uid": 62,
-     "unit": "103RV",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 348,
-     "rent": 1175
-    },
-    {
-     "uid": 64,
-     "unit": "105RV",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 483,
-     "rent": 1300
-    },
-    {
-     "uid": 73,
-     "unit": "302RV",
+     "uid": 102,
+     "unit": "107IL",
      "beds": 1,
      "baths": 1,
-     "sqft": 619,
-     "rent": 1590
+     "sqft": 775,
+     "rent": 1795
     },
     {
-     "uid": 85,
-     "unit": "502RV",
+     "uid": 68,
+     "unit": "203RV",
      "beds": 1,
      "baths": 1,
-     "sqft": 619,
-     "rent": 1625
+     "sqft": 568,
+     "rent": 1630
     },
     {
-     "uid": 87,
-     "unit": "504RV",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 505,
-     "rent": 1600
-    },
-    {
-     "uid": 90,
-     "unit": "601RV",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 597,
-     "rent": 1400
-    },
-    {
-     "uid": 94,
-     "unit": "605RV",
+     "uid": 70,
+     "unit": "205RV",
      "beds": 1,
      "baths": 1,
      "sqft": 807,
-     "rent": 1700
+     "rent": 1725
+    },
+    {
+     "uid": 79,
+     "unit": "402RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 619,
+     "rent": 1395
+    },
+    {
+     "uid": 82,
+     "unit": "405RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 734,
+     "rent": 1595
+    },
+    {
+     "uid": 88,
+     "unit": "505RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 807,
+     "rent": 1725
+    },
+    {
+     "uid": 91,
+     "unit": "602RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 619,
+     "rent": 1495
     }
    ],
    "geo": [
@@ -217,6 +246,30 @@
      "sqft": 365,
      "rent": 1595,
      "note": "Furnished"
+    },
+    {
+     "uid": 131,
+     "unit": "12B",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 365,
+     "rent": 1075
+    },
+    {
+     "uid": 138,
+     "unit": "17",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 365,
+     "rent": 1220
+    },
+    {
+     "uid": 132,
+     "unit": "20",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 470,
+     "rent": 1495
     }
    ],
    "geo": [
@@ -246,18 +299,36 @@
    ],
    "units": [
     {
-     "uid": 172,
-     "unit": "4E",
+     "uid": 157,
+     "unit": "2A",
      "beds": 0,
-     "sqft": 470,
-     "rent": 1195
+     "baths": 1,
+     "sqft": 2300,
+     "rent": 1850
     },
     {
-     "uid": 185,
-     "unit": "6E",
+     "uid": 162,
+     "unit": "2F",
      "beds": 0,
-     "sqft": 520,
-     "rent": 1200
+     "baths": 1,
+     "sqft": 445,
+     "rent": 1075
+    },
+    {
+     "uid": 171,
+     "unit": "4D",
+     "beds": 2,
+     "baths": 1,
+     "sqft": 1160,
+     "rent": 1595
+    },
+    {
+     "uid": 184,
+     "unit": "6D",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 1140,
+     "rent": 1500
     }
    ],
    "geo": [
@@ -360,6 +431,14 @@
    ],
    "units": [
     {
+     "uid": 23,
+     "unit": "1",
+     "beds": 4,
+     "baths": 1,
+     "rent": 2350,
+     "available": "2026-11-30"
+    },
+    {
      "uid": 26,
      "unit": "4",
      "beds": 1,
@@ -370,6 +449,7 @@
      "uid": 27,
      "unit": "5",
      "beds": 2,
+     "baths": 1,
      "rent": 1895
     }
    ],
@@ -433,15 +513,7 @@
     "Pressed-tin ceilings",
     "Gas range"
    ],
-   "units": [
-    {
-     "uid": 55,
-     "unit": "5",
-     "beds": 2,
-     "baths": 1,
-     "rent": 1425
-    }
-   ],
+   "units": [],
    "geo": [
     42.86156,
     -76.98276
