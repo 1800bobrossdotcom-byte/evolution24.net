@@ -419,8 +419,9 @@ The tables are made on the first request; there is nothing to run. Each has row-
 security on with no policies, so Supabase's public Data API cannot read or write them;
 the site connects as their owner, which row security does not apply to.
 
-**2. The dashboard's secrets.** Run `node scripts/hash-password.mjs` on your own computer.
-It makes a password (save it in a password manager) and prints `ADMIN_PASSWORD_HASH`,
+**2. The dashboard's secrets.** Open `scripts/hash-password.html` in a browser on your own
+computer (no internet needed, and it can reach none), or run `node scripts/hash-password.mjs`.
+It makes a password (save it in a password manager) and gives `ADMIN_PASSWORD_HASH`,
 `SESSION_SECRET` and `VISITOR_SALT`. Add all three in Vercel, for Production.
 
 **3. Email reports (optional).** Resend → Webhooks → Add endpoint
