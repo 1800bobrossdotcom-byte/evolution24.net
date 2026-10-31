@@ -18,7 +18,7 @@
 
 ## Properties (11)
 - [301 Central Avenue](https://evolution24.net/properties/301-central-avenue/): 301 Central Avenue, Rochester, NY 14605. 1–2 bedrooms. 4 available, from $1,295/mo.
-- [145 South Fitzhugh](https://evolution24.net/properties/145-south-fitzhugh-street/): 145 South Fitzhugh Street, Rochester, NY 14608. Studios and 1 bedrooms. 5 available, from $1,020/mo.
+- [145 South Fitzhugh](https://evolution24.net/properties/145-south-fitzhugh-street/): 145 South Fitzhugh Street, Rochester, NY 14608. Studios and 1 bedrooms. 6 available, from $1,020/mo.
 - [Water Street](https://evolution24.net/properties/water-street/): 168–176 North Water Street, Rochester, NY 14604. Studios to 3 bedrooms. 7 available, from $1,395/mo.
 - [The Biltmore](https://evolution24.net/properties/biltmore/): 357 Alexander Street, Rochester, NY 14607. Furnished studios. 4 available, from $1,075/mo.
 - [181 St. Paul](https://evolution24.net/properties/181-st-paul-street/): 181 St. Paul Street, Rochester, NY 14604. Loft studios. 4 available, from $1,075/mo.
@@ -29,7 +29,7 @@
 - [561 South Main](https://evolution24.net/properties/561-south-main-street/): 561 South Main Street, Geneva, NY 14456. 2 bedrooms. fully leased.
 - [31 Genesee Street](https://evolution24.net/properties/31-genesee-street/): 31 Genesee Street, Geneva, NY 14456. Multifamily. fully leased.
 
-## Available apartments (as of 30 October 2026)
+## Available apartments (as of 31 October 2026)
 - 145 South Fitzhugh, Rochester: unit 2-2, Studio · 1 bath, 450 sq ft, $1,020/mo. Apply: https://evolution24.net/properties/145-south-fitzhugh-street/?unit=39&interest=apply#enquire
 - The Biltmore, Rochester: unit 12B, Studio · 1 bath, 365 sq ft, $1,075/mo. Apply: https://evolution24.net/properties/biltmore/?unit=131&interest=apply#enquire
 - 181 St. Paul, Rochester: unit 2F, Studio · 1 bath, 445 sq ft, $1,075/mo. Apply: https://evolution24.net/properties/181-st-paul-street/?unit=162&interest=apply#enquire
@@ -45,6 +45,7 @@
 - 181 St. Paul, Rochester: unit 6D, 1 bed · 1 bath, 1140 sq ft, $1,500/mo. Apply: https://evolution24.net/properties/181-st-paul-street/?unit=184&interest=apply#enquire
 - Water Street, Rochester: unit 405RV, 1 bed · 1 bath, 734 sq ft, $1,595/mo. Apply: https://evolution24.net/properties/water-street/?unit=82&interest=apply#enquire
 - 181 St. Paul, Rochester: unit 4D, 2 bed · 1 bath, 1160 sq ft, $1,595/mo. Apply: https://evolution24.net/properties/181-st-paul-street/?unit=171&interest=apply#enquire
+- 145 South Fitzhugh, Rochester: unit 4-2, Studio · 1 bath, 450 sq ft, $1,600/mo. Apply: https://evolution24.net/properties/145-south-fitzhugh-street/?unit=48&interest=apply#enquire
 - Water Street, Rochester: unit 203RV, 1 bed · 1 bath, 568 sq ft, $1,630/mo. Apply: https://evolution24.net/properties/water-street/?unit=68&interest=apply#enquire
 - 121 Park Drive, Manlius: unit 4, 1 bed · 1 bath, $1,695/mo. Apply: https://evolution24.net/properties/121-park-drive/?unit=26&interest=apply#enquire
 - 301 Central Avenue, Rochester: unit 11, 1 bed · 1 bath, $1,710/mo. Apply: https://evolution24.net/properties/301-central-avenue/?unit=11&interest=apply#enquire

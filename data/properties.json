@@ -1,6 +1,6 @@
 {
  "_about": "Facts about each building. Everything here was read off evolution24.net and its Rent Manager listings on 22 September 2026 unless a field says otherwise. 'desc_source' is 'site' when the words are the old site's own, 'written' when the old site had no description and one was written from the listing facts and photos only. Review every 'written' one.",
- "units_as_of": "2026-10-30",
+ "units_as_of": "2026-10-31",
  "properties": [
   {
    "slug": "301-central-avenue",
@@ -105,6 +105,14 @@
      "baths": 1,
      "sqft": 450,
      "rent": 1020
+    },
+    {
+     "uid": 48,
+     "unit": "4-2",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 450,
+     "rent": 1600
     },
     {
      "uid": 50,

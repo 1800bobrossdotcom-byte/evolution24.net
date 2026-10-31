@@ -316,6 +316,18 @@
     {
      "type": "query",
      "key": "uid",
+     "value": "48"
+    }
+   ],
+   "destination": "/properties/145-south-fitzhugh-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
      "value": "50"
     }
    ],
