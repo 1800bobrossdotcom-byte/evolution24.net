@@ -29,7 +29,7 @@ const CHECK_DAYS = 90;       // how far back "recent" bills reach
 const WEBSITE = [
   { id: 1, name: "301 Central Avenue", units: [[4, "4"], [5, "5"], [6, "6"], [11, "11"]] },
   { id: 6, name: "145 South Fitzhugh", units: [[34, "1-1"], [36, "1-3"], [39, "2-2"], [48, "4-2"], [50, "4-4"], [54, "5-4"]] },
-  { id: 8, name: "Water Street", units: [[102, "107IL"], [68, "203RV"], [70, "205RV"], [79, "402RV"], [82, "405RV"], [88, "505RV"], [91, "602RV"]] },
+  { id: 8, name: "Water Street", units: [[102, "107IL"], [68, "203RV"], [70, "205RV"], [82, "405RV"], [88, "505RV"], [91, "602RV"]] },
   { id: 9, name: "The Biltmore", units: [[128, "10"], [131, "12B"], [138, "17"], [132, "20"]] },
   { id: 11, name: "181 St. Paul", units: [[157, "2A"], [162, "2F"], [171, "4D"], [184, "6D"]] },
   { id: 12, name: "Charlotte Square", units: [] },
