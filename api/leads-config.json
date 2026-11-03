@@ -95,16 +95,16 @@
    "region": "rochester",
    "pid": 9,
    "units": {
-    "131": {
-     "label": "Unit 12B · Studio · $1,075/mo",
-     "bedrooms": "studio"
-    },
     "128": {
      "label": "Unit 10 · Studio · $1,150/mo",
      "bedrooms": "studio"
     },
     "138": {
      "label": "Unit 17 · Studio · $1,220/mo",
+     "bedrooms": "studio"
+    },
+    "131": {
+     "label": "Unit 12B · Studio · $1,250/mo",
      "bedrooms": "studio"
     },
     "132": {
