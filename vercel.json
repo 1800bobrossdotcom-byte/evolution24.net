@@ -388,6 +388,18 @@
     {
      "type": "query",
      "key": "uid",
+     "value": "79"
+    }
+   ],
+   "destination": "/properties/water-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
      "value": "82"
     }
    ],

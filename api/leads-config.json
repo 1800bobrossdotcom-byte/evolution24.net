@@ -63,6 +63,10 @@
    "region": "rochester",
    "pid": 8,
    "units": {
+    "79": {
+     "label": "Unit 402RV · 1 bed · $1,395/mo",
+     "bedrooms": "1"
+    },
     "91": {
      "label": "Unit 602RV · 1 bed · $1,495/mo",
      "bedrooms": "1"
@@ -230,5 +234,5 @@
  "office_phone": "585-759-7117",
  "office_address": "176 N Water Street, Rochester, NY 14604",
  "units_as_of": "2026-11-04",
- "open_units": 28
+ "open_units": 29
 }

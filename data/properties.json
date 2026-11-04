@@ -186,6 +186,14 @@
      "rent": 1725
     },
     {
+     "uid": 79,
+     "unit": "402RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 619,
+     "rent": 1395
+    },
+    {
      "uid": 82,
      "unit": "405RV",
      "beds": 1,
