@@ -215,7 +215,8 @@
   /* ---- The Properties map: the list beside a map with a numbered pin for each building.
      Leaflet (ours, in /assets/vendor/) and the street tiles (OpenStreetMap's) load only once
      the map is about to come on screen; the list works without them. The chips above filter
-     both. Zoomed out, the pins gather into one bubble per city, which zooms in when pressed. */
+     both. Zoomed out over more than one city, the pins gather into one bubble per city, which
+     zooms in when pressed. A city's own page has the same map, of its buildings only. */
   const finder = $('[data-finder]');
   if (finder && 'IntersectionObserver' in window) {
     const { homes, regions } = JSON.parse($('#finder-data').textContent);
@@ -297,7 +298,7 @@
       const pinLayer = L.layerGroup().addTo(map), cityLayer = L.layerGroup().addTo(map);
       const cities = new Map();
       const layout = () => {
-        const far = map.getZoom() < CITY_ZOOM;
+        const far = map.getZoom() < CITY_ZOOM && new Set(homes.filter(h => shown.has(h.slug)).map(h => h.region)).size > 1;
         pins.forEach((m, slug) => {
           const want = !far && shown.has(slug);
           if (want && !pinLayer.hasLayer(m)) pinLayer.addLayer(m);

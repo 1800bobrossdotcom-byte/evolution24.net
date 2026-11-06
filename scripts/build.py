@@ -703,7 +703,7 @@ def finder(props, group):
     blob = json.dumps({"homes": homes, "regions": {k: r["name"] for k, r in REGIONS.items()}},
                       ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     leaflet = "/assets/vendor/leaflet/"
-    return f"""<div class="finder">
+    return f"""<div class="finder{' finder--few' if len(props) <= 3 else ''}">
   <ol class="finder-list" data-filter-items="{group}">{''.join(finder_row(p, i) for i, p in enumerate(props))}</ol>
   <div class="finder-map" data-finder="{group}" data-tiles="{MAP_TILES}/{{z}}/{{x}}/{{y}}.png"
        data-js="{leaflet}leaflet.js?v={asset_version('assets/vendor/leaflet/leaflet.js')}" data-css="{leaflet}leaflet.css?v={asset_version('assets/vendor/leaflet/leaflet.css')}">
@@ -1305,7 +1305,9 @@ def property_page(p):
 
 def city_page(key):
     r = REGIONS[key]
-    props = [p for p in PROPS if p["region"] == key]
+    # The big three lead here too, as on /properties/ (in Rochester, the same numbers on both maps).
+    props = sorted((p for p in PROPS if p["region"] == key),
+                   key=lambda p: FEATURED.index(p["slug"]) if p["slug"] in FEATURED else len(FEATURED))
     rows = [(p, u) for p, u in ALL_UNITS if p["region"] == key]
     url, name = city_url(key), r["name"]
     towns = sorted(dict.fromkeys(p["city"] for p in props), key=lambda c: -sum(1 for p in props if p["city"] == c))
@@ -1352,7 +1354,7 @@ def city_page(key):
       <div><p class="label" data-reveal>Our buildings</p><h2 data-reveal class="i1">{emph(h2)}</h2></div>
       <p class="lead" data-reveal>{esc(r['blurb'])}</p>
     </div>
-    <div class="cards">{''.join(card(p, i) for i, p in enumerate(props))}</div>
+    {finder(props, 'city-props')}
   </div>
 </section>
 {avail}

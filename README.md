@@ -39,7 +39,7 @@ Never hand-edit the generated `*.html`, `sitemap.xml`, `llms.txt`, `speculation-
 | `/` | Intro animation, hero slideshow, the three regions, photo band, every available unit, about, residents, contact |
 | `/properties/` | All 11 buildings as a list beside a map (see *The properties map*), filterable by region and by availability, plus the full unit list |
 | `/properties/<slug>/` | One per building: photos with lightbox, description, amenities, available units with Apply links, map, nearby |
-| `/apartments/rochester-ny/`, `/apartments/syracuse-ny/`, `/apartments/geneva-ny/` | One per city: its buildings, every unit open there, each address, and answers to the usual questions. These are the pages meant to rank for "apartments in Rochester, NY" |
+| `/apartments/rochester-ny/`, `/apartments/syracuse-ny/`, `/apartments/geneva-ny/` | One per city: its buildings on the map (as on `/properties/`), every unit open there, each address, and answers to the usual questions. These are the pages meant to rank for "apartments in Rochester, NY" |
 | `/about-us/`, `/faqs/`, `/contact-us/` | Same URLs as the old site, so no rankings are lost |
 | `/privacy/` | Fair housing, privacy and accessibility statement |
 | `404.html` | Not found |
@@ -169,11 +169,13 @@ Here:
 
 ## The properties map
 
-`/properties/` lists every building beside a map, as listing sites do: photo, area, rent
+`/properties/` lists every building beside a map, as listing sites do, and each city page
+(`/apartments/rochester-ny/` and the rest) has the same list and map for its own buildings: photo, area, rent
 range, sizes, **Apply now** (or the waitlist, or Charlotte Square's site), the leasing phone
 and **On the map**. Each building has a number, on its photo and on its pin. The chips
-above filter the list and the map together; zoomed out, the pins gather into one bubble per
-city, which zooms in when pressed. Hovering a building lights its pin, and opening a pin
+above filter the list and the map together; zoomed out over more than one city, the pins
+gather into one bubble per city, which zooms in when pressed. With two or three buildings (Syracuse,
+Geneva) the map is as tall as the list rather than following it down the page. Hovering a building lights its pin, and opening a pin
 lights its building and scrolls the list to it. A pin's popup has the photo, rents, sizes,
 what is open and the same Apply. Opening one counts as `map_click` on that building in the
 statistics.

@@ -505,6 +505,8 @@ html:not(.js) .finder-map { display: none; }
 .finder-map.is-failed .fm-wait span::after { content: " It could not be loaded; the list has everything."; }
 .fm-hint { position: absolute; inset: 0; z-index: 1001; display: grid; place-items: center; margin: 0; padding: 24px; background: rgba(21, 22, 19, .5); color: #fff; font: 700 16px/1.3 var(--sans); text-align: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
 .finder-map.show-hint .fm-hint { opacity: 1; }
+/* A short list (a city with two or three buildings) gets a map as tall as itself. */
+@media (min-width: 981px) { .finder--few .finder-map { position: relative; top: auto; align-self: stretch; height: auto; } }
 @media (max-width: 980px) {
   .finder { grid-template-columns: minmax(0, 1fr); }
   .finder-map { position: relative; top: auto; order: -1; height: clamp(340px, 60vh, 500px); min-height: 0; }
