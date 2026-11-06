@@ -132,6 +132,7 @@
       const apply = () => items.forEach((it, n) => it.classList.toggle('is-filtered-out', !hits[n]));
       if (document.startViewTransition) document.startViewTransition(apply); else apply();
       if (empty) empty.hidden = shown > 0;
+      group.dispatchEvent(new CustomEvent('e24:filter', { bubbles: true, detail: { value: want } }));
       if (window.e24track) window.e24track('filter', { value: want });
     }));
   });
@@ -210,6 +211,186 @@
       slot.replaceChildren(f);
     });
   });
+
+  /* ---- The Properties map: the list beside a map with a numbered pin for each building.
+     Leaflet (ours, in /assets/vendor/) and the street tiles (OpenStreetMap's) load only once
+     the map is about to come on screen; the list works without them. The chips above filter
+     both. Zoomed out, the pins gather into one bubble per city, which zooms in when pressed. */
+  const finder = $('[data-finder]');
+  if (finder && 'IntersectionObserver' in window) {
+    const { homes, regions } = JSON.parse($('#finder-data').textContent);
+    const name = finder.dataset.finder;
+    const chips = $(`[data-filter-group="${name}"]`);
+    const rows = new Map($$(`[data-filter-items="${name}"] [data-slug]`).map(li => [li.dataset.slug, li]));
+    const wide = matchMedia('(min-width: 981px)');
+    const touch = matchMedia('(pointer: coarse)').matches;
+    const CITY_ZOOM = 11;                          // below this, one bubble per city
+    const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+    const fetchOne = (tag, attrs) => new Promise((ok, no) => {
+      const n = Object.assign(document.createElement(tag), attrs);
+      n.onload = ok; n.onerror = no; document.head.append(n);
+    });
+
+    const draw = () => {
+      const L = window.L;
+      const map = L.map($('.fm-stage', finder), {
+        scrollWheelZoom: false, dragging: !touch, zoomSnap: 0.5, zoomDelta: 1,
+        zoomAnimation: !calm, fadeAnimation: !calm, markerZoomAnimation: !calm,
+      });
+      map.attributionControl.setPrefix('<a href="https://leafletjs.com" rel="noopener">Leaflet</a>');
+      L.tileLayer(finder.dataset.tiles, {
+        maxZoom: 19,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      const popup = h => {
+        const box = el('div', 'fm-pop'), pic = el('a'), img = new Image(), body = el('div');
+        pic.href = h.url; pic.tabIndex = -1; pic.setAttribute('aria-hidden', 'true');
+        img.src = h.img; img.alt = ''; img.decoding = 'async'; pic.append(img);
+        body.append(el('span', 'kicker', `${String(h.n).padStart(2, '0')} · ${h.area}`), el('h3', '', h.name));
+        if (h.rent) {
+          const price = el('p', 'fm-price'); price.append(el('b', '', h.rent), '/mo', h.beds ? ` · ${h.beds}` : '');
+          body.append(price);
+        } else if (h.beds) body.append(el('p', '', h.beds));
+        body.append(el('p', '', h.status));
+        const go = el('p', 'fm-go'), cta = el('a', 'btn btn--solid', h.cta[0]), see = el('a', 'link', 'See the building');
+        cta.href = h.cta[1];
+        if (h.ext) cta.rel = 'noopener';
+        else if (h.open) { cta.setAttribute('data-apply', ''); cta.dataset.property = h.slug; }
+        see.href = h.url;
+        go.append(cta, see); body.append(go); box.append(pic, body);
+        return box;
+      };
+
+      const pins = new Map();
+      const hot = (slug, on) => {
+        const r = rows.get(slug), m = pins.get(slug), icon = m && m.getElement();
+        if (r) r.classList.toggle('is-hot', on);
+        if (icon) icon.classList.toggle('is-hot', on);
+        if (m) m.setZIndexOffset(on ? 1000 : 0);
+      };
+      homes.forEach(h => {
+        const face = el('span'); face.append(el('b', '', String(h.n).padStart(2, '0')));
+        const m = L.marker(h.at, {
+          icon: L.divIcon({ className: `e24-pin${h.open || h.ext ? '' : ' is-off'}`, html: face, iconSize: [34, 34], iconAnchor: [17, 40], popupAnchor: [0, -38] }),
+          title: `${h.name}: ${h.rent ? `${h.rent} a month, ` : ''}${h.status.toLowerCase()}`, keyboard: true,
+        });
+        m.bindPopup(() => popup(h), { minWidth: 240, maxWidth: 270, autoPanPaddingTopLeft: [16, 16], autoPanPaddingBottomRight: [16, 16] });
+        m.on('popupopen', () => {
+          hot(h.slug, true);
+          const r = rows.get(h.slug);
+          if (r && wide.matches) r.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
+          if (window.e24track) window.e24track('map_click', { property: h.slug });
+        });
+        m.on('popupclose', () => hot(h.slug, false));
+        pins.set(h.slug, m);
+      });
+
+      // What the chips show, and the pins or city bubbles for it at this zoom.
+      let shown = new Set();
+      const choose = value => {
+        shown = new Set(homes.filter(h => {
+          const r = rows.get(h.slug);
+          return value === 'all' || (r && r.dataset.tags.split(' ').includes(value));
+        }).map(h => h.slug));
+      };
+      const pinLayer = L.layerGroup().addTo(map), cityLayer = L.layerGroup().addTo(map);
+      const cities = new Map();
+      const layout = () => {
+        const far = map.getZoom() < CITY_ZOOM;
+        pins.forEach((m, slug) => {
+          const want = !far && shown.has(slug);
+          if (want && !pinLayer.hasLayer(m)) pinLayer.addLayer(m);
+          else if (!want && pinLayer.hasLayer(m)) pinLayer.removeLayer(m);
+        });
+        cityLayer.clearLayers(); cities.clear();
+        if (!far) return;
+        const by = {};
+        homes.filter(h => shown.has(h.slug)).forEach(h => { (by[h.region] = by[h.region] || []).push(h); });
+        Object.entries(by).forEach(([key, hs]) => {
+          const at = [hs.reduce((a, h) => a + h.at[0], 0) / hs.length, hs.reduce((a, h) => a + h.at[1], 0) / hs.length];
+          // On a narrow map, "Syracuse" for "Syracuse & Manlius": three full names do not fit side by side.
+          const face = el('span'); face.append(el('b', '', String(hs.length)), wide.matches ? regions[key] : regions[key].split(' & ')[0]);
+          const m = L.marker(at, {
+            icon: L.divIcon({ className: 'e24-area', html: face, iconSize: null }),
+            title: `${regions[key]}: ${hs.length} ${hs.length === 1 ? 'building' : 'buildings'}. Press to zoom in.`, keyboard: true,
+          });
+          m.on('click', () => frame(hs));
+          cityLayer.addLayer(m); cities.set(key, m);
+        });
+      };
+      const frame = (list, animate = !calm) => {
+        if (!list.length) return;
+        const points = list.map(h => h.at);
+        // Across cities the map shows their bubbles, which need room for their names.
+        const across = new Set(list.map(h => h.region)).size > 1;
+        const pad = across ? (wide.matches ? [120, 60] : [64, 44]) : (wide.matches ? [64, 64] : [40, 40]);
+        if (points.length === 1) map.setView(points[0], 16, { animate });
+        else map.fitBounds(L.latLngBounds(points), { padding: pad, maxZoom: 16, animate });
+      };
+      const fit = animate => frame(homes.filter(h => shown.has(h.slug)), animate);
+      map.on('zoomend', layout);
+
+      const pressed = chips && $('.chip[aria-pressed="true"]', chips);
+      choose(pressed ? pressed.dataset.value : 'all');
+      fit(false);
+      layout();
+      document.addEventListener('e24:filter', e => {
+        if (e.target !== chips) return;
+        map.closePopup();
+        choose(e.detail.value);
+        layout();
+        fit();
+      });
+
+      // The list and the map, each pointing at the other.
+      rows.forEach((r, slug) => {
+        const h = homes.find(x => x.slug === slug);
+        if (matchMedia('(hover: hover)').matches) {
+          r.addEventListener('mouseenter', () => { hot(slug, true); const c = cities.get(h.region); if (c && c.getElement()) c.getElement().classList.add('is-hot'); });
+          r.addEventListener('mouseleave', () => { hot(slug, pins.get(slug).isPopupOpen()); cities.forEach(c => c.getElement() && c.getElement().classList.remove('is-hot')); });
+        }
+        const b = $('[data-locate]', r);
+        if (!b) return;
+        b.hidden = false;
+        b.addEventListener('click', () => {
+          const m = pins.get(slug);
+          if (!wide.matches) finder.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'center' });
+          map.closePopup();
+          map.once('moveend', () => { if (pinLayer.hasLayer(m)) m.openPopup(); });
+          map.setView(m.getLatLng(), Math.max(map.getZoom(), 16), { animate: !calm });
+        });
+      });
+
+      // A page scrolls under a finger, so on a touch screen the map moves with two (as Google's do).
+      if (touch) {
+        const hint = el('p', 'fm-hint', 'Use two fingers to move the map');
+        finder.append(hint);
+        let t;
+        $('.fm-stage', finder).addEventListener('touchmove', e => {
+          if (e.touches.length !== 1) return;
+          finder.classList.add('show-hint'); clearTimeout(t);
+          t = setTimeout(() => finder.classList.remove('show-hint'), 1300);
+        }, { passive: true });
+      } else {
+        // Nor does the wheel zoom it until someone has clicked into it.
+        map.on('click focus', () => map.scrollWheelZoom.enable());
+        map.on('mouseout blur', () => map.scrollWheelZoom.disable());
+      }
+      if ('ResizeObserver' in window) new ResizeObserver(() => map.invalidateSize()).observe(finder);
+      finder.classList.add('is-ready');
+    };
+
+    const io = new IntersectionObserver(entries => {
+      if (!entries.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      Promise.all([fetchOne('link', { rel: 'stylesheet', href: finder.dataset.css }), fetchOne('script', { src: finder.dataset.js })])
+        .then(draw).catch(() => finder.classList.add('is-failed'));
+    }, { rootMargin: '400px 0px' });
+    // A prerendered page (speculation rules) asks OpenStreetMap for nothing until it is shown.
+    if (document.prerendering) document.addEventListener('prerenderingchange', () => io.observe(finder), { once: true });
+    else io.observe(finder);
+  }
 
   /* ---- Enquiry forms: the contact page's and each building's own. Both post to
      /api/inquiry/, which saves the enquiry, puts it on the building's tab of the

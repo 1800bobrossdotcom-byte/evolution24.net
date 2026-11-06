@@ -464,6 +464,117 @@ body.menu-open { overflow: hidden; }
 .map-slot .map-pin p { margin: 0; font: 400 28px/1.1 var(--serif); }
 @media (max-width: 700px) { .map-slot { aspect-ratio: 4 / 5; } }
 
+/* ---------- Finder: the Properties page's list beside a map ----------
+   The list is plain HTML and works on its own; main.js draws the map (Leaflet) once it is
+   about to come on screen. Without JavaScript there is no map and the list takes the width. */
+.finder { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 3vw, 40px); align-items: start; }
+html:not(.js) .finder { grid-template-columns: minmax(0, 1fr); }
+html:not(.js) .finder-map { display: none; }
+.finder-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.fl { position: relative; display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); grid-template-rows: 1fr auto; grid-template-areas: "media body" "media act"; gap: 6px 20px; padding: 12px; border: 1px solid var(--line); border-radius: calc(var(--radius) * 2); background: var(--card); transition: border-color .3s, box-shadow .3s; }
+.fl.is-hot { border-color: var(--accent); box-shadow: 0 14px 34px -22px rgba(21, 22, 19, .55); }
+.fl-media { grid-area: media; position: relative; display: block; min-height: 184px; overflow: hidden; border-radius: var(--radius); background: var(--paper-2); }
+.fl-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
+.fl:hover .fl-media img { transform: scale(1.05); }
+.fl-media .badge { position: absolute; left: 10px; top: 10px; background: rgba(21, 22, 19, .78); backdrop-filter: blur(6px); color: var(--cream); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 10px; border-radius: 999px; }
+.fl-media .badge--live { background: var(--tan); color: var(--ink); }
+.fl-num { position: absolute; right: 10px; bottom: 10px; min-width: 32px; height: 32px; padding: 0 8px; border-radius: 999px; background: var(--ink); color: var(--tan); font: 700 12px/32px var(--sans); letter-spacing: .06em; text-align: center; }
+.fl.is-hot .fl-num { background: var(--tan); color: var(--ink); }
+.fl-body { grid-area: body; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-top: 6px; }
+.fl-body .kicker { font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.fl-body h3 { font-size: clamp(27px, 2.3vw, 32px); }
+.fl-body h3 a { color: inherit; text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size .4s var(--ease); }
+.fl-body h3 a:hover, .fl-body h3 a:focus-visible { background-size: 100% 1px; }
+.fl-price { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; font-size: 15px; color: var(--muted); }
+.fl-price b { color: var(--text); font-size: 18px; font-weight: 700; }
+.fl-price small { font-size: 13px; }
+.fl-type { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.fl-act { grid-area: act; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 4px 0 2px; }
+.fl-act .btn { min-height: 42px; padding: 0 18px; font-size: 12px; }
+.fl-tel, .fl-locate { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 0; border: 0; background: none; color: var(--text); font: 700 13px/1 var(--sans); text-decoration: none; cursor: pointer; }
+.fl-tel svg, .fl-locate svg { width: 17px; height: 17px; color: var(--accent); flex: none; }
+.fl-tel:hover span, .fl-locate:hover span { text-decoration: underline; text-underline-offset: .25em; }
+.fl-locate[hidden] { display: none; }
+
+.finder-map { position: sticky; top: calc(var(--header-h) + 14px); height: min(calc(100vh - var(--header-h) - 28px), 860px); min-height: 440px; overflow: hidden; border: 1px solid var(--line); border-radius: calc(var(--radius) * 2); background: var(--paper-2); isolation: isolate; }
+.fm-stage { position: absolute; inset: 0; }
+.fm-wait { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--muted); font-size: 14px; pointer-events: none; transition: opacity .6s var(--ease);
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 48px 48px; }
+.fm-wait svg { width: 34px; height: 34px; color: var(--accent); }
+.finder-map.is-ready .fm-wait { opacity: 0; }
+.finder-map.is-failed .fm-wait span::after { content: " It could not be loaded; the list has everything."; }
+.fm-hint { position: absolute; inset: 0; z-index: 1001; display: grid; place-items: center; margin: 0; padding: 24px; background: rgba(21, 22, 19, .5); color: #fff; font: 700 16px/1.3 var(--sans); text-align: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.finder-map.show-hint .fm-hint { opacity: 1; }
+@media (max-width: 980px) {
+  .finder { grid-template-columns: minmax(0, 1fr); }
+  .finder-map { position: relative; top: auto; order: -1; height: clamp(340px, 60vh, 500px); min-height: 0; }
+}
+@media (max-width: 600px) {
+  .fl { grid-template-columns: 116px minmax(0, 1fr); grid-template-rows: auto auto; grid-template-areas: "media body" "act act"; gap: 10px 14px; padding: 10px; }
+  .fl-media { min-height: 132px; }
+  .fl-media .badge { left: 6px; top: 6px; font-size: 9.5px; letter-spacing: .1em; padding: 5px 7px; }
+  .fl-num { right: 6px; bottom: 6px; min-width: 28px; height: 28px; line-height: 28px; font-size: 11px; }
+  .fl-body { padding-top: 2px; gap: 4px; }
+  .fl-body h3 { font-size: 25px; }
+  .fl-price b { font-size: 16px; }
+  .fl-type { font-size: 13px; }
+  .fl-act { gap: 4px 16px; padding: 0; }
+  .fl-act .btn { flex: 1 1 100%; justify-content: center; }
+}
+
+/* Inside the map. Leaflet's own stylesheet loads with it; these win on specificity. */
+.finder-map .leaflet-container { background: var(--paper-2); font: 500 13px/1.4 var(--sans); }
+.finder-map .leaflet-tile-pane { filter: grayscale(.9) sepia(.16) brightness(1.03) contrast(.94); }
+.finder-map .leaflet-control-zoom { border: 0; border-radius: 999px; overflow: hidden; box-shadow: 0 8px 22px -12px rgba(21, 22, 19, .55); }
+.finder-map .leaflet-control-zoom a { width: 42px; height: 42px; background: var(--card); color: var(--text); font: 400 22px/42px var(--sans); border-bottom-color: var(--line); }
+.finder-map .leaflet-control-zoom a:hover { background: var(--paper-2); }
+.finder-map .leaflet-control-attribution { background: color-mix(in srgb, var(--card) 86%, transparent); color: var(--muted); font-size: 11px; padding: 2px 8px; border-top-left-radius: 6px; }
+.finder-map .leaflet-control-attribution a { color: inherit; }
+.e24-pin { --pin: var(--ink); --pin-text: var(--tan); }
+.e24-pin.is-off { --pin: #6d6e66; --pin-text: var(--cream); }
+.e24-pin.is-hot { --pin: var(--tan); --pin-text: var(--ink); }
+.e24-pin span { display: grid; place-items: center; width: 34px; height: 34px; border: 2px solid var(--card); border-radius: 50% 50% 50% 0; background: var(--pin); box-shadow: 0 6px 14px -6px rgba(0, 0, 0, .6); transform: rotate(-45deg); transform-origin: 50% 50%; transition: transform .3s var(--ease), background .3s; }
+.e24-pin b { color: var(--pin-text); font: 700 12px/1 var(--sans); letter-spacing: .04em; transform: rotate(45deg); }
+.e24-pin.is-hot span { transform: rotate(-45deg) scale(1.2); }
+.e24-area { width: 0; height: 0; }
+.e24-area span { display: inline-flex; align-items: center; gap: 10px; padding: 7px 16px 7px 7px; border-radius: 999px; background: var(--ink); color: var(--on-ink); font: 700 13px/1 var(--sans); white-space: nowrap; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .6); transform: translate(-50%, -50%); transition: transform .3s var(--ease); cursor: pointer; }
+.e24-area b { display: grid; place-items: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 999px; background: var(--tan); color: var(--ink); }
+.e24-area:hover span, .e24-area:focus-visible span, .e24-area.is-hot span { transform: translate(-50%, -50%) scale(1.08); }
+.finder-map .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border-radius: calc(var(--radius) * 2); background: var(--card); color: var(--text); box-shadow: 0 22px 44px -18px rgba(0, 0, 0, .55); }
+.finder-map .leaflet-popup-content { margin: 0; line-height: 1.4; }
+.finder-map .leaflet-popup-tip { background: var(--card); }
+.finder-map .leaflet-container a.leaflet-popup-close-button { top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%; background: rgba(21, 22, 19, .7); color: var(--cream); font: 400 20px/30px var(--sans); text-align: center; }
+.fm-pop > a { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--paper-2); }
+.fm-pop img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fm-pop > div { display: grid; gap: 4px; padding: 12px 16px 16px; }
+.fm-pop .kicker { font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.fm-pop h3 { font-size: 26px; }
+.finder-map .fm-pop p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.fm-pop .fm-price b { color: var(--text); font-size: 16px; }
+.fm-pop .fm-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 10px; }
+.finder-map .fm-pop .btn { min-height: 38px; padding: 0 14px; font-size: 11px; color: var(--paper); }
+.finder-map .fm-pop .link { font-size: 12px; color: var(--accent); }
+@media (max-width: 600px) {
+  .e24-area span { gap: 7px; padding: 5px 12px 5px 5px; font-size: 12px; }
+  .e24-area b { min-width: 26px; height: 26px; }
+  .fm-pop > a { aspect-ratio: 2 / 1; }
+  .fm-pop > div { padding: 10px 14px 14px; }
+  .fm-pop h3 { font-size: 23px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .finder-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(.9) sepia(.12) brightness(.82) contrast(.9); }
+  :root:not([data-theme="light"]) .e24-pin { --pin: var(--tan); --pin-text: var(--ink); }
+  :root:not([data-theme="light"]) .e24-pin.is-off { --pin: #8d8b80; --pin-text: var(--ink); }
+  :root:not([data-theme="light"]) .e24-pin.is-hot { --pin: var(--cream); }
+  :root:not([data-theme="light"]) .e24-area span { background: var(--cream); color: var(--ink); }
+}
+:root[data-theme="dark"] .finder-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(.9) sepia(.12) brightness(.82) contrast(.9); }
+:root[data-theme="dark"] .e24-pin { --pin: var(--tan); --pin-text: var(--ink); }
+:root[data-theme="dark"] .e24-pin.is-off { --pin: #8d8b80; --pin-text: var(--ink); }
+:root[data-theme="dark"] .e24-pin.is-hot { --pin: var(--cream); }
+:root[data-theme="dark"] .e24-area span { background: var(--cream); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .fl-media img, .e24-pin span, .e24-area span { transition: none; } }
+
 /* ---------- Lightbox ---------- */
 .lightbox { position: fixed; inset: 0; z-index: 400; background: rgba(12, 13, 11, .96); display: none; color: var(--on-ink); }
 .lightbox.is-open { display: grid; grid-template-rows: auto 1fr auto; animation: fade .4s var(--ease); }

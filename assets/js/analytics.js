@@ -94,6 +94,7 @@
   window.e24track = (kind, meta) => {
     if (kind === 'filter' && meta && meta.value) send('filter', { value: String(meta.value).slice(0, 20) });
     else if (kind === 'deal_open' || kind === 'deal_click') send(kind);     // the leasing special's popup
+    else if (kind === 'map_click') send(kind, undefined, meta && meta.property); // a pin on the Properties map
   };
 
   // The first time they touch an enquiry form: the step between reading and

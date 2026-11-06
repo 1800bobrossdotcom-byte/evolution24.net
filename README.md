@@ -37,7 +37,7 @@ Never hand-edit the generated `*.html`, `sitemap.xml`, `llms.txt`, `speculation-
 | URL | What it is |
 | --- | --- |
 | `/` | Intro animation, hero slideshow, the three regions, photo band, every available unit, about, residents, contact |
-| `/properties/` | All 11 buildings, filterable by region and by availability, plus the full unit list |
+| `/properties/` | All 11 buildings as a list beside a map (see *The properties map*), filterable by region and by availability, plus the full unit list |
 | `/properties/<slug>/` | One per building: photos with lightbox, description, amenities, available units with Apply links, map, nearby |
 | `/apartments/rochester-ny/`, `/apartments/syracuse-ny/`, `/apartments/geneva-ny/` | One per city: its buildings, every unit open there, each address, and answers to the usual questions. These are the pages meant to rank for "apartments in Rochester, NY" |
 | `/about-us/`, `/faqs/`, `/contact-us/` | Same URLs as the old site, so no rankings are lost |
@@ -157,12 +157,45 @@ Here:
   page, a bar with **Call** and the building's next step (see what's available, join the
   waitlist, or visit Charlotte Square's site) slides up once the hero's buttons have
   scrolled away, and gets out of the way over the footer.
-- **Maps** load nothing from Google until someone presses "Show the map".
+- **Maps.** A building's page loads nothing from Google until someone presses "Show the map".
+  The Properties page's map loads Leaflet (ours) and OpenStreetMap's street tiles only once
+  it is about to come on screen, and never while the page is only prerendered.
 - **Caching:** CSS and JS are requested as `?v=<content hash>` and cached for a year as
   immutable. Images are cached for 30 days.
-- **No third-party requests at all, and no cookies for visitors.** The site counts its own
+- **One third party, and no cookies for visitors.** Apart from OpenStreetMap's map tiles on
+  the Properties page (and Google's map, once asked for), nothing loads from anyone else. The site counts its own
   visits on its own server (see *Statistics and the dashboard*), keeping no IP address, so
   there is nothing for a consent banner to ask about.
+
+## The properties map
+
+`/properties/` lists every building beside a map, as listing sites do: photo, area, rent
+range, sizes, **Apply now** (or the waitlist, or Charlotte Square's site), the leasing phone
+and **On the map**. Each building has a number, on its photo and on its pin. The chips
+above filter the list and the map together; zoomed out, the pins gather into one bubble per
+city, which zooms in when pressed. Hovering a building lights its pin, and opening a pin
+lights its building and scrolls the list to it. A pin's popup has the photo, rents, sizes,
+what is open and the same Apply. Opening one counts as `map_click` on that building in the
+statistics.
+
+- **Everything comes from `data/properties.json`**: the building's `geo` (looked up in
+  OpenStreetMap), its open units' rents and sizes, or Charlotte Square's `rent_range`. The
+  sync from Rent Manager keeps it current with no change here.
+- **Without JavaScript**, or before the map loads, the list is the whole thing: plain links.
+- **The tiles** are OpenStreetMap's own (`MAP_TILES` in `build.py`, which also puts the
+  host in the CSP's `img-src`). Their [tile policy](https://operations.osmfoundation.org/policies/tiles/)
+  allows a site of this size, with the credit shown and the Referer kept (the site's
+  `strict-origin-when-cross-origin` does). If traffic ever grows a lot, or they ask, move to
+  a paid provider (MapTiler, Stadia, Thunderforest): change `MAP_TILES` and the tile path and
+  attribution in `main.js`. The tiles are greyed and warmed in CSS to suit the site, and
+  inverted for dark mode.
+- **Leaflet 1.9.4** is kept in `assets/vendor/leaflet/` (BSD-2, its LICENSE beside it),
+  checked against npm's published checksum, and loaded only by this page. It runs under the
+  site's strict CSP: it styles through the DOM, never with `style=""` in markup.
+- **On a phone** the map sits above the list. One finger scrolls the page and two move the
+  map, as Google's maps do; a one-finger drag shows a hint. On a computer the scroll wheel
+  zooms only after a click into the map.
+- **The privacy page** says what the map loads and from whom.
 
 ## SEO
 
@@ -770,6 +803,7 @@ index.html, properties/, apartments/, about-us/, faqs/, contact-us/, privacy/, 4
 property-detail/, unit-detail/, careers/        redirect stubs for old URLs
 assets/css/main.css      design system        assets/js/main.js   behaviour
 assets/js/legacy.js      old-URL redirects    assets/fonts/       self-hosted, OFL
+assets/vendor/leaflet/   the Properties map's library (BSD-2), loaded only there
 assets/img/<slug>/       generated AVIF+WebP   assets/img/*.svg|png  logo files
 assets/img/og/           share cards, drawn by render-og.cjs
 data/properties.json     facts (edit)          data/photos.json    generated by photos.py

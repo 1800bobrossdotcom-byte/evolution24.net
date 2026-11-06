@@ -40,6 +40,11 @@ def emails_html(sep=" or "):
 OFFICE = {"street": "176 N Water Street", "city": "Rochester", "region": "NY", "zip": "14604"}
 OFFICE_GEO = (43.15981, -77.61129)        # from OpenStreetMap, matched to the house number
 PORTAL = "https://evolution.twa.rentmanager.com/"
+# The Properties map's streets: OpenStreetMap's own tile servers, free for a site of this
+# size (operations.osmfoundation.org/policies/tiles: credit them, keep the Referer, no bulk
+# downloads). The one thing the site loads from anyone else, and only once the map is about
+# to come on screen. Another provider is this line and its attribution in main.js.
+MAP_TILES = "https://tile.openstreetmap.org"
 FOUNDED = 2024
 BUILD_DATE = dt.date.today().isoformat()
 PET_DEPOSIT, PET_FEE = 300, 45
@@ -370,7 +375,7 @@ HEAD_SCRIPT = ("document.documentElement.classList.add('js');"
                "document.documentElement.classList.add('is-intro')}}catch(e){}")
 HEAD_HASH = "sha256-" + base64.b64encode(hashlib.sha256(HEAD_SCRIPT.encode()).digest()).decode()
 CSP_BASE = ("default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self' mailto:; "
-            f"script-src 'self' '{HEAD_HASH}'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
+            f"script-src 'self' '{HEAD_HASH}'; style-src 'self'; img-src 'self' data: {MAP_TILES}; font-src 'self'; "
             "connect-src 'self'; frame-src https://www.google.com https://maps.google.com; manifest-src 'self'; "
             "upgrade-insecure-requests")
 CSP_HEADER = CSP_BASE + "; frame-ancestors 'none'"
@@ -605,6 +610,108 @@ def card(p, i=0, sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1200p
     <div class="card-meta">{' · '.join(f'<span>{m}</span>' for m in meta)}</div>
   </div>
 </a>"""
+
+
+# ---------------------------------------------------------------- the map
+# The Properties page lists every building beside a map with a numbered pin for each.
+# main.js draws it with Leaflet (kept in assets/vendor/leaflet/, BSD-2), and the streets
+# are MAP_TILES's (see the top of this file).
+
+
+def rent_range(p):
+    """"$1,075 – $1,850", from the homes open now (Charlotte Square: its listed range)."""
+    rents = [u["rent"] for u in p["units"]] or list(p.get("rent_range") or [])
+    if not rents:
+        return ""
+    lo, hi = min(rents), max(rents)
+    return money(lo) if lo == hi else f"{money(lo)} – {money(hi)}"
+
+
+def beds_range(p):
+    """"Studio – 2 beds", from the homes open now; with none open, the building's own line."""
+    beds = sorted({u["beds"] for u in p["units"]})
+    if not beds:
+        return p.get("bedrooms") or ""
+    plural = lambda b: f"{b} bed" + ("s" if b > 1 else "")
+    if len(beds) == 1:
+        return "Studios" if beds[0] == 0 else plural(beds[0])
+    lo = "Studio" if beds[0] == 0 else str(beds[0])
+    return f"{lo} – {plural(beds[-1])}"
+
+
+def leasing_phone(p):
+    """(shown, tel:) — Charlotte Square leases from its own office."""
+    if p.get("external"):
+        shown = p["leasing"]["phone"]
+        return shown, "+1" + re.sub(r"\D", "", shown)
+    return PHONE, PHONE_TEL
+
+
+def finder_action(p):
+    """The row's main button: Apply, the building's own site, or its waitlist."""
+    if p.get("external"):
+        href = f'{p["external"].rstrip("/")}/?utm_source=evolution24&utm_medium=website&utm_campaign=map'
+        return "Visit its site", href, ' rel="noopener"', "ext"
+    if p["units"]:
+        return "Apply now", apply_url(p), f' data-apply data-property="{p["slug"]}"', "arrow"
+    return "Join the waitlist", f"{prop_url(p)}#enquire", "", "arrow"
+
+
+def finder_status(p):
+    n = len(p["units"])
+    return f"{n} available" if n else ("Leasing on its own site" if p.get("external") else "Waitlist")
+
+
+def finder_row(p, i):
+    n = len(p["units"])
+    tags = [p["region"]] + (["available"] if n else []) + sorted({unit_tag(u) for u in p["units"]})
+    badge = (f'<span class="badge badge--live">{n} available</span>' if n
+             else '<span class="badge">Visit site</span>' if p.get("external")
+             else '<span class="badge">Waitlist</span>')
+    label, href, attrs, ic = finder_action(p)
+    shown, tel = leasing_phone(p)
+    rr, beds = rent_range(p), beds_range(p)
+    price = f'<span><b>{rr}</b><small>/mo</small></span>' if rr else '<span><b>Rents on request</b></span>'
+    beds_html = f'<span>{esc(beds)}</span>' if beds else ""
+    return f"""<li class="fl" id="at-{p['slug']}" data-slug="{p['slug']}" data-tags="{' '.join(tags)}">
+  <a class="fl-media" href="{prop_url(p)}" tabindex="-1" aria-hidden="true">{img(p['slug'], p['card'], '(max-width: 600px) 116px, (max-width: 980px) 40vw, 260px', alt='', fit=480)}{badge}<span class="fl-num">{i + 1:02d}</span></a>
+  <div class="fl-body">
+    <span class="kicker">{esc(p['area'])}</span>
+    <h3><a href="{prop_url(p)}">{esc(p['name'])}</a></h3>
+    <p class="fl-price">{price}{beds_html}</p>
+    <p class="fl-type">{esc(p['type'])} · {esc(p['street'])}, {esc(p['city'])}</p>
+  </div>
+  <div class="fl-act">
+    <a class="btn btn--solid" href="{esc(href)}"{attrs}>{label} {icon(ic)}</a>
+    <a class="fl-tel" href="tel:{tel}">{icon('phone')}<span>{shown}</span></a>
+    <button class="fl-locate" type="button" data-locate="{p['slug']}" hidden>{icon('pin')}<span>On the map</span></button>
+  </div>
+</li>"""
+
+
+def finder(props, group):
+    """The list (filtered by the chips of [data-filter-group=group]) and the map beside it."""
+    homes = []
+    for i, p in enumerate(props):
+        label, href, _, _ = finder_action(p)
+        ph = photo(p["slug"], p["card"])
+        homes.append({"slug": p["slug"], "n": i + 1, "name": p["name"], "at": p["geo"], "region": p["region"],
+                      "url": prop_url(p), "area": p["area"], "rent": rent_range(p), "beds": beds_range(p),
+                      "status": finder_status(p), "open": len(p["units"]), "ext": bool(p.get("external")),
+                      "img": src(p["slug"], ph, next((w for w in sorted(ph["widths"]) if w >= 480), max(ph["widths"]))),
+                      "cta": [label, href]})
+    blob = json.dumps({"homes": homes, "regions": {k: r["name"] for k, r in REGIONS.items()}},
+                      ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    leaflet = "/assets/vendor/leaflet/"
+    return f"""<div class="finder">
+  <ol class="finder-list" data-filter-items="{group}">{''.join(finder_row(p, i) for i, p in enumerate(props))}</ol>
+  <div class="finder-map" data-finder="{group}" data-tiles="{MAP_TILES}/{{z}}/{{x}}/{{y}}.png"
+       data-js="{leaflet}leaflet.js?v={asset_version('assets/vendor/leaflet/leaflet.js')}" data-css="{leaflet}leaflet.css?v={asset_version('assets/vendor/leaflet/leaflet.css')}">
+    <div class="fm-stage" role="region" aria-label="Map of our buildings. Each pin has the number of its building in the list."></div>
+    <div class="fm-wait" aria-hidden="true">{icon('pin')}<span>Loading the map…</span></div>
+  </div>
+</div>
+<script type="application/json" id="finder-data">{blob}</script>"""
 
 
 # Apply goes to the building's own enquiry form, with the home and "Applying" chosen; the
@@ -905,7 +1012,6 @@ def properties_index():
     chips = [('all', 'All', len(PROPS))] + [(k, r["name"], sum(1 for p in PROPS if p["region"] == k)) for k, r in REGIONS.items()]
     chips.append(("available", "Available now", sum(1 for p in PROPS if p["units"])))
     chip_html = "".join(f'<button class="chip" type="button" data-value="{k}" aria-pressed="{str(k == "all").lower()}">{esc(n)} <small>{c}</small></button>' for k, n, c in chips)
-    cards = "".join(card(p, i) for i, p in enumerate(order))
     items = [{"@type": "ListItem", "position": i + 1, "url": SITE + prop_url(p), "name": p["name"]} for i, p in enumerate(order)]
     body = f"""{page_hero('Properties', f'{len(PROPS)} places|to call *home*.', f'Every Evolution24 property in Rochester, Syracuse, Manlius and Geneva. {len(ALL_UNITS)} apartments are available now, from {money(RENT_FROM)} a month.', [('Home', '/'), ('Properties', '/properties/')])}
 <section class="section section--tight">
@@ -913,7 +1019,7 @@ def properties_index():
     <h2 class="sr-only">All properties</h2>
     <div class="filters" data-filter-group="props" role="group" aria-label="Filter properties">{chip_html}</div>
     <p class="by-city">By city: {' · '.join(f'<a href="{city_url(k)}">{esc(r["name"])}</a>' for k, r in REGIONS.items())}</p>
-    <div class="cards" data-filter-items="props">{cards}</div>
+    {finder(order, 'props')}
   </div>
 </section>
 <section class="section ink" id="available">
@@ -1400,10 +1506,10 @@ def privacy():
 <h2>Fair housing</h2>
 <p>{NAME} is an Equal Housing Opportunity provider. We do not discriminate on the basis of race, color, religion, sex, disability, familial status or national origin, nor on any basis protected by New York State law, including age, sexual orientation, gender identity or expression, marital status, military status, and lawful source of income.</p>
 <h2>What this website collects</h2>
-<p>This site sets no cookies for visitors and loads nothing from third parties. It counts its own visits, on our own servers and nowhere else: which pages are viewed, which buttons are used (calling us, applying, the map), the website or ad link that brought you, your country as your connection shows it, and the kind of device. It never stores your IP address. Visits are grouped by a code made from your connection and browser that changes every day, so nobody can be recognised from one day to the next. If your browser sends Do Not Track or Global Privacy Control, nothing is counted at all.</p>
+<p>This site sets no cookies for visitors and, apart from two kinds of map, loads nothing from third parties. It counts its own visits, on our own servers and nowhere else: which pages are viewed, which buttons are used (calling us, applying, the map), the website or ad link that brought you, your country as your connection shows it, and the kind of device. It never stores your IP address. Visits are grouped by a code made from your connection and browser that changes every day, so nobody can be recognised from one day to the next. If your browser sends Do Not Track or Global Privacy Control, nothing is counted at all.</p>
 <p>When you send one of our forms, what you type is saved in our enquiry records (a database we run, hosted by Supabase), sent to our leasing team by email through our email provider, Resend, and added to our enquiry list in Google Workspace. If you asked about one of our buildings, it may also be added to that building’s records in our property management software, Rent Manager. We use it only to reply to you and to follow up on what you asked about, and we do not sell or share it. The form also notes which website or ad link brought you to us, if any (a Google search, say), and the first page you opened; your browser keeps that for the length of your visit only, not in a cookie.</p>
 <p>After you send a form we email you once to say it arrived. Every such email has a link to stop them, and we send no more than one in twelve hours. To have an enquiry removed, call or email us.</p>
-<p>Maps are only loaded from Google when you press “Show the map”, and are then subject to Google’s privacy policy. Applications and resident accounts are handled by our property management software, Rent Manager, in Tenant Web Access.</p>
+<p>The map of our buildings on the Properties page draws its streets from OpenStreetMap: when it comes on screen your browser fetches map images from OpenStreetMap’s servers, which see your IP address as any website does and are subject to the <a href="https://osmfoundation.org/wiki/Privacy_Policy" rel="noopener">OpenStreetMap Foundation’s privacy policy</a>. We send them nothing else. The map on each building’s page is only loaded from Google when you press “Show the map”, and is then subject to Google’s privacy policy. Applications and resident accounts are handled by our property management software, Rent Manager, in Tenant Web Access.</p>
 <h2>Accessibility</h2>
 <p>We want this site to work for everyone, including with a screen reader, a keyboard alone or reduced motion. If something is hard to use, call <a href="tel:{PHONE_TEL}">{PHONE}</a> or email {emails_html()} and we will help and fix it.</p>
 <h2>Contact</h2>
@@ -1657,7 +1763,7 @@ SECURITY_HEADERS = [
 ]
 SECURITY_HEADERS.append(("Speculation-Rules", '"/speculation-rules.json"'))
 YEAR = "public, max-age=31536000, immutable"   # CSS/JS carry ?v=<content hash>, so a change is a new URL
-CACHE_RULES = [("/assets/css/", YEAR), ("/assets/js/", YEAR), ("/assets/fonts/", YEAR), ("/assets/img/", "public, max-age=2592000")]
+CACHE_RULES = [("/assets/css/", YEAR), ("/assets/js/", YEAR), ("/assets/fonts/", YEAR), ("/assets/vendor/", YEAR), ("/assets/img/", "public, max-age=2592000")]
 VERCEL_HOST = "evolution24-net.vercel.app"     # Vercel's own alias for the production deployment
 
 
