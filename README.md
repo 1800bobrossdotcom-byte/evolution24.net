@@ -36,7 +36,7 @@ Never hand-edit the generated `*.html`, `sitemap.xml`, `llms.txt`, `speculation-
 
 | URL | What it is |
 | --- | --- |
-| `/` | Intro animation, hero slideshow, the three regions, photo band, every available unit, about, residents, contact |
+| `/` | Intro animation, hero slideshow, every building on the map (as on `/properties/`), photo band, every available unit, about, residents, contact |
 | `/properties/` | All 11 buildings as a list beside a map (see *The properties map*), filterable by region and by availability, plus the full unit list |
 | `/properties/<slug>/` | One per building: photos with lightbox, description, amenities, available units with Apply links, map, nearby |
 | `/apartments/rochester-ny/`, `/apartments/syracuse-ny/`, `/apartments/geneva-ny/` | One per city: its buildings on the map (as on `/properties/`), every unit open there, each address, and answers to the usual questions. These are the pages meant to rank for "apartments in Rochester, NY" |
@@ -169,7 +169,8 @@ Here:
 
 ## The properties map
 
-`/properties/` lists every building beside a map, as listing sites do, and each city page
+`/properties/` lists every building beside a map, as listing sites do. The home page's
+*Where we are* has the same list, map and chips, and each city page
 (`/apartments/rochester-ny/` and the rest) has the same list and map for its own buildings: photo, area, rent
 range, sizes, **Apply now** (or the waitlist, or Charlotte Square's site), the leasing phone
 and **On the map**. Each building has a number, on its photo and on its pin. The chips

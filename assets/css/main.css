@@ -83,6 +83,8 @@
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 16px); }
 body { margin: 0; background: var(--paper); color: var(--text); font: 400 17px/1.65 var(--sans); overflow-x: hidden; overflow-x: clip; -webkit-font-smoothing: antialiased; }
 picture { display: contents; }
+/* <source> would otherwise be a grid or flex item of picture's parent, and take a column. */
+picture > source { display: none; }
 a, button, summary, .chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 img { display: block; max-width: 100%; height: auto; }
 a { color: inherit; text-underline-offset: .2em; text-decoration-thickness: 1px; }
@@ -265,18 +267,6 @@ body.menu-open { overflow: hidden; }
 .js [data-reveal="clip"].is-in img { transform: none; }
 
 /* ---------- Regions (home) ---------- */
-.regions { display: grid; gap: 0; border-top: 1px solid var(--line); }
-.region { display: grid; grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1.4fr); gap: 32px; padding: 36px 0; border-bottom: 1px solid var(--line); align-items: start; }
-.region-num { font: italic 400 22px/1 var(--serif); color: var(--accent); padding-top: 12px; }
-.region h3 { font-size: clamp(38px, 4.4vw, 64px); }
-.region .region-text p { color: var(--muted); margin: 14px 0 0; max-width: 38ch; }
-.region-list { list-style: none; margin: 0; padding: 0; display: grid; }
-.region-list a { display: grid; grid-template-columns: 72px 1fr auto; gap: 18px; align-items: center; padding: 12px 0; text-decoration: none; border-top: 1px solid var(--line); transition: padding .4s var(--ease); }
-.region-list li:first-child a { border-top: 0; }
-.region-list a:hover { padding-left: 10px; }
-.region-list img { width: 72px; height: 54px; object-fit: cover; border-radius: 2px; }
-.region-list strong { display: block; font-weight: 600; font-size: 17px; }
-.region-list small { color: var(--muted); font-size: 14px; }
 .avail { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ok); white-space: nowrap; }
 .avail { position: relative; }
 .avail::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
@@ -285,7 +275,6 @@ body.menu-open { overflow: hidden; }
 .avail--none::before { opacity: .5; }
 .avail--none::after { display: none; }
 @keyframes ping { 0% { transform: scale(1); opacity: .5; } 70%, 100% { transform: scale(3.3); opacity: 0; } }
-@media (max-width: 860px) { .region { grid-template-columns: 1fr; gap: 16px; } .region-num { padding: 0; } }
 
 /* ---------- Property cards ---------- */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(20px, 2.4vw, 32px); }
@@ -740,7 +729,6 @@ body.lb-open { overflow: hidden; }
   .js [data-reveal="clip"].is-in { opacity: 1; }
   .js [data-reveal="clip"] img, .card:hover .card-media img, .gallery button:hover img { transform: none; }
   .js .route::before { transform: none; }
-  .region-list a:hover { padding-left: 0; }
   ::view-transition-old(root) { animation: fade-out .25s both; }
   ::view-transition-new(root) { animation: fade .4s both; }
 }

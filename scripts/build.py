@@ -876,23 +876,6 @@ def home():
         dots += f'<button type="button" class="{"is-active" if i == 0 else ""}" aria-label="Show photo {i + 1}"></button>'
     first = BY_SLUG[slides[0][0]]
 
-    regions = ""
-    for ri, (key, r) in enumerate(REGIONS.items()):
-        items = ""
-        for p in [p for p in PROPS if p["region"] == key]:
-            n = len(p["units"])
-            av = (f'<span class="avail">{n} open</span>' if n else
-                  '<span class="avail avail--none">Waitlist</span>' if not p.get("external") else
-                  '<span class="avail avail--none">Own site</span>')
-            items += (f'<li><a href="{prop_url(p)}">{img(p["slug"], p["card"], "72px", alt="", fit=480)}'
-                      f'<span><strong>{esc(p["name"])}</strong><small>{esc(p["street"])}</small></span>{av}</a></li>')
-        count = sum(1 for p in PROPS if p["region"] == key)
-        regions += f"""<div class="region" data-reveal>
-  <span class="region-num">0{ri + 1}</span>
-  <div class="region-text"><h3><a href="{city_url(key)}">{esc(r['name'])}</a></h3><p>{esc(r['blurb'])}</p><p><a class="link" href="{city_url(key)}">{count} {'property' if count == 1 else 'properties'} {icon('arrow')}</a></p></div>
-  <ul class="region-list">{items}</ul>
-</div>"""
-
     band_a = [("biltmore", "01-lobby"), ("379-south-main-street", "02-living-room"), ("121-park-drive", "01-exterior"),
               ("301-central-avenue", "04-kitchen"), ("561-south-main-street", "06-gas-range"), ("379-south-main-street", "09-bedroom-green"),
               ("145-south-fitzhugh-street", "15-studio-bedroom"), ("water-street", "03-loft-mezzanine")]
@@ -939,7 +922,9 @@ def home():
       <div><p class="label" data-reveal>Where we are</p><h2 data-reveal class="i1">Three cities, <em>one family.</em></h2></div>
       <p class="lead i2" data-reveal>Downtown lofts and East End classics in Rochester, a restored Victorian outside Syracuse, and houses above Seneca Lake in Geneva. Every one managed by the people who own it.</p>
     </div>
-    <div class="regions">{regions}</div>
+    {prop_chips('home-props')}
+    {by_city()}
+    {finder(featured_order(), 'home-props')}
   </div>
 </section>
 
@@ -1007,18 +992,32 @@ def home():
 FEATURED = ("charlotte-square", "181-st-paul-street", "water-street")
 
 
-def properties_index():
-    order = [BY_SLUG[s] for s in FEATURED] + [p for p in PROPS if p["slug"] not in FEATURED]
+def featured_order():
+    return [BY_SLUG[s] for s in FEATURED] + [p for p in PROPS if p["slug"] not in FEATURED]
+
+
+def prop_chips(group):
+    """All, each city, Available now: the chips over a list of buildings and its map."""
     chips = [('all', 'All', len(PROPS))] + [(k, r["name"], sum(1 for p in PROPS if p["region"] == k)) for k, r in REGIONS.items()]
     chips.append(("available", "Available now", sum(1 for p in PROPS if p["units"])))
-    chip_html = "".join(f'<button class="chip" type="button" data-value="{k}" aria-pressed="{str(k == "all").lower()}">{esc(n)} <small>{c}</small></button>' for k, n, c in chips)
+    html = "".join(f'<button class="chip" type="button" data-value="{k}" aria-pressed="{str(k == "all").lower()}">{esc(n)} <small>{c}</small></button>' for k, n, c in chips)
+    return f'<div class="filters" data-filter-group="{group}" role="group" aria-label="Filter properties">{html}</div>'
+
+
+def by_city():
+    links = " · ".join(f'<a href="{city_url(k)}">{esc(r["name"])}</a>' for k, r in REGIONS.items())
+    return f'<p class="by-city">By city: {links}</p>'
+
+
+def properties_index():
+    order = featured_order()
     items = [{"@type": "ListItem", "position": i + 1, "url": SITE + prop_url(p), "name": p["name"]} for i, p in enumerate(order)]
     body = f"""{page_hero('Properties', f'{len(PROPS)} places|to call *home*.', f'Every Evolution24 property in Rochester, Syracuse, Manlius and Geneva. {len(ALL_UNITS)} apartments are available now, from {money(RENT_FROM)} a month.', [('Home', '/'), ('Properties', '/properties/')])}
 <section class="section section--tight">
   <div class="wrap">
     <h2 class="sr-only">All properties</h2>
-    <div class="filters" data-filter-group="props" role="group" aria-label="Filter properties">{chip_html}</div>
-    <p class="by-city">By city: {' · '.join(f'<a href="{city_url(k)}">{esc(r["name"])}</a>' for k, r in REGIONS.items())}</p>
+    {prop_chips('props')}
+    {by_city()}
     {finder(order, 'props')}
   </div>
 </section>
