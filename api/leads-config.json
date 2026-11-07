@@ -123,10 +123,6 @@
    "region": "rochester",
    "pid": 11,
    "units": {
-    "162": {
-     "label": "Unit 2F · Studio · $1,075/mo",
-     "bedrooms": "studio"
-    },
     "184": {
      "label": "Unit 6D · 1 bed · $1,500/mo",
      "bedrooms": "1"
@@ -233,6 +229,6 @@
  "site": "https://evolution24.net",
  "office_phone": "585-759-7117",
  "office_address": "176 N Water Street, Rochester, NY 14604",
- "units_as_of": "2026-11-06",
- "open_units": 29
+ "units_as_of": "2026-11-07",
+ "open_units": 28
 }

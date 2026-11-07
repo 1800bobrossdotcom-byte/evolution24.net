@@ -496,18 +496,6 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "162"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "171"
     }
    ],
