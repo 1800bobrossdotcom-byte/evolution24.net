@@ -1,6 +1,6 @@
 /* =============================================================================
-   Keeping form spam out of the leasing inbox. The same file, word for word
-   but for the last line, serves Charlotte Square (functions/_lib/spam.js).
+   Keeping form spam out of the leasing inbox. Charlotte Square has the same
+   file (functions/_lib/spam.js): only this header and the last line differ.
 
    Three things, each cheap, each catching a different kind of sender:
 
