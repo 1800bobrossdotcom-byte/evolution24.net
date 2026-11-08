@@ -91,6 +91,11 @@
       <p class="lead-count" id="lead-count" aria-live="polite"></p>
       <p class="warn" id="lead-warn" hidden></p>
       <div id="leads"></div>
+      <details class="held" id="held" hidden>
+        <summary id="held-sum">Held as spam</summary>
+        <p class="panel__note">Sent through the forms but held back as spam, and why: not emailed, not in the lead sheet or Rent Manager, and not counted anywhere. If one is a real person, press <b>Not spam</b> and it goes on as a normal enquiry. Each is deleted after 30 days.</p>
+        <div class="leads" id="held-list"></div>
+      </details>
     </section>
 
     <section class="panel" aria-labelledby="traffic-title">

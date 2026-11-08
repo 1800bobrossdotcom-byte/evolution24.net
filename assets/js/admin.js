@@ -892,6 +892,48 @@
     return b;
   }
 
+  /* Held as spam (api/_lib/spam.js): what the forms caught, with why, so a real person
+     caught by mistake can be sent on as a normal enquiry. Their text, so textContent. */
+  function heldCard(h) {
+    const card = make('article', 'lead lead--held');
+    card.append(make('p', 'lead__bldg', h.property_name || 'General'));
+    const head = make('div', 'lead__head');
+    head.append(make('h3', 'lead__who', `${h.first_name || ''} ${h.last_name || ''}`.trim() || 'No name given'));
+    const when = make('time', 'lead__when', ago(h.ts));
+    when.dateTime = new Date(secs(h.ts) * 1000).toISOString();
+    head.append(when);
+    card.append(head);
+    card.append(make('p', 'lead__contact', [h.email, h.phone].filter(Boolean).join(' · ')));
+    card.append(make('p', 'lead__via is-bad', `Held: ${h.reasons || 'it looked like spam'}.`));
+    if (h.message) card.append(make('p', 'lead__msg', h.message));
+    const foot = make('div', 'lead__foot');
+    const send = button('Not spam: send it on');
+    const drop = button('Delete');
+    const say = make('span', 'lead__flag');
+    const act = async (body, doing) => {
+      send.disabled = drop.disabled = true;
+      say.textContent = doing;
+      const r = await api('/api/inquiries/', { method: 'POST', body: { held: h.id, ...body } });
+      if (!r) return;
+      if (r.res.ok) { loadLeads(); return; }
+      say.textContent = r.data.error || 'That did not work. Try again.';
+      send.disabled = drop.disabled = false;
+    };
+    send.addEventListener('click', () => act({ release: true }, 'Sending…'));
+    drop.addEventListener('click', () => act({ discard: true }, 'Deleting…'));
+    foot.append(send, drop, say);
+    card.append(foot);
+    return card;
+  }
+
+  function renderHeld(list) {
+    const box = $('#held');
+    if (!box) return;
+    box.hidden = !list.length;
+    $('#held-sum').textContent = `Held as spam: ${num(list.length)} in the last 30 days`;
+    $('#held-list').replaceChildren(...list.map(heldCard));
+  }
+
   function leadCard(r) {
     const card = make('article', 'lead' + (r.handled ? ' lead--done' : ''));
 
@@ -1114,6 +1156,7 @@
           ? { slug, name: String(v.name || slug), city: v.city ? String(v.city) : '' } : { slug, name: String(v) })));
       }
 
+      renderHeld(Array.isArray(d.held) ? d.held : []);
       const list = Array.isArray(d.inquiries) ? d.inquiries : [];
       const where = leadProperty ? ` for ${buildingName(leadProperty)}` : '';
       host.replaceChildren();

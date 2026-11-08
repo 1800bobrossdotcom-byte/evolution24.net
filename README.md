@@ -347,7 +347,38 @@ as plain text, so a "name" can never run as a formula.
 
 Without JavaScript the forms still post, and the endpoint sends the browser back to
 the page they came from with `#sent` or `#not-sent`, where CSS `:target` shows the
-notice.
+notice. (With the form token below, a post without JavaScript has no token, so it comes
+back to `#not-sent`, which gives the phone number.)
+
+### Spam
+
+`api/_lib/spam.js` (the same file as Charlotte Square's `functions/_lib/spam.js`) keeps bots
+out of the inbox, in layers:
+
+1. **The post must come from this site:** its `Origin`, or failing that its `Referer`. A
+   script posting straight to `/api/inquiry/` usually sends neither, and is refused.
+2. **A form token.** The page fetches one from `/api/form-token/` as it loads: the time,
+   signed with `SESSION_SECRET`. A post without a valid one, or sent under three seconds
+   after it, is refused with `retry: 'token'`. The page's own script then gets a new token,
+   waits three seconds and sends again by itself, so a person never sees it. A token lasts a
+   day; a tab left open longer gets a new one when it is looked at again. With no
+   `SESSION_SECRET` set, tokens are not checked rather than the form turning everyone away.
+3. **The honeypot** (a field people never see) and **five sends per connection per ten
+   minutes**, as before.
+4. **The words, scored.** Links, link markup, SEO and marketing pitches, crypto and the like,
+   text in other scripts, names of random letters or with digits, a throwaway email domain.
+   At 5 or more the enquiry is **held**: the sender is told it went (so a script learns
+   nothing), but nothing is emailed, nothing goes to the lead sheet or Rent Manager, no
+   confirmation goes out, and it is not counted. One link, one sales word ("I work in digital
+   marketing") or "your website" alone never holds a message; it takes two of them, or one
+   thing people never do (link markup, a name of random letters).
+
+The dashboard lists what was held, under **Enquiries → Held as spam**, with why. **Not spam:
+send it on** makes it a normal enquiry, emailed, in the sheet and in Rent Manager as if it had
+never been held; **Delete** removes it. Held enquiries are kept in the `held` table for 30
+days and then deleted. To tune what is caught, edit the word lists and weights in `spam.js`
+(and copy the file to Charlotte Square); `node scripts/test-inquiry.cjs` and
+`scripts/test-analytics.cjs` cover it.
 
 ### Setup, once
 

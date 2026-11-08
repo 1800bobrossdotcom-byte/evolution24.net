@@ -33,6 +33,7 @@ const { visitorHash, today } = require('./_lib/auth.js');
 const { CONFIG, sheetOn, emailOn, moveInValue, leadFor, notify, logEmail, sheetAndRecord } = require('./_lib/leads.js');
 const { confirmAndRecord } = require('./_lib/confirm.js');
 const { prospectAndRecord } = require('./_lib/rentmanager.js');
+const { checkToken, spamCheck, HOLD_DAYS } = require('./_lib/spam.js');
 
 /* Submissions per address per window. High enough that a couple sent in
    earnest, or a shared office connection, never trips it; low enough to be
@@ -172,6 +173,18 @@ function rowFrom(form, req, now) {
   };
 }
 
+/** Held as spam: kept for the dashboard, sent nowhere. The month-old ones go as each arrives. */
+async function hold(db, row, verdict) {
+  if (!db) { console.warn('inquiry: held as spam, no database to keep it in:', verdict.reasons.join('; ')); return; }
+  try {
+    await db.prepare('DELETE FROM held WHERE ts < ?').bind(row.ts - HOLD_DAYS * 86400).run();
+    await db.prepare('INSERT INTO held (ts, score, reasons, data) VALUES (?, ?, ?, ?)')
+      .bind(row.ts, verdict.score, verdict.reasons.join('; '), JSON.stringify(row)).run();
+  } catch (err) {
+    console.error('inquiry: could not keep a held enquiry:', err.message);
+  }
+}
+
 const COLUMNS = ['ref', 'ts', 'day', 'property', 'property_name', 'first_name', 'last_name', 'email', 'phone', 'interest',
   'bedrooms', 'unit', 'unit_id', 'move_in', 'source', 'message', 'country', 'form', 'page',
   'utm_source', 'utm_medium', 'utm_campaign', 'referrer', 'landing'];
@@ -200,13 +213,12 @@ module.exports = async function handler(req, res) {
     res.end();
     return;
   }
-  // Only this site's own pages may post here.
-  const origin = req.headers.origin;
-  if (origin) {
-    let host = '';
-    try { host = new URL(origin).host; } catch { /* unreadable: refused below */ }
-    if (host !== req.headers.host) return reply(403, { error: 'Not allowed.' });
-  }
+  // Only this site's own pages may post here. Browsers say where a post came from (Origin, or
+  // at least the Referer); a script posting straight to this address usually says nothing.
+  const from = req.headers.origin || req.headers.referer || '';
+  let fromHost = '';
+  try { fromHost = new URL(from).host; } catch { /* none, or unreadable: refused below */ }
+  if (fromHost !== req.headers.host) return reply(403, { error: `Please send the form from our website, or call us on ${CONFIG.office_phone}.` });
 
   let form;
   try {
@@ -218,6 +230,16 @@ module.exports = async function handler(req, res) {
 
   // The honeypot: a field people never see. Anything that fills it in is not a person.
   if (clean(form.website, 200)) return reply(202, { ok: true });
+
+  // The form token: a page of this site was loaded, at least three seconds ago. The page's own
+  // script reads retry: 'token', fetches a new one and sends again, so a person never sees this.
+  const token = await checkToken(form.token, process.env.SESSION_SECRET || '');
+  if (!token.ok) {
+    return reply(token.reason === 'fast' ? 425 : 400, {
+      retry: 'token', reason: token.reason,
+      error: `Please reload the page and send the form again, or call us on ${CONFIG.office_phone}.`,
+    });
+  }
 
   const now = new Date();
   const db = database();
@@ -234,15 +256,32 @@ module.exports = async function handler(req, res) {
     return reply(503, { error: `Our form is not connected yet. Please call us on ${CONFIG.office_phone}.` });
   }
 
+  // The words: held as spam, it is kept for the dashboard and sent nowhere. The sender is
+  // told it went, as a person would be, so a script learns nothing from the answer.
+  const verdict = spamCheck(row);
+  if (verdict.hold) {
+    await hold(db, row, verdict);
+    return reply(202, { ok: true, id: row.ref });
+  }
+
+  if (db && !row.utm_source && !row.referrer) {
+    const t = await firstTouch(db, ip, String(req.headers['user-agent'] || '')).catch(() => null);
+    if (t) Object.assign(row, { utm_source: t.utm_source || '', utm_medium: t.utm_medium || '', utm_campaign: t.utm_campaign || '', referrer: t.ref || '', landing: row.landing || t.path || '' });
+  }
+  const { stored, sheet, mail } = await deliver(db, row);
+  if (stored || sheet.ok || mail.ok) return reply(202, { ok: true, id: row.ref });
+  return reply(502, { error: `Sorry, your message did not go through. Please call us on ${CONFIG.office_phone}.` });
+};
+
+/** Steps 1 to 3 at the top of this file, for one enquiry: the database, then the sheet, the
+ *  visitor's confirmation and Rent Manager, then the team's email. Also how the dashboard
+ *  sends on an enquiry that was held as spam by mistake. */
+async function deliver(db, row) {
   const env = { ...process.env, DB: db };
   // 1. The database, first: the record the dashboard keeps.
   let stored = false;
   if (db) {
     try {
-      if (!row.utm_source && !row.referrer) {
-        const t = await firstTouch(db, ip, String(req.headers['user-agent'] || '')).catch(() => null);
-        if (t) Object.assign(row, { utm_source: t.utm_source || '', utm_medium: t.utm_medium || '', utm_campaign: t.utm_campaign || '', referrer: t.ref || '', landing: row.landing || t.path || '' });
-      }
       const r = await db.prepare(`INSERT INTO inquiries (${COLUMNS.join(', ')}) VALUES (${COLUMNS.map(() => '?').join(', ')}) RETURNING id`)
         .bind(...COLUMNS.map((c) => (row[c] === '' ? null : row[c]))).first();
       row.id = r.id;
@@ -271,9 +310,8 @@ module.exports = async function handler(req, res) {
   if (!sheet.ok && sheetOn()) console.error('inquiry', row.ref, 'lead sheet:', sheet.note);
   if (!mail.ok) console.error('inquiry', row.ref, 'email:', mail.error);
   if (rm.tried && !rm.ok) console.error('inquiry', row.ref, 'Rent Manager:', rm.note);
-
-  if (stored || sheet.ok || mail.ok) return reply(202, { ok: true, id: row.ref });
-  return reply(502, { error: `Sorry, your message did not go through. Please call us on ${CONFIG.office_phone}.` });
-};
+  return { stored, sheet, mail, id: row.id };
+}
 
 module.exports.rowFrom = rowFrom;
+module.exports.deliver = deliver;

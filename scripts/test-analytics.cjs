@@ -86,7 +86,7 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
   const { CONFIG } = require(path.join(API, '_lib', 'leads.js'));
   CONFIG.properties['water-street'].units['73'] = { label: 'Unit 302RV · 1 bed · $1,590/mo', bedrooms: '1' };
   const routes = {};
-  for (const name of ['inquiry', 'collect', 'login', 'logout', 'stats', 'inquiries', 'reports', 'r', 'unsubscribe', 'email-events']) {
+  for (const name of ['inquiry', 'form-token', 'collect', 'login', 'logout', 'stats', 'inquiries', 'reports', 'r', 'unsubscribe', 'email-events']) {
     routes[`/api/${name}/`] = require(path.join(API, `${name}.js`));
   }
   const site = await listen((req, res) => {
@@ -103,11 +103,19 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
   });
   const base = `http://127.0.0.1:${site.address().port}`;
   let ipN = 1;
-  const call = (p, { method = 'GET', body, cookie, ip, headers = {} } = {}) => fetch(base + p, {
-    method, redirect: 'manual',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Forwarded-For': ip || `10.1.0.${ipN++}`, 'User-Agent': 'Mozilla/5.0 (test)', ...(cookie ? { Cookie: cookie } : {}), ...headers },
-    body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body),
-  });
+  // An enquiry is sent as the site's own page sends it: from this origin, with a form token from
+  // ten seconds ago (api/_lib/spam.js), unless the test brings its own.
+  const { issueToken } = require(path.join(API, '_lib', 'spam.js'));
+  const formToken = () => issueToken(process.env.SESSION_SECRET, Date.now() - 10000);
+  const call = async (p, { method = 'GET', body, cookie, ip, headers = {} } = {}) => {
+    if (p === '/api/inquiry/' && body && typeof body === 'object' && !('token' in body)) body = { ...body, token: await formToken() };
+    return fetch(base + p, {
+      method, redirect: 'manual',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Forwarded-For': ip || `10.1.0.${ipN++}`, 'User-Agent': 'Mozilla/5.0 (test)',
+        ...(p === '/api/inquiry/' ? { Origin: base } : {}), ...(cookie ? { Cookie: cookie } : {}), ...headers },
+      body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body),
+    });
+  };
 
   const results = [];
   const test = async (name, fn) => {
@@ -306,7 +314,52 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
     await forget();
     const r = await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/faqs/' } });
     assert.ok(r.status < 300, `collect answered ${r.status}`);
-    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM pg_tables WHERE schemaname = 'public' AND rowsecurity")).at(0).n, 9);
+    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM pg_tables WHERE schemaname = 'public' AND rowsecurity")).at(0).n, 10);
+  });
+
+  await test('spam is held: the sender hears it went, nothing is sent, the dashboard lists it', async () => {
+    const pitch = { ...enquiry, email: 'mike@seo-pros.example', first_name: 'Mike', last_name: 'Seo',
+      message: 'We can get your website on the first page of Google with our SEO services. Reply YES for a free audit: https://seo-pros.example' };
+    const r = await call('/api/inquiry/', { method: 'POST', body: pitch });
+    assert.strictEqual(r.status, 202); assert.strictEqual((await r.json()).ok, true);
+    assert.strictEqual(mails.length, 0); assert.strictEqual(leads.length, 0); assert.strictEqual(prospects.length, 0);
+    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM inquiries WHERE email = 'mike@seo-pros.example'"))[0].n, 0);
+    const out = await (await call('/api/inquiries/', { cookie })).json();
+    const held = out.held.find((h) => h.email === 'mike@seo-pros.example');
+    assert.ok(held && /sales words: seo/.test(held.reasons), JSON.stringify(out.held));
+    assert.ok(!out.inquiries.some((i) => i.email === 'mike@seo-pros.example'));
+  });
+
+  await test('a held enquiry sent on from the dashboard becomes a normal one; another is deleted', async () => {
+    let out = await (await call('/api/inquiries/', { cookie })).json();
+    const held = out.held.find((h) => h.email === 'mike@seo-pros.example');
+    let r = await call('/api/inquiries/', { method: 'POST', cookie, body: { held: held.id, release: true } });
+    const sent = await r.json();
+    assert.strictEqual(r.status, 200, JSON.stringify(sent)); assert.strictEqual(sent.notified, true);
+    assert.ok(mails.some((m) => m.to.includes('team@example.com'))); assert.strictEqual(leads.length, 1);
+    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM inquiries WHERE email = 'mike@seo-pros.example'"))[0].n, 1);
+    assert.strictEqual((await q('SELECT COUNT(*) AS n FROM held WHERE id = ?', held.id))[0].n, 0);
+    await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, email: 'x@mailinator.com', message: '<a href="http://x.example">cheap</a>' } });
+    out = await (await call('/api/inquiries/', { cookie })).json();
+    const junk = out.held.find((h) => h.email === 'x@mailinator.com');
+    r = await call('/api/inquiries/', { method: 'POST', cookie, body: { held: junk.id, discard: true } });
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual((await q('SELECT COUNT(*) AS n FROM held'))[0].n, 0);
+  });
+
+  await test('the form token: none, forged or under three seconds old is refused; the endpoint gives one', async () => {
+    let r = await call('/api/form-token/');
+    const { token } = await r.json();
+    assert.strictEqual(r.headers.get('cache-control'), 'no-store'); assert.match(token, /^\d+\.[\w-]{43}$/);
+    r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, email: 'fast@example.com', token } });
+    assert.strictEqual(r.status, 425); assert.strictEqual((await r.json()).retry, 'token');
+    r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, email: 'none@example.com', token: '' } });
+    assert.strictEqual(r.status, 400);
+    r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, email: 'forged@example.com', token: `${Math.floor(Date.now() / 1000) - 60}.${'A'.repeat(43)}` } });
+    assert.strictEqual(r.status, 400);
+    r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, email: 'origin@example.com' }, headers: { Origin: 'https://elsewhere.example' } });
+    assert.strictEqual(r.status, 403);
+    assert.strictEqual(mails.length, 0);
   });
 
   await test('without a database the form still reaches the sheet and the inbox', async () => {

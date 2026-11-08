@@ -9,6 +9,8 @@ const path = require('path');
 
 const handlerPath = path.join(__dirname, '..', 'api', 'inquiry.js');
 const handler = require(handlerPath);   // settings are read per request, so one load serves every test
+const { issueToken } = require(path.join(__dirname, '..', 'api', '_lib', 'spam.js'));
+const SECRET = 'session-secret-for-tests';
 
 function listen(fn) {
   return new Promise((resolve) => { const s = http.createServer(fn); s.listen(0, '127.0.0.1', () => resolve(s)); });
@@ -46,19 +48,25 @@ const readJson = (req) => new Promise((resolve) => { let b = ''; req.on('data', 
       LEAD_TO: 'one@example.com, two@example.com', LEAD_FROM: 'Evolution24 Properties <leasing@example.com>',
       RESEND_API_KEY: 're_test', RESEND_API_URL: `http://127.0.0.1:${resend.address().port}/emails`,
       LEADS_SHEET_URL: `  http://127.0.0.1:${sheet.address().port}/exec `, LEADS_SHEET_TOKEN: `"${TOKEN}" `,
+      SESSION_SECRET: SECRET,
     };
-    ['LEAD_TO', 'LEAD_FROM', 'RESEND_API_KEY', 'RESEND_API_URL', 'LEADS_SHEET_URL', 'LEADS_SHEET_TOKEN', 'LEADS_SHEET_LINK'].forEach((k) => delete process.env[k]);
+    ['SESSION_SECRET', 'LEAD_TO', 'LEAD_FROM', 'RESEND_API_KEY', 'RESEND_API_URL', 'LEADS_SHEET_URL', 'LEADS_SHEET_TOKEN', 'LEADS_SHEET_LINK'].forEach((k) => delete process.env[k]);
     Object.assign(process.env, base, over);
     Object.keys(over).forEach((k) => { if (over[k] === undefined) delete process.env[k]; });
   };
   const site = await listen((req, res) => handler(req, res));
   const url = `http://127.0.0.1:${site.address().port}/api/inquiry/`;
   let ip = 1;
-  const send = (data, { json = true, headers = {}, sameIp = false } = {}) => fetch(url, {
-    method: 'POST', redirect: 'manual',
-    headers: { 'Content-Type': json ? 'application/json' : 'application/x-www-form-urlencoded', ...(json ? { Accept: 'application/json' } : {}), 'X-Forwarded-For': `10.0.0.${sameIp ? 250 : ip++}`, ...headers },
-    body: json ? JSON.stringify(data) : new URLSearchParams(data).toString(),
-  });
+  // As the site's own page sends it: from this origin, with a form token from ten seconds ago.
+  const self = `http://127.0.0.1:${site.address().port}`;
+  const send = async (data, { json = true, headers = {}, sameIp = false } = {}) => {
+    if (!('token' in data)) data = { ...data, token: await issueToken(SECRET, Date.now() - 10000) };
+    return fetch(url, {
+      method: 'POST', redirect: 'manual',
+      headers: { 'Content-Type': json ? 'application/json' : 'application/x-www-form-urlencoded', ...(json ? { Accept: 'application/json' } : {}), 'X-Forwarded-For': `10.0.0.${sameIp ? 250 : ip++}`, Origin: self, ...headers },
+      body: json ? JSON.stringify(data) : new URLSearchParams(data).toString(),
+    });
+  };
   const good = { first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com', phone: '(585) 555-0100', property: 'water-street',
     interest: 'tour', bedrooms: '1', move_in: '1-2', source: 'search', message: 'Hi <b>there</b>\nSecond line', website: '',
     utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'fall-2026', landing: '/properties/water-street/' };
@@ -140,6 +148,36 @@ const readJson = (req) => new Promise((resolve) => { let b = ''; req.on('data', 
   await test('the sixth send from one connection in ten minutes is refused', async () => {
     const codes = []; for (let i = 0; i < 6; i++) codes.push((await send(good, { sameIp: true })).status);
     assert.deepStrictEqual(codes, [202, 202, 202, 202, 202, 429]);
+  });
+  await test('no Origin and no Referer: refused; a Referer from this site will do', async () => {
+    let r = await send(good, { headers: { Origin: '' } }); assert.strictEqual(r.status, 403);
+    r = await send(good, { headers: { Origin: '', Referer: `${self}/contact-us/` } }); assert.strictEqual(r.status, 202);
+  });
+  await test('no form token: refused with retry, nothing sent', async () => {
+    const r = await send({ ...good, token: '' }); assert.strictEqual(r.status, 400);
+    const out = await r.json(); assert.strictEqual(out.retry, 'token'); assert.strictEqual(out.reason, 'missing');
+    assert.strictEqual(mails.length, 0); assert.strictEqual(leads.length, 0);
+  });
+  await test('a token under three seconds old is too fast', async () => {
+    const r = await send({ ...good, token: await issueToken(SECRET) }); assert.strictEqual(r.status, 425);
+    assert.strictEqual((await r.json()).reason, 'fast');
+  });
+  await test('a forged or day-old token is refused', async () => {
+    let r = await send({ ...good, token: (await issueToken('another-secret', Date.now() - 10000)) }); assert.strictEqual((await r.json()).reason, 'forged');
+    r = await send({ ...good, token: await issueToken(SECRET, Date.now() - 25 * 3600e3) }); assert.strictEqual((await r.json()).reason, 'stale');
+  });
+  await test('without JavaScript there is no token: back to #not-sent, which gives the phone number', async () => {
+    const r = await send({ ...good, token: '' }, { json: false }); assert.strictEqual(r.status, 303);
+    assert.strictEqual(r.headers.get('location'), '/contact-us/#not-sent');
+  });
+  await test('with no SESSION_SECRET the form still works, unchecked', async () => {
+    env({ SESSION_SECRET: undefined });
+    const r = await send({ ...good, token: '' }); assert.strictEqual(r.status, 202); assert.strictEqual(mails.length, 1);
+  });
+  await test('spam is held: success to the sender, nothing emailed or in the sheet', async () => {
+    const r = await send({ ...good, message: 'Dear owner, we are a team of web developers. Free quote at https://cheapdev.example and https://more.example' });
+    assert.strictEqual(r.status, 202); assert.strictEqual((await r.json()).ok, true);
+    assert.strictEqual(mails.length, 0); assert.strictEqual(leads.length, 0);
   });
   await test('only POST is answered', async () => {
     const r = await fetch(url); assert.strictEqual(r.status, 405);

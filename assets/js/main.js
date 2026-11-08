@@ -398,7 +398,19 @@
      lead sheet and emails the leasing team. Without JavaScript the same forms post
      natively and the endpoint sends the browser back to #sent or #not-sent. */
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  $$('form[data-lead]').forEach(form => {
+  /* The form token (api/_lib/spam.js): fetched as the page loads and sent with the enquiry, so
+     the server knows a page of this site was open, and for more than three seconds. Refused for
+     want of one, the post gets a new token here and goes again by itself. */
+  const leadForms = $$('form[data-lead]');
+  let formToken = '', tokenAt = 0;
+  const getToken = () => fetch('/api/form-token/', { headers: { Accept: 'application/json' }, cache: 'no-store' })
+    .then(r => r.json()).then(d => { formToken = d.token || ''; tokenAt = Date.now(); }).catch(() => {});
+  if (leadForms.length) {
+    getToken();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - tokenAt > 6 * 3600e3) getToken(); });
+  }
+  const pause = ms => new Promise(done => setTimeout(done, ms));
+  leadForms.forEach(form => {
     const msg = $('textarea[name="message"]', form), count = $('.count', form), status = $('.form-status', form);
     const upd = () => { if (msg && count) count.textContent = `${msg.value.length} / ${msg.maxLength}`; };
     if (msg) { msg.addEventListener('input', upd); upd(); }
@@ -428,8 +440,17 @@
       const data = Object.fromEntries(new FormData(form));
       form.classList.add('is-sending'); status.classList.remove('is-error'); status.textContent = 'Sending…';
       try {
-        const res = await fetch(form.action, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data) });
-        const out = await res.json().catch(() => ({}));
+        const post = async () => {
+          data.token = formToken;
+          const r = await fetch(form.action, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data) });
+          return { res: r, out: await r.json().catch(() => ({})) };
+        };
+        let { res, out } = await post();
+        if (!res.ok && out.retry === 'token') {        // no token yet, an old one, or sent within seconds
+          if (out.reason !== 'fast') await getToken();
+          await pause(3200);
+          ({ res, out } = await post());
+        }
         if (res.ok && out.ok) {
           const sent = $('#sent');
           $('.flash-name', sent).textContent = data.first_name ? `, ${data.first_name}` : '';

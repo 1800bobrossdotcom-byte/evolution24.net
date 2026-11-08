@@ -9,6 +9,9 @@
    POST {id, confirm: true}               send the visitor's confirmation now
    POST {id, sheet: true}                 add it to the lead sheet now
    POST {id, rentmanager: true}           add it to Rent Manager now
+   POST {held, release: true}             one held as spam was a person: make it an
+                                          enquiry and send it on, as if never held
+   POST {held, discard: true}             delete one held as spam now
 
    Session-gated. No CSRF token: the session cookie is SameSite=Strict, so it
    never rides a request that started on another site. Everything here is the
@@ -23,6 +26,21 @@ const { CONFIG, sheetOn, leadFor, notify, logEmail, sheetAndRecord } = require('
 const { confirmAndRecord } = require('./_lib/confirm.js');
 const { rmOn, prospectAndRecord } = require('./_lib/rentmanager.js');
 const { labels } = require('./_lib/stats.js');
+const { HOLD_DAYS } = require('./_lib/spam.js');
+const { deliver } = require('./inquiry.js');
+
+/** The last month's enquiries held as spam, newest first: who, what and why. */
+async function heldList(db) {
+  const since = Math.floor(Date.now() / 1000) - HOLD_DAYS * 86400;
+  const rows = await db.prepare('SELECT id, ts, score, reasons, data FROM held WHERE ts >= ? ORDER BY ts DESC LIMIT 100')
+    .bind(since).all().then((r) => r.results).catch(() => []);
+  return rows.map((h) => {
+    let d = {};
+    try { d = JSON.parse(h.data) || {}; } catch { /* shown with what there is */ }
+    return { id: h.id, ts: h.ts, score: h.score, reasons: h.reasons || '', first_name: d.first_name || '', last_name: d.last_name || '',
+      email: d.email || '', phone: d.phone || '', message: d.message || '', property_name: d.property_name || 'General' };
+  });
+}
 
 const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 50;
@@ -63,7 +81,10 @@ async function GET({ request, env }) {
                 ORDER BY ts DESC LIMIT 1) AS last_error
          FROM inquiries`,
     ).first()) || {};
+    const held = await heldList(env.DB);
     return json({
+      // Held as spam (api/_lib/spam.js): never emailed or counted; listed so a person caught by mistake is not lost.
+      held,
       inquiries: rows.results.map((r) => {
         const out = { ...r, rm_ok: r.rm_ok === null ? null : r.rm_ok, property: r.property || '' };
         if (typeof r.ai === 'string') { try { out.ai = JSON.parse(r.ai); } catch { out.ai = null; } }
@@ -93,6 +114,25 @@ async function POST({ request, env }) {
   if (!env.DB) return json({ error: 'No database is connected (DATABASE_URL).' }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Bad JSON.' }, 400); }
+
+  if (body && body.held) {
+    const hid = Number.parseInt(body.held, 10);
+    if (!Number.isInteger(hid) || hid < 1) return json({ error: 'Which one?' }, 400);
+    const rec = await env.DB.prepare('SELECT id, data FROM held WHERE id = ?').bind(hid).first().catch(() => null);
+    if (!rec) return json({ error: 'It is not held any more.' }, 404);
+    if (body.discard) {
+      await env.DB.prepare('DELETE FROM held WHERE id = ?').bind(hid).run();
+      return json({ ok: true });
+    }
+    if (!body.release) return json({ error: 'Send it on, or delete it?' }, 400);
+    let row;
+    try { row = JSON.parse(rec.data); } catch { return json({ error: 'It could not be read.' }, 500); }
+    const out = await deliver(env.DB, row);
+    if (!out.stored) return json({ error: 'It could not be saved as an enquiry. Try again in a minute.' }, 502);
+    await env.DB.prepare('DELETE FROM held WHERE id = ?').bind(hid).run().catch(() => {});
+    return json({ ok: true, id: out.id, notified: Boolean(out.mail && out.mail.ok) });
+  }
+
   const id = Number.parseInt(body && body.id, 10);
   if (!Number.isInteger(id) || id < 1) return json({ error: 'Which enquiry?' }, 400);
   const origin = CONFIG.site;   // links in emails point at the live site

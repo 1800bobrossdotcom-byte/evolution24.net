@@ -419,6 +419,12 @@ a { color: inherit; }
 .lead__flag { font-size: .76rem; font-weight: 700; color: var(--warn); }
 .lead__aierr { margin-top: .45rem; font-size: .78rem; color: var(--warn); overflow-wrap: anywhere; }
 
+/* Held as spam: folded away under the enquiries, greyed, without the unread stripe. */
+.held { margin-top: 1.1rem; border-top: 1px solid var(--line); padding-top: .8rem; }
+.held > summary { cursor: pointer; font-size: .86rem; font-weight: 700; color: var(--ink-2); }
+.held > .panel__note { margin: .4rem 0 .7rem; max-width: 70ch; }
+.lead--held { box-shadow: none; background: transparent; }
+
 /* ---------- In plain English ------------------------------------------------ */
 .panel--ai { box-shadow: inset 3px 0 0 var(--s2); }
 .panel--ai .panel__head { align-items: center; }
