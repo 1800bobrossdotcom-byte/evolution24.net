@@ -373,11 +373,80 @@ export function todayInRochester(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
 }
 
+/* ---- What Rent Manager calls things: `node scripts/availability.mjs --inspect` -------
+   Read-only, and safe for the Actions log. Rent Manager sends only the fields asked for by
+   name and ignores names it does not know, so this asks for every likely name of its
+   "post to web" switch and says which came back, with each unit's value; lists every field
+   it sends for one unit, by name and kind; and tries the likely embeds one at a time.
+   Values are shown only for fields whose names are about the web, posting or marketing,
+   and never for anything about a person. It names unit numbers only and writes nothing. */
+const WEB_FIELDS = ['PostToWeb', 'IsPostToWeb', 'PostedToWeb', 'IsPostedToWeb', 'PostUnitToWeb', 'IsPostUnitToWeb',
+  'WebPost', 'IsWebPost', 'WebPosting', 'IsWebPosting', 'WebPosted', 'IsWebPosted', 'PostOnWeb', 'IsPostOnWeb',
+  'ShowOnWeb', 'IsShowOnWeb', 'DisplayOnWeb', 'IsDisplayOnWeb', 'ShowOnWebsite', 'IsShowOnWebsite', 'PostToWebsite',
+  'IsPostToWebsite', 'PostToInternet', 'IsPostToInternet', 'InternetPost', 'IsInternetPost', 'PostToILS', 'IsPostToILS',
+  'IsAdvertised', 'Advertise', 'IsMarketed', 'IsListed', 'IsAvailableOnWeb', 'AvailableOnWeb', 'IsWebAvailable',
+  'IsOnWeb', 'IsWebVisible', 'WebVisible', 'IsWeb', 'ExcludeFromWeb', 'IsExcludedFromWeb', 'HideFromWeb', 'IsHiddenFromWeb',
+  'DoNotPostToWeb', 'PostingStatus', 'WebStatus', 'IsAvailableForWeb', 'AvailableForWeb', 'IsPostedOnline', 'IsOnline',
+  'IsSyndicated', 'IsPosted', 'Posted', 'IsPost', 'PostDate', 'PostingDate', 'WebPostingDate', 'PostStartDate',
+  'PostEndDate', 'PostingStartDate', 'PostingEndDate', 'IsVacancyListed', 'ShowOnVacancyList', 'IsShownOnVacancyList',
+  'IsMarketingEnabled', 'MarketingStatus', 'IsActive', 'IsDown', 'IsModel', 'IsReady'];
+const WEB_EMBEDS = ['UnitMarketing', 'Marketing', 'MarketingInformation', 'MarketingInfo', 'WebPosting', 'WebPostings', 'Postings',
+  'UnitPostings', 'Posting', 'Listing', 'Listings', 'ILSListings', 'Advertising', 'UserDefinedValues', 'UnitUserDefinedValues',
+  'Features', 'Amenities'];
+const WEBBY = /web|post|internet|ils\b|advert|market|listing|listed|show|display|online|syndic|vacanc|publish|visible|hid|exclude|active|down|model|ready/i;
+const PERSON = /tenant|lease|contact|owner|resident|person|user(?!defined)|phone|email|address|note|comment|ssn|birth|bank|account|history|first|last|full|middle|signer|agent|guarantor|occupant|emergency|vendor|employer|description|text/i;
+const kindOf = (v) => (v === null ? 'null' : Array.isArray(v) ? `list of ${v.length}` : typeof v);
+const shown = (k, v) => (v !== null && typeof v !== 'object' && WEBBY.test(k) && !PERSON.test(k) ? ` = ${String(v).slice(0, 40)}` : '');
+
+async function inspect({ rm, data, log }) {
+  const props = data.properties.filter((p) => p.pid && !p.external);
+  // 1. The likely names of the switch, asked for all at once, for every building's units.
+  const found = new Map();
+  for (const p of props) {
+    const r = await rm.get(`/Units?filters=PropertyID,eq,${p.pid}&fields=${[...BASE_FIELDS, ...WEB_FIELDS].join(',')}&pagesize=${PAGE}`);
+    if (!r.ok) { log(`${p.name}: Rent Manager answered ${r.status} to the likely field names.`); continue; }
+    for (const u of asList(r.data)) {
+      for (const f of WEB_FIELDS) {
+        if (!(f in u)) continue;
+        if (!found.has(f)) found.set(f, []);
+        found.get(f).push(`${p.name} ${String(u.Name || u.UnitID).trim()}=${kindOf(u[f]) === 'object' ? 'object' : String(u[f]).slice(0, 30)}`);
+      }
+    }
+  }
+  log(found.size ? `Of ${WEB_FIELDS.length} likely names, Rent Manager sent: ${[...found.keys()].join(', ')}` : `None of ${WEB_FIELDS.length} likely names came back.`);
+  for (const [f, vals] of found) log(`  ${f}: ${vals.join('; ')}`);
+
+  // 2. Every field it sends for one unit asked for on its own, by name and kind.
+  const first = await rm.get(`/Units?filters=PropertyID,eq,${props[0].pid}&pagesize=1`);
+  const id = asList(first.data)[0] && asList(first.data)[0].UnitID;
+  if (id) {
+    const one = await rm.get(`/Units/${id}`);
+    const u = asList(one.data)[0] || {};
+    log(`One unit on its own (${one.status}): ${Object.entries(u).filter(([k]) => k !== 'ApiUri').map(([k, v]) => `${k}: ${kindOf(v)}${shown(k, v)}`).join(', ')}`);
+    // 3. The embeds a "post to web" switch might live in, one at a time.
+    for (const e of WEB_EMBEDS) {
+      const r = await rm.get(`/Units/${id}?embeds=${e}&fields=UnitID,${e}`);
+      if (!r.ok) { log(`  embed ${e}: refused (${r.status})`); continue; }
+      const v = (asList(r.data)[0] || {})[e];
+      const row = Array.isArray(v) ? v[0] : v;
+      const keys = row && typeof row === 'object' ? Object.entries(row).filter(([k]) => k !== 'ApiUri')
+        .map(([k, x]) => `${k}: ${kindOf(x)}${shown(k, x)}`).join(', ') : kindOf(v);
+      // A user-defined field shows its own name; its value only when that name is about the web.
+      const udf = Array.isArray(v) ? v.filter((x) => x && typeof x === 'object' && (x.Name || x.FieldName))
+        .map((x) => { const n = String(x.Name || x.FieldName); return `"${n.slice(0, 40)}"${WEBBY.test(n) && !PERSON.test(n) ? ` = ${String(x.Value ?? '').slice(0, 30)}` : ''}`; }) : [];
+      log(`  embed ${e}: ${Array.isArray(v) ? `list of ${v.length}` : 'one'}; ${keys}${udf.length ? `; named: ${udf.join(', ')}` : ''}`);
+    }
+  }
+  log(`${rm.state.requests} requests. Nothing written.`);
+  return { written: false };
+}
+
 export async function run({ env = process.env, argv = process.argv.slice(2), file = DATA, now = new Date(), log = console.log } = {}) {
   const dry = argv.includes('--dry-run');
   const data = JSON.parse(readFileSync(file, 'utf8'));
   const today = todayInRochester(now);
   const rm = client(env);
+  if (argv.includes('--inspect')) return inspect({ rm, data, log });
   const pids = data.properties.filter((p) => p.pid && !p.external).map((p) => p.pid);
   const before = data.properties.filter((p) => !p.external).reduce((s, p) => s + (p.units || []).length, 0);
 

@@ -20,6 +20,10 @@ on:
         description: "Only report what would change"
         type: boolean
         default: false
+      inspect:
+        description: "Only list what Rent Manager calls a unit's fields (writes nothing)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -53,6 +57,10 @@ jobs:
         run: |
           if [ -z "$RM_USERNAME" ] || [ -z "$RM_PASSWORD" ]; then
             echo "::notice::Rent Manager is not set up yet: add the RM_USERNAME and RM_PASSWORD secrets."
+            exit 0
+          fi
+          if [ "${{ inputs.inspect }}" = "true" ]; then
+            node scripts/availability.mjs --inspect
             exit 0
           fi
           node scripts/availability.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
