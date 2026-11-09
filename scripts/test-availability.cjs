@@ -51,10 +51,17 @@ const UNITS = [
 // Plenty of leased units, so the open share stays under a quarter.
 for (let i = 0; i < 80; i++) UNITS.push([5000 + i, 8, `X${i}`, 1, 1, 600, 1500, occupied, 'Occupied']);
 
+// Show On Web, a user-defined field on each unit: Yes unless a test says otherwise.
+let WEB_NO = new Set();          // UnitIDs whose Show On Web says No
+let WEB_ALL = null;              // one value for every unit, when set
+
 function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
   const u = { UnitID: id, PropertyID: pid, Name: name, SortOrder: 0 };
   if (!ask.fields.length) return u;
   const want = (f) => ask.fields.includes(f);
+  if (ask.embeds.includes('UserDefinedValues') && want('UserDefinedValues')) {
+    u.UserDefinedValues = [{ Name: 'Show on Zillow?', Value: 'No' }, { Name: 'Show On Web', Value: WEB_ALL || (WEB_NO.has(id) ? 'No' : 'Yes') }];
+  }
   if (want('Bedrooms')) u.Bedrooms = beds;
   if (want('Bathrooms')) u.Bathrooms = baths;
   if (want('SquareFootage')) u.SquareFootage = sqft;
@@ -233,6 +240,32 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
       await assert.rejects(run(file), /more than a quarter/);
       await run(file, ['--allow-many']);
     } finally { UNITS.splice(0, UNITS.length, ...saved); }
+  });
+
+  test('Show On Web saying No keeps an open home off, and names it', async () => {
+    const file = copy();
+    WEB_NO = new Set([34, 62]);                      // 145 South Fitzhugh 1-1 and Water Street 103RV
+    try { await run(file); } finally { WEB_NO = new Set(); }
+    const d = read(file);
+    assert.deepEqual(units(d, '145-south-fitzhugh-street').map((u) => u.unit), ['1-3']);
+    assert.deepEqual(units(d, 'water-street').map((u) => u.unit), ['105RV', '302RV']);
+    assert.ok(log.join('\n').includes('Water Street unit 103RV: open by its status, but Show On Web is No in Rent Manager'));
+  });
+
+  test('Show On Web saying No on every unit is not in use yet: ignored', async () => {
+    const file = copy();
+    WEB_ALL = 'No';
+    try { await run(file); } finally { WEB_ALL = null; }
+    assert.deepEqual(units(read(file), '145-south-fitzhugh-street').map((u) => u.unit), ['1-1', '1-3']);
+    assert.ok(log.join('\n').includes('not in use yet'));
+  });
+
+  test('Show On Web unreadable: nothing written', async () => {
+    const file = copy();
+    const before = fs.readFileSync(file, 'utf8');
+    refuse = new Set(['UserDefinedValues']);
+    try { await assert.rejects(run(file), /Show On Web/); } finally { refuse = new Set(); }
+    assert.equal(fs.readFileSync(file, 'utf8'), before);
   });
 
   test('the file keeps its format: one-space indent, a final newline, the same keys', async () => {

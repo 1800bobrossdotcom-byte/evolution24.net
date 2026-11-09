@@ -34,6 +34,11 @@
        home already spoken for before its lease is in Rent Manager.
      - Open means vacant, being made ready, or on notice with a move-out date
        still to come; those last two carry "available": the date.
+     - A home whose "Show On Web" (a user-defined field on the unit in Rent
+       Manager) says No is left off and named, whatever its status: the team
+       turns it off when a home is rented, often before the lease is entered.
+       Only while the field is in use (some unit says Yes); blank is not No.
+       If it cannot be read, nothing is written.
      - A unit with no market rent is left off and named in the report.
      - Only homes: a garage, parking space, storage unit or the like (by its name
        or unit type) is never listed, and anything open at under $300 a month is
@@ -329,8 +334,38 @@ const natural = (s) => String(s).split(/(\d+)/).map((t) => (/^\d+$/.test(t) ? t.
 const kind = (u) => (u.beds ? `${u.beds} bed` : 'studio');
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
 
-/** data, updated in place from each building's units as read. Returns the report. */
-export function apply(data, unitsByPid, today) {
+/* ---- "Show On Web": the leasing team's switch for what goes on the website ------------
+   A user-defined field on each unit in Rent Manager (beside "Show on Zillow?"). The team
+   turns it to No when a home is rented, often before the lease or move-in is entered, so a
+   No keeps a home off the site whatever its status says. Only once the field is in use: if
+   no unit anywhere says Yes, it has not been set up and is ignored, rather than emptying
+   the site. Blank is not No. */
+const SHOW_ON_WEB = /^show\s*on\s*(the\s*)?web(site)?\??$/i;
+
+/** UnitID → 'yes' | 'no' | null for one building, from its units' user-defined values. */
+async function webSwitches(rm, pid) {
+  const qs = `pagesize=${PAGE}&fields=UnitID,UserDefinedValues&embeds=UserDefinedValues`;
+  let r = await rm.get(`/Units?filters=PropertyID,eq,${pid}&${qs}`);
+  if (r.status === 404) return new Map();          // a building with no units
+  if (r.status === 400) {                          // the filter, or the embed, refused: try through the property
+    const alt = await rm.get(`/Properties/${pid}/Units?${qs}`);
+    if (alt.ok) r = alt;
+  }
+  if (!r.ok) throw new RMError(`${rm.explain(r, `the "Show On Web" field of property ${pid}'s units`)} Nothing written, so a home switched off there cannot reappear.`, r.status);
+  const out = new Map();
+  for (const u of asList(r.data)) {
+    const v = (Array.isArray(u.UserDefinedValues) ? u.UserDefinedValues : [])
+      .find((x) => x && SHOW_ON_WEB.test(String(x.Name || x.FieldName || '').trim()));
+    const said = v ? String(v.Value ?? '').trim().toLowerCase() : '';
+    out.set(u.UnitID, /^(yes|y|true|1)$/.test(said) ? 'yes' : /^(no|n|false|0)$/.test(said) ? 'no' : null);
+  }
+  return out;
+}
+
+/** data, updated in place from each building's units as read. Returns the report.
+ *  web: UnitID → 'yes' | 'no' | null, Show On Web for every building read; omitted, it is not used. */
+export function apply(data, unitsByPid, today, web = null) {
+  const webOn = Boolean(web && [...web.values()].includes('yes'));
   const report = [];
   const skipped = [];
   let total = 0;
@@ -346,6 +381,7 @@ export function apply(data, unitsByPid, today) {
     for (const n of read.filter((x) => isOpen(x, today))) {
       if (hidden.has(n.unit.replace(FURNISHED, ''))) continue;
       const label = `${p.name} unit ${n.unit.replace(FURNISHED, '')}`;
+      if (webOn && web.get(n.id) === 'no') { skipped.push(`${label}: open by its status, but Show On Web is No in Rent Manager`); continue; }
       if (!n.rent) { skipped.push(`${label}: open, but no market rent in Rent Manager`); continue; }
       if (n.rent < MIN_RENT) { skipped.push(`${label}: open at ${money(n.rent)} a month, too little for a home (parking or storage?)`); continue; }
       if (n.available && n.available > soon) { skipped.push(`${label}: free from ${n.available}, more than ${SOON_DAYS} days off; listed once it is nearer`); continue; }
@@ -366,7 +402,7 @@ export function apply(data, unitsByPid, today) {
     if (lines.length) report.push(`${p.name} (${units.length} open)`, ...lines);
     p.units = units;
   }
-  return { report, skipped, total, open };
+  return { report, skipped, total, open, webOn };
 }
 
 export function todayInRochester(now = new Date()) {
@@ -486,9 +522,13 @@ export async function run({ env = process.env, argv = process.argv.slice(2), fil
     unitsByPid.set(pids[0], rows);
   }
 
-  const { report, skipped, total, open } = apply(data, unitsByPid, today);
+  const web = new Map();
+  for (const pid of pids) for (const [id, v] of await webSwitches(rm, pid)) web.set(id, v);
+
+  const { report, skipped, total, open, webOn } = apply(data, unitsByPid, today, web);
   log(`Rent Manager: ${total} units read across ${pids.length} buildings, ${open} open; ${rm.state.requests} requests.`
     + (embeds.length < KNOWN_EMBEDS.length ? ` (It took only these embeds: ${embeds.join(', ') || 'none'}.)` : ''));
+  if (!webOn) log('Show On Web: no unit says Yes, so it is not in use yet; homes are listed by their status alone.');
   log(report.length ? report.join('\n') : 'No change to what is open or its rents.');
   skipped.forEach((s) => log(`Left off: ${s}`));
   if (open === 0 && before > 0 && !argv.includes('--allow-empty')) {

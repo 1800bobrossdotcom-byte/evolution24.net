@@ -545,6 +545,16 @@ model or a down unit is never listed. A unit named with `-F` is furnished. A bui
 Rent Manager yet). It writes nothing if the answer looks wrong: nothing open anywhere
 while the site lists some, or more than a quarter of all units open at once.
 
+**Show On Web.** Each unit in Rent Manager has a user-defined field, *Show On Web*
+(beside *Show on Zillow?*), that the leasing team turns to No when a home is rented, often
+before the lease or move-in is entered. A home whose Show On Web says No is never listed,
+whatever its status, and the run names it (*open by its status, but Show On Web is No*).
+To put a home back on the site, set it to Yes; to take one off, No. Blank counts as Yes.
+The field is only used while some unit says Yes, so one left at No everywhere cannot empty
+the site; if it cannot be read, nothing is written. *Run workflow* with *inspect* ticked
+lists each building's Show On Web and Show on Zillow values and those of every listed home,
+by unit number only, and writes nothing.
+
 **Setup:** GitHub → the repository → Settings → Secrets and variables → Actions → add
 `RM_USERNAME` and `RM_PASSWORD` (a read-only Rent Manager user that can see every
 building's units; Charlotte Square's website user will do if it can). Until they are
