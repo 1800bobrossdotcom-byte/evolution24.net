@@ -186,28 +186,12 @@
      "rent": 1725
     },
     {
-     "uid": 79,
-     "unit": "402RV",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 619,
-     "rent": 1395
-    },
-    {
      "uid": 82,
      "unit": "405RV",
      "beds": 1,
      "baths": 1,
      "sqft": 734,
      "rent": 1595
-    },
-    {
-     "uid": 88,
-     "unit": "505RV",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 807,
-     "rent": 1725
     },
     {
      "uid": 91,
@@ -265,14 +249,6 @@
      "rent": 1250
     },
     {
-     "uid": 138,
-     "unit": "17",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 365,
-     "rent": 1220
-    },
-    {
      "uid": 132,
      "unit": "20",
      "beds": 1,
@@ -307,22 +283,6 @@
     "Exposed brick"
    ],
    "units": [
-    {
-     "uid": 157,
-     "unit": "2A",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 2300,
-     "rent": 2000
-    },
-    {
-     "uid": 171,
-     "unit": "4D",
-     "beds": 2,
-     "baths": 1,
-     "sqft": 1160,
-     "rent": 1595
-    },
     {
      "uid": 184,
      "unit": "6D",
@@ -432,14 +392,6 @@
    ],
    "units": [
     {
-     "uid": 23,
-     "unit": "1",
-     "beds": 4,
-     "baths": 1,
-     "rent": 2350,
-     "available": "2026-11-30"
-    },
-    {
      "uid": 26,
      "unit": "4",
      "beds": 1,
@@ -481,15 +433,7 @@
     "On-site laundry",
     "Fireplaces"
    ],
-   "units": [
-    {
-     "uid": 152,
-     "unit": "2",
-     "beds": 3,
-     "baths": 1,
-     "rent": 3300
-    }
-   ],
+   "units": [],
    "geo": [
     42.8661,
     -76.98465

@@ -388,31 +388,7 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "79"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "82"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "88"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -460,18 +436,6 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "138"
-    }
-   ],
-   "destination": "/properties/biltmore/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "132"
     }
    ],
@@ -484,46 +448,10 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "157"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "171"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "184"
     }
    ],
    "destination": "/properties/181-st-paul-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "23"
-    }
-   ],
-   "destination": "/properties/121-park-drive/#units",
    "permanent": true
   },
   {
@@ -548,18 +476,6 @@
     }
    ],
    "destination": "/properties/121-park-drive/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "152"
-    }
-   ],
-   "destination": "/properties/379-south-main-street/#units",
    "permanent": true
   },
   {

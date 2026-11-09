@@ -63,10 +63,6 @@
    "region": "rochester",
    "pid": 8,
    "units": {
-    "79": {
-     "label": "Unit 402RV · 1 bed · $1,395/mo",
-     "bedrooms": "1"
-    },
     "91": {
      "label": "Unit 602RV · 1 bed · $1,495/mo",
      "bedrooms": "1"
@@ -83,10 +79,6 @@
      "label": "Unit 205RV · 1 bed · $1,725/mo",
      "bedrooms": "1"
     },
-    "88": {
-     "label": "Unit 505RV · 1 bed · $1,725/mo",
-     "bedrooms": "1"
-    },
     "102": {
      "label": "Unit 107IL · 1 bed · $1,795/mo",
      "bedrooms": "1"
@@ -101,10 +93,6 @@
    "units": {
     "128": {
      "label": "Unit 10 · Studio · $1,150/mo",
-     "bedrooms": "studio"
-    },
-    "138": {
-     "label": "Unit 17 · Studio · $1,220/mo",
      "bedrooms": "studio"
     },
     "131": {
@@ -126,14 +114,6 @@
     "184": {
      "label": "Unit 6D · 1 bed · $1,500/mo",
      "bedrooms": "1"
-    },
-    "171": {
-     "label": "Unit 4D · 2 bed · $1,595/mo",
-     "bedrooms": "2"
-    },
-    "157": {
-     "label": "Unit 2A · Studio · $2,000/mo",
-     "bedrooms": "studio"
     }
    }
   },
@@ -157,10 +137,6 @@
     "27": {
      "label": "Unit 5 · 2 bed · $1,895/mo",
      "bedrooms": "2"
-    },
-    "23": {
-     "label": "Unit 1 · 4 bed · $2,350/mo · from Nov 30",
-     "bedrooms": "3"
     }
    }
   },
@@ -169,12 +145,7 @@
    "city": "Geneva",
    "region": "geneva",
    "pid": 10,
-   "units": {
-    "152": {
-     "label": "Unit 2 · 3 bed · $3,300/mo",
-     "bedrooms": "3"
-    }
-   }
+   "units": {}
   },
   "561-south-main-street": {
    "name": "561 South Main",
@@ -230,5 +201,5 @@
  "office_phone": "585-759-7117",
  "office_address": "176 N Water Street, Rochester, NY 14604",
  "units_as_of": "2026-11-09",
- "open_units": 28
+ "open_units": 21
 }
