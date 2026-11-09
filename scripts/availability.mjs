@@ -437,6 +437,28 @@ async function inspect({ rm, data, log }) {
       log(`  embed ${e}: ${Array.isArray(v) ? `list of ${v.length}` : 'one'}; ${keys}${udf.length ? `; named: ${udf.join(', ')}` : ''}`);
     }
   }
+  // 4. The units' own yes/no fields (user-defined values), building by building: how often each
+  //    says what, and for every home the site lists now, what they say and when Rent Manager
+  //    last posted it to online listings. Only fields whose names are about the web or listings.
+  for (const p of props) {
+    const r = await rm.get(`/Units?filters=PropertyID,eq,${p.pid}&pagesize=${PAGE}&fields=UnitID,Name,LastSuccessfulOnlineListingsPosting,UserDefinedValues&embeds=UserDefinedValues`);
+    if (!r.ok) { log(`${p.name}: user-defined values not readable (${r.status}).`); continue; }
+    const tally = {};
+    const listed = new Set((p.units || []).map((u) => u.uid));
+    const lines = [];
+    for (const u of asList(r.data)) {
+      const vals = (Array.isArray(u.UserDefinedValues) ? u.UserDefinedValues : [])
+        .filter((v) => v && WEBBY.test(String(v.Name || '')) && !PERSON.test(String(v.Name || '')))
+        .map((v) => [String(v.Name).trim(), String(v.Value ?? '').trim() || '(blank)']);
+      for (const [n, v] of vals) { tally[n] = tally[n] || {}; tally[n][v] = (tally[n][v] || 0) + 1; }
+      if (listed.has(u.UnitID)) {
+        lines.push(`    listed ${String(u.Name).trim()}: ${vals.map(([n, v]) => `${n} ${v}`).join(', ') || 'no such fields'}`
+          + `; last online-listings posting ${u.LastSuccessfulOnlineListingsPosting || 'never'}`);
+      }
+    }
+    log(`${p.name}: ${Object.entries(tally).map(([n, c]) => `${n} ${Object.entries(c).map(([v, k]) => `${v} ×${k}`).join(' ')}`).join('; ') || 'no web fields'}`);
+    lines.forEach((l) => log(l));
+  }
   log(`${rm.state.requests} requests. Nothing written.`);
   return { written: false };
 }
