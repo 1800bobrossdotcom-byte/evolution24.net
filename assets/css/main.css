@@ -313,13 +313,30 @@ body.menu-open { overflow: hidden; }
 .units .u-rent { font: 400 26px/1 var(--serif); white-space: nowrap; }
 .units .u-rent small { font: 500 12px var(--sans); color: var(--muted); }
 .units .u-act { text-align: right; white-space: nowrap; }
-/* A unit with photos: its number opens them (main.js's lightbox). */
-.u-pics { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* A unit with photos: a stack of prints, its number and how many. One press opens the tour;
+   on a computer, moving across the top print flips through every photo (main.js). */
+.u-pics { display: inline-flex; align-items: center; gap: 16px; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.u-thumb { position: relative; flex: none; width: 92px; aspect-ratio: 4 / 3; border-radius: 5px; }
+.u-thumb::before, .u-thumb::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #e9e4d8; box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .55); transition: transform .45s var(--ease); }
+.u-thumb::before { transform: rotate(-7deg) translate(-3px, 2px); }
+.u-thumb::after { transform: rotate(5deg) translate(3px, 1px); background: #d8d1c1; }
+.u-thumb img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; outline: 2px solid #f4f1ea; outline-offset: -2px; box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .7); transition: transform .45s var(--ease); }
+.u-pics:hover .u-thumb::before, .u-pics:focus-visible .u-thumb::before { transform: rotate(-13deg) translate(-12px, 4px); }
+.u-pics:hover .u-thumb::after, .u-pics:focus-visible .u-thumb::after { transform: rotate(10deg) translate(12px, 3px); }
+.u-pics:hover .u-thumb img { transform: scale(1.06); }
+.u-ticks { position: absolute; z-index: 2; left: 6px; right: 6px; bottom: 6px; display: flex; gap: 2px; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.u-ticks i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .45); box-shadow: 0 0 3px rgba(0, 0, 0, .4); }
+.u-ticks i.is-on { background: #fff; }
+.u-pics:hover .u-ticks { opacity: 1; }
+.u-txt { display: grid; gap: 4px; }
 .u-pics .u-num { font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25em; }
 .u-pics .u-cam { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
 .u-pics .u-cam svg { width: 15px; height: 15px; flex: none; }
 .u-pics:hover .u-num, .u-pics:focus-visible .u-num { color: var(--accent); }
-.lb-cap small { display: block; margin-top: 4px; font-size: 13px; color: var(--tan); }
+@media (max-width: 760px) { .u-thumb { width: 78px; } .u-pics { gap: 14px; } }
+@media (prefers-reduced-motion: reduce) { .u-thumb::before, .u-thumb::after, .u-thumb img { transition: none; } }
+
+
 .units .u-act .btn { min-height: 40px; padding: 0 16px; font-size: 12px; }
 @media (max-width: 760px) {
   .units thead { display: none; }
@@ -328,6 +345,7 @@ body.menu-open { overflow: hidden; }
   .units .u-rent { grid-row: 1 / 3; grid-column: 2; text-align: right; align-self: center; }
   .units .u-act { grid-column: 1 / -1; text-align: left; margin-top: 10px; }
   .units td[data-k]::before { content: attr(data-k) " "; color: var(--muted); font-size: 13px; }
+  .units td[data-k]:has(.u-pics)::before { content: none; }   /* the stack names the unit itself */
 }
 
 /* ---------- Photo band (horizontal drift on scroll) ---------- */
@@ -574,12 +592,12 @@ html:not(.js) .finder-map { display: none; }
 @media (prefers-reduced-motion: reduce) { .fl-media img, .e24-pin span, .e24-area span { transition: none; } }
 
 /* ---------- Lightbox ---------- */
-.lightbox { position: fixed; inset: 0; z-index: 400; background: rgba(12, 13, 11, .96); display: none; color: var(--on-ink); }
+.lightbox { position: fixed; inset: 0; z-index: 400; background: #0c0d0b; display: none; color: var(--on-ink); }
 .lightbox.is-open { display: grid; grid-template-rows: auto 1fr auto; animation: fade .4s var(--ease); }
 @keyframes fade { from { opacity: 0; } }
 .lb-top { display: flex; justify-content: space-between; align-items: center; padding: 16px var(--gutter); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--on-ink-muted); }
-.lb-stage { position: relative; display: grid; place-items: center; min-height: 0; padding: 0 var(--gutter); touch-action: pan-y; }
-.lb-stage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; animation: lb-in .5s var(--ease); }
+.lb-stage { position: relative; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; min-height: 0; overflow: hidden; padding: 0 var(--gutter); touch-action: pan-y; }
+.lb-stage img { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; animation: lb-in .5s var(--ease); }
 @keyframes lb-in { from { opacity: 0; transform: scale(.97); } }
 .lb-cap { padding: 16px var(--gutter) 24px; text-align: center; color: var(--on-ink-muted); font-size: 15px; min-height: 60px; }
 .lb-btn { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--line-ink); background: rgba(21, 22, 19, .6); color: var(--cream); cursor: pointer; display: grid; place-items: center; }
@@ -588,6 +606,39 @@ html:not(.js) .finder-map { display: none; }
 .lb-prev, .lb-next { position: absolute; top: 50%; transform: translateY(-50%); }
 .lb-prev { left: var(--gutter); } .lb-next { right: var(--gutter); }
 body.lb-open { overflow: hidden; }
+/* The tour: a unit's facts and Apply above the photo, its rooms and every photo below. */
+.lightbox.is-open { grid-template-rows: auto minmax(0, 1fr) auto auto auto; }
+.lb-top { gap: 18px; }
+.lb-info { flex: 1; min-width: 0; text-transform: none; letter-spacing: normal; }
+.lb-title { margin: 0; font: 400 clamp(21px, 2.2vw, 30px)/1.1 var(--serif); color: var(--cream); }
+.lb-facts { margin: 4px 0 0; font-size: 14px; color: var(--on-ink-muted); }
+.lb-facts b { color: var(--cream); font-weight: 700; }
+.lb-facts .u-special { vertical-align: 1px; }
+.lb-facts .lb-note { display: block; color: var(--tan); }
+.lb-acts { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.lightbox .lb-apply { --b: var(--tan); background: var(--tan); border-color: var(--tan); color: var(--ink); min-height: 46px; }
+.lightbox .lb-apply::before { background: var(--cream); }
+.lightbox .lb-apply:hover { color: var(--ink); }
+.lb-cap { padding: 12px var(--gutter) 10px; min-height: 0; }
+.lb-cap small { display: block; margin-top: 4px; font-size: 13px; color: var(--tan); }
+.lb-rooms { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 var(--gutter) 12px; }
+.lb-rooms button { min-height: 36px; padding: 0 15px; border-radius: 999px; border: 1px solid var(--line-ink); background: transparent; color: var(--cream); font: 600 13px/1 var(--sans); cursor: pointer; transition: background .25s, color .25s, border-color .25s; }
+.lb-rooms button:hover { border-color: var(--cream); }
+.lb-rooms button[aria-pressed="true"] { background: var(--tan); border-color: var(--tan); color: var(--ink); }
+.lb-strip { display: flex; gap: 6px; overflow-x: auto; justify-content: safe center; padding: 2px var(--gutter) 18px; scroll-snap-type: x proximity; scrollbar-width: none; }
+.lb-strip::-webkit-scrollbar { display: none; }
+.lb-strip button { flex: none; width: 66px; height: 50px; padding: 0; border: 2px solid transparent; border-radius: 4px; overflow: hidden; background: var(--ink-3); opacity: .5; cursor: pointer; scroll-snap-align: center; transition: opacity .25s, border-color .25s; }
+.lb-strip img { width: 100%; height: 100%; object-fit: cover; }
+.lb-strip button:hover, .lb-strip button.is-on { opacity: 1; }
+.lb-strip button.is-on { border-color: var(--tan); }
+@media (max-width: 700px) {
+  .lb-top { flex-wrap: wrap; row-gap: 8px; }
+  .lb-info { order: 3; flex-basis: 100%; }
+  .lb-acts .lb-apply { min-height: 40px; padding: 0 16px; font-size: 11px; }
+  .lb-rooms { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .lb-rooms button { flex: none; }
+  .lb-strip button { width: 54px; height: 42px; }
+}
 
 /* ---------- FAQ ---------- */
 .faq { border-top: 1px solid var(--line); max-width: 900px; }

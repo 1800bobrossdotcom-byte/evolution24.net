@@ -141,36 +141,81 @@
   const region = new URLSearchParams(location.search).get('region');
   if (region) { const chip = $(`[data-filter-group="props"] .chip[data-value="${CSS.escape(region)}"]`); if (chip) chip.click(); }
 
-  /* ---- Lightbox: a building's gallery, and each unit's photos (the unit's number in a units
-     table, data-photos; its sets are in .unit-photos-data, from the leasing team's Drive). */
+  /* ---- Lightbox: a building's gallery, or a unit's tour. A unit with photos is a stack of
+     prints in its units table (data-photos; its sets in .unit-photos-data, from the leasing
+     team's Drive). On a computer, moving across the top print flips through every photo;
+     pressing opens the tour there, with the unit's facts and Apply above, its rooms and every
+     photo below, arrows, swipes and keys. */
   const lb = $('.lightbox');
   if (lb) {
     const img = $('.lb-stage img', lb), avif = $('.lb-stage source', lb), cap = $('.lb-cap', lb), count = $('.lb-count', lb);
+    const info = $('.lb-info', lb), title = $('.lb-title', lb), facts = $('.lb-facts', lb), apply = $('.lb-apply', lb);
+    const rooms = $('.lb-rooms', lb), strip = $('.lb-strip', lb);
     const galleryLabel = lb.getAttribute('aria-label');
-    let data = [], at = 0, opener = null, note = '';
-    // Fetches a photo the way the stage would show it (AVIF where the browser takes it), so the
-    // next swipe is instant. A detached <picture> loads like a detached new Image() does.
-    const warm = q => {
-      const pic = document.createElement('picture'), s = document.createElement('source'), im = new Image();
-      pic.append(s, im); s.type = 'image/avif'; s.srcset = q.avif; im.srcset = q.srcset;
+    let data = [], at = 0, opener = null, note = '', touring = false;
+    const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+    // A photo as a detached <picture> at a given size (AVIF where the browser takes it): the
+    // next swipe is instant, and so is the next print while flipping through a stack.
+    const pictureOf = (q, sizes, alt = '') => {
+      const pic = el('picture'), s = el('source'), im = new Image();
+      s.type = 'image/avif'; s.sizes = sizes; s.srcset = q.avif;
+      im.sizes = sizes; im.srcset = q.srcset; im.src = q.src; im.alt = alt; im.decoding = 'async';
+      pic.append(s, im);
+      return pic;
     };
+    const warm = q => pictureOf(q, '100vw');
     const render = () => {
       const p = data[at];
       avif.srcset = p.avif; img.src = p.src; img.srcset = p.srcset; img.alt = p.alt; img.width = p.w; img.height = p.h;
       img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
       cap.textContent = p.alt;
-      if (note) { const s = document.createElement('small'); s.textContent = note; cap.append(s); }   // "Representative photos: unit 6D…"
+      if (note && !touring) cap.append(el('small', '', note));    // "Representative photos: unit 2D…"
       count.textContent = `${at + 1} / ${data.length}`;
       [at + 1, at - 1].forEach(n => warm(data[(n + data.length) % data.length]));
+      const thumbs = $$('button', strip);
+      thumbs.forEach((b, n) => { b.classList.toggle('is-on', n === at); if (n === at) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+      const on = thumbs[at];
+      if (on) strip.scrollTo({ left: on.offsetLeft - strip.clientWidth / 2 + on.clientWidth / 2, behavior: calm ? 'auto' : 'smooth' });
+      $$('button', rooms).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.room === p.room)));
     };
-    const open = (list, n, label, why = '') => {
+    const go = n => { at = n; render(); };
+    // Every photo, small, along the bottom; and a button for each room, at its first photo.
+    const fill = tour => {
+      strip.replaceChildren(...data.map((p, n) => {
+        const b = el('button'); b.type = 'button'; b.setAttribute('aria-label', `Photo ${n + 1} of ${data.length}: ${p.alt}`);
+        const pic = pictureOf(p, '66px'); $('img', pic).loading = 'lazy';
+        b.append(pic); b.addEventListener('click', () => go(n));
+        return b;
+      }));
+      strip.hidden = data.length < 2;
+      const firsts = [];
+      data.forEach((p, n) => { if (p.room && !firsts.some(r => r.room === p.room)) firsts.push({ room: p.room, n }); });
+      rooms.replaceChildren(...firsts.map(r => {
+        const b = el('button', '', r.room); b.type = 'button'; b.dataset.room = r.room; b.addEventListener('click', () => go(r.n));
+        return b;
+      }));
+      rooms.hidden = firsts.length < 2;
+      touring = Boolean(tour);
+      info.hidden = !tour; apply.hidden = !tour;
+      if (!tour) return;
+      title.textContent = `Unit ${tour.unit} · ${tour.name}`;
+      facts.replaceChildren(document.createTextNode(tour.facts ? `${tour.facts} · ` : ''), el('b', '', tour.rent), document.createTextNode('/mo'));
+      if (tour.special) facts.append(' ', el('span', 'u-special', 'Special'));
+      if (note) facts.append(el('span', 'lb-note', note));
+      apply.href = tour.apply; apply.textContent = `Apply for ${tour.unit} `;
+      apply.append($('.lb-next svg', lb).cloneNode(true));
+      apply.setAttribute('data-apply', ''); apply.dataset.property = tour.property; apply.dataset.unit = tour.unit;
+    };
+    const open = (list, n, label, why = '', tour = null) => {
       if (!list || !list.length) return;
-      data = list; note = why; opener = document.activeElement; at = n;
+      data = list; note = why; opener = document.activeElement; at = Math.min(n || 0, list.length - 1);
       lb.setAttribute('aria-label', label || galleryLabel || 'Photos');
-      render(); lb.classList.add('is-open'); lb.removeAttribute('inert'); document.body.classList.add('lb-open'); $('.lb-close', lb).focus();
+      fill(tour); render();
+      lb.classList.add('is-open'); lb.removeAttribute('inert'); document.body.classList.add('lb-open'); $('.lb-close', lb).focus();
     };
     const close = () => { lb.classList.remove('is-open'); lb.setAttribute('inert', ''); document.body.classList.remove('lb-open'); opener && opener.focus(); };
-    const step = d => { at = (at + d + data.length) % data.length; render(); };
+    const step = d => go((at + d + data.length) % data.length);
+    apply.addEventListener('click', close);     // on its own building's page, Apply then goes to the form
     const gallery = $('[data-gallery]');
     if (gallery) {
       const photos = JSON.parse($('#gallery-data').textContent);
@@ -182,8 +227,33 @@
     document.addEventListener('click', e => {
       const b = e.target.closest && e.target.closest('[data-photos]');
       const s = b && sets[b.dataset.photos];
-      if (s) open(s.photos, 0, s.title, s.note);
+      if (s) open(s.photos, +(b.dataset.at || 0), s.title, s.note, s.tour);
     });
+    // Flipping through a stack: where the pointer is across the top print says which photo.
+    if (matchMedia('(hover: hover)').matches) {
+      $$('[data-photos]').forEach(b => {
+        const s = sets[b.dataset.photos], thumb = $('.u-thumb', b);
+        if (!s || !thumb || s.photos.length < 2) return;
+        const im = $('img', thumb), source = $('source', thumb), ticks = el('span', 'u-ticks');
+        s.photos.forEach(() => ticks.append(el('i')));
+        thumb.append(ticks);
+        let shown = -1, warmed = false;
+        const show = n => {
+          if (n === shown) return;
+          shown = n; b.dataset.at = String(n);
+          const p = s.photos[n];
+          if (source) source.srcset = p.avif;
+          im.srcset = p.srcset;
+          [...ticks.children].forEach((t, k) => t.classList.toggle('is-on', k === n));
+        };
+        thumb.addEventListener('pointerenter', () => { if (!warmed) { warmed = true; s.photos.forEach(p => pictureOf(p, '92px')); } show(0); });
+        thumb.addEventListener('pointermove', e => {
+          const r = thumb.getBoundingClientRect();
+          show(Math.min(s.photos.length - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * s.photos.length))));
+        });
+        b.addEventListener('pointerleave', () => { show(0); b.dataset.at = '0'; });
+      });
+    }
     $('.lb-close', lb).addEventListener('click', close);
     $('.lb-prev', lb).addEventListener('click', () => step(-1));
     $('.lb-next', lb).addEventListener('click', () => step(1));
@@ -192,7 +262,7 @@
       if (e.key === 'ArrowRight') step(1);
       if (e.key === 'ArrowLeft') step(-1);
       if (e.key === 'Tab') { // keep focus inside the dialog
-        const f = $$('button', lb), first = f[0], lastB = f[f.length - 1];
+        const f = $$('button, a[href]', lb).filter(x => !x.closest('[hidden]') && x.offsetParent !== null), first = f[0], lastB = f[f.length - 1];
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastB.focus(); }
         else if (!e.shiftKey && document.activeElement === lastB) { e.preventDefault(); first.focus(); }
       }

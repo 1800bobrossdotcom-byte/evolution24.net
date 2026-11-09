@@ -203,8 +203,14 @@ statistics.
 ## Unit photos, from the leasing team's Google Drive
 
 Every units table (a building's page, *Available now*, the city and search pages, the home
-page) shows a unit with photos as its number underlined, with *12 photos* under it; pressing
-it opens them in the lightbox, one by one, each with its words. A unit without photos of its
+page) shows a unit with photos as a small stack of prints beside its number and *12 photos*.
+On a computer, moving across the top print flips through every photo, with a tick for each;
+pressing anywhere opens the **tour** at the photo it stopped on: the unit's facts, rent and
+*Special* tag across the top with **Apply for 6D**, the photo with its words, a button per
+room (Living, Kitchen, Bedroom, Bath, Closet…, read from the photos' words, each jumping to
+that room's first photo), and every photo in a strip below; arrows, swipes and keys move
+through it. Apply closes the tour and fills in the building's form for that home. A
+building's own gallery opens in the same viewer, with its rooms and strip. A unit without photos of its
 own, in a building where units on the same letter share a layout (181 St. Paul: 2D, 3D, 6D),
 shows those of the nearest unit on its line, labelled *Similar unit* and, in the lightbox,
 *Representative photos: unit 2D, the same layout*. A furnished home gets a furnished set

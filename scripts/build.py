@@ -822,18 +822,41 @@ def unit_photo_set(p, u):
     own = of == name
     kind = f" ({s['set'].lower()})" if s["set"] else ""
     note = "" if own else f"Representative photos: unit {of}{kind}, the same layout"
-    return {"key": f"{p['slug']}/{name}", "own": own, "of": of, "photos": s["photos"],
+    size = f'{u["sqft"]:,} sq ft' if u.get("sqft") else ""
+    tour = {"unit": str(u["unit"]), "property": p["slug"], "name": p["name"], "facts": " · ".join(x for x in (unit_type(u), size) if x),
+            "rent": money(u["rent"]), "special": bool(u.get("special")), "apply": apply_url(p, u), "page": prop_url(p)}
+    return {"key": f"{p['slug']}/{name}", "own": own, "of": of, "photos": s["photos"], "tour": tour,
             "title": f"Unit {u['unit']} · {p['name']}", "note": note, "set": s["set"] if own else None}
 
 
+# The room a photo shows, from the first part of its alt text, for the tour's room buttons.
+ROOMS = (("Outside", r"exterior|building|\bfront\b|fa[cç]ade|street"), ("Kitchen", r"kitchen"), ("Bath", r"bath|shower|vanity|toilet"), ("Bedroom", r"bedroom|\bbed\b|sleeping"),
+         ("Closet", r"closet"), ("Living", r"living|loft|studio|sofa|seating|lounge"), ("Dining", r"dining"),
+         ("Entry", r"entry|\bhall\b|door"), ("Views", r"window|view"))
+
+
+def room_of(alt):
+    a = alt.split(",")[0].lower()
+    return next((name for name, pat in ROOMS if re.search(pat, a)), None)
+
+
+def lb_photo(slug, ph):
+    """One photo as the lightbox shows it: every size, its words, and its room."""
+    return {"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "avif": srcset(slug, ph, "avif"),
+            "alt": ph["alt"], "w": ph["w"], "h": ph["h"], "room": room_of(ph["alt"])}
+
+
 def photo_button(p, u, ups):
-    """The unit's number as a button that opens its photos, with how many and whose."""
+    """The unit as a stack of its photos, its number and how many: one press opens the tour.
+    On a computer, moving across the photo flips through them all (main.js)."""
     n = len(ups["photos"])
     what = f"{n} photo{'s' if n != 1 else ''}" if ups["own"] else "Similar unit"
-    label = (f"Photos of unit {u['unit']} at {p['name']} ({n})" if ups["own"]
+    label = (f"Tour unit {u['unit']} at {p['name']}: {n} photos" if ups["own"]
              else f"Representative photos for unit {u['unit']} at {p['name']}: unit {ups['of']}, the same layout ({n})")
+    thumb = img(p["slug"], ups["photos"][0], "112px", alt="", fit=480)
     return (f'<button class="u-pics" type="button" data-photos="{esc(ups["key"])}" aria-label="{esc(label)}">'
-            f'<span class="u-num">{esc(u["unit"])}</span><span class="u-cam">{icon("camera")}{what}</span></button>')
+            f'<span class="u-thumb">{thumb}</span>'
+            f'<span class="u-txt"><span class="u-num">{esc(u["unit"])}</span><span class="u-cam">{icon("camera")}{what}</span></span></button>')
 
 
 def photos_blob(sets):
@@ -843,18 +866,25 @@ def photos_blob(sets):
     out = {}
     for s in sets:
         slug = s["key"].split("/")[0]
-        out[s["key"]] = {"title": s["title"], "note": s["note"], "photos": [
-            {"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "avif": srcset(slug, ph, "avif"),
-             "alt": ph["alt"], "w": ph["w"], "h": ph["h"]} for ph in s["photos"]]}
+        out[s["key"]] = {"title": s["title"], "note": s["note"], "tour": s["tour"],
+                         "photos": [lb_photo(slug, ph) for ph in s["photos"]]}
     blob = json.dumps(out, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     return f'<script type="application/json" class="unit-photos-data">{blob}</script>'
 
 
 def lightbox(label="Photos"):
+    """The photo viewer: a building's gallery, or a unit's tour, with its facts and Apply above,
+    its rooms and a strip of every photo below (main.js fills it)."""
     return f"""<div class="lightbox" role="dialog" aria-modal="true" aria-label="{esc(label)}" inert>
-  <div class="lb-top"><span class="lb-count"></span><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
+  <div class="lb-top">
+    <span class="lb-count"></span>
+    <div class="lb-info" hidden><p class="lb-title"></p><p class="lb-facts"></p></div>
+    <div class="lb-acts"><a class="btn btn--solid lb-apply" hidden></a><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
+  </div>
   <div class="lb-stage"><picture><source type="image/avif"><img alt=""></picture><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
   <p class="lb-cap"></p>
+  <div class="lb-rooms" role="group" aria-label="Rooms" hidden></div>
+  <div class="lb-strip" role="group" aria-label="All photos"></div>
 </div>"""
 
 
@@ -1230,8 +1260,7 @@ def property_page(p):
         more = f'<span class="more">+{len(photos) - 5} more</span>' if i == 4 and len(photos) > 5 else ""
         sizes = "(max-width: 700px) 100vw, 58vw" if i < 2 or layout[i] == "g-f" else "(max-width: 700px) 50vw, 34vw"
         tiles += f'<button type="button" data-index="{i}" aria-label="Open photo {i + 1} of {len(photos)}: {esc(ph["alt"])}" data-reveal="clip" class="{layout[i]} i{i % 4}">{img(slug, ph, sizes, alt="", fit=1600 if i < 2 else 960)}{more}</button>'
-    gdata = json.dumps([{"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "avif": srcset(slug, ph, "avif"),
-                         "alt": ph["alt"], "w": ph["w"], "h": ph["h"]} for ph in photos]).replace("</", "<\\/")
+    gdata = json.dumps([lb_photo(slug, ph) for ph in photos], ensure_ascii=False).replace("</", "<\\/")
 
     facts = [("Address", esc(full_addr(p))), ("Type", esc(p["type"]))]
     if p.get("bedrooms"):
