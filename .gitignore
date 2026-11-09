@@ -8,3 +8,6 @@ tools/ads/out/
 tools/ads/contacts.json
 node_modules/
 tools/google-business/
+
+# The leasing team's Google Drive photos, as downloaded by scripts/unit_photos.py --fetch (the Drive is the source)
+source/drive/

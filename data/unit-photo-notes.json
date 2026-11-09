@@ -1,0 +1,351 @@
+{
+ "_about": "Per photo of the Drive folder (by its path there): 'alt', the words a screen reader and an image search read; 'skip' to leave it off, with 'why'. A key ending in / is a whole folder. '_cover' is the photo each folder's set opens on. scripts/unit_photos.py reads it.",
+ "_cover": {
+  "6D": "IMG_6418.JPG",
+  "2A": "IMG_9361.JPG",
+  "2D move out": "IMG_7565.JPG",
+  "2E after renovations": "Common area",
+  "2F move out": "IMG_9113.JPG",
+  "3B move out photos": "IMG_6028.HEIC",
+  "4B Furnished": "Open cocmet",
+  "5B Furnished": "IMG_4848.HEIC",
+  "5E move out": "IMG_5802.JPG",
+  "6E Furnished": "IMG_4564.HEIC",
+  "6E Unfurnished": "IMG_3283.jpeg",
+  "6F Move out": "IMG_7553.JPG"
+ },
+ "3D/": {
+  "skip": true,
+  "why": "Photographed while lived in: the resident's furniture, art and belongings throughout."
+ },
+ "5B Furnished/IMG_4850.HEIC": {
+  "skip": true,
+  "why": "A closet piled with someone's clothes and bags."
+ },
+ "6F Move out/IMG_7547.JPG": {
+  "skip": true,
+  "why": "A paper notice taped to the door."
+ },
+ "6D/IMG_6417.JPG": {
+  "alt": "Long open loft with maple floors, white brick walls and a black tin ceiling, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_6418.JPG": {
+  "alt": "Living area with a wall of tall windows, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_6419.JPG": {
+  "alt": "Open loft with a ceiling fan, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_6420.JPG": {
+  "alt": "Bedroom with white brick walls and a pendant light, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_6421.JPG": {
+  "alt": "Second room, white brick and maple floors, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_6422.JPG": {
+  "alt": "Entry hall, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_6424.JPG": {
+  "alt": "Bathroom with vanity, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_9368.JPG": {
+  "alt": "Bathroom vanity, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_9369.JPG": {
+  "alt": "Bathroom with walk-in shower, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_9370.JPG": {
+  "alt": "Kitchen with stainless sink, range and refrigerator, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_9371.JPG": {
+  "alt": "Living area with windows along the far wall, unit 6D at 181 St. Paul"
+ },
+ "6D/IMG_9372.JPG": {
+  "alt": "Living area with pendant lights and city views, unit 6D at 181 St. Paul"
+ },
+ "2A/IMG_9360.JPG": {
+  "alt": "Long open loft with maple floors and a black tin ceiling, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9361.JPG": {
+  "alt": "Living area with a wall of windows, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9362.JPG": {
+  "alt": "Open loft with built-in shelving, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9363.JPG": {
+  "alt": "Bathroom with tub and shower, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9364.JPG": {
+  "alt": "Half bath with vanity, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9365.JPG": {
+  "alt": "Kitchen with island and green cabinets, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9366.JPG": {
+  "alt": "Living area with windows and pendant lights, unit 2A at 181 St. Paul"
+ },
+ "2A/IMG_9367.JPG": {
+  "alt": "The loft from the kitchen end, unit 2A at 181 St. Paul"
+ },
+ "2D move out/IMG_7561.JPG": {
+  "alt": "Entry with built-in shelves, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7562.JPG": {
+  "alt": "Closet with shelving, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7563.JPG": {
+  "alt": "Kitchen along the window wall, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7564.JPG": {
+  "alt": "Kitchen with range, refrigerator and cabinets, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7565.JPG": {
+  "alt": "Living area with tall windows, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7566.JPG": {
+  "alt": "Living area with pendant lights, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7567.JPG": {
+  "alt": "Open loft with a ceiling fan, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7568.JPG": {
+  "alt": "The loft from the windows, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7569.JPG": {
+  "alt": "Bedroom with white brick walls, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7570.JPG": {
+  "alt": "Bedroom with pendant light, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7571.JPG": {
+  "alt": "Walk-in shower and shelving, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7572.JPG": {
+  "alt": "Bathroom vanity, unit 2D at 181 St. Paul"
+ },
+ "2D move out/IMG_7573.JPG": {
+  "alt": "Bathroom with tile floor, unit 2D at 181 St. Paul"
+ },
+ "2E after renovations/Bathroom": {
+  "alt": "Renovated bathroom with shower and vanity, unit 2E at 181 St. Paul"
+ },
+ "2E after renovations/Common area": {
+  "alt": "Long living area with maple floors, unit 2E at 181 St. Paul"
+ },
+ "2E after renovations/Kitchen": {
+  "alt": "Kitchen with range, refrigerator and stainless sink, unit 2E at 181 St. Paul"
+ },
+ "2E after renovations/Kitchen entry": {
+  "alt": "Kitchen and entry, unit 2E at 181 St. Paul"
+ },
+ "2E after renovations/Room": {
+  "alt": "Bedroom with a large window, unit 2E at 181 St. Paul"
+ },
+ "2F move out/IMG_9113.JPG": {
+  "alt": "Bedroom with tall windows, unit 2F at 181 St. Paul"
+ },
+ "2F move out/IMG_9114.JPG": {
+  "alt": "Open loft with kitchen and entry, unit 2F at 181 St. Paul"
+ },
+ "2F move out/IMG_9115.JPG": {
+  "alt": "Living area towards the windows, unit 2F at 181 St. Paul"
+ },
+ "2F move out/IMG_9116.JPG": {
+  "alt": "Bathroom with shower and vanity, unit 2F at 181 St. Paul"
+ },
+ "2F move out/IMG_9358.JPG": {
+  "alt": "Living area, unit 2F at 181 St. Paul"
+ },
+ "2F move out/IMG_9359.JPG": {
+  "alt": "Kitchen with range, refrigerator and cabinets, unit 2F at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6028.HEIC": {
+  "alt": "Living area with a wall of windows, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6029.HEIC": {
+  "alt": "Open loft towards the kitchen, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6030.HEIC": {
+  "alt": "Kitchen with range, refrigerator and cabinets, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6031.HEIC": {
+  "alt": "Bedroom with pendant light, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6032.HEIC": {
+  "alt": "Long open loft with tin ceiling and fans, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6033.HEIC": {
+  "alt": "Walk-in closet, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6034.HEIC": {
+  "alt": "Bathroom with corner shower, unit 3B at 181 St. Paul"
+ },
+ "3B move out photos/IMG_6035.HEIC": {
+  "alt": "Bathroom vanity, unit 3B at 181 St. Paul"
+ },
+ "4B Furnished/Bathroom 1": {
+  "alt": "Bathroom with glass shower, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Bathroom 2": {
+  "alt": "Second bathroom with vanity, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Bedroom 1": {
+  "alt": "Furnished bedroom with queen bed, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Bedroom 2": {
+  "alt": "Bedroom window, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Closet": {
+  "alt": "Walk-in closet, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Dining": {
+  "alt": "Dining table for four, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Kitchen 1": {
+  "alt": "Kitchen with island cart and cabinets, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Kitchen2": {
+  "alt": "Kitchen and dining area, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Living": {
+  "alt": "Furnished living room with leather sofas and TV, unit 4B (furnished) at 181 St. Paul"
+ },
+ "4B Furnished/Open cocmet": {
+  "alt": "Open living and dining area with tall windows, unit 4B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4840.HEIC": {
+  "alt": "Furnished bedroom with dresser and art, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4841.HEIC": {
+  "alt": "Bedroom with nightstands, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4842.HEIC": {
+  "alt": "Bedroom window, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4843.HEIC": {
+  "alt": "Long living and dining area towards the kitchen, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4844.HEIC": {
+  "alt": "Dining table and kitchen, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4845.HEIC": {
+  "alt": "Kitchen with range and island, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4846.HEIC": {
+  "alt": "Kitchen island, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4847.HEIC": {
+  "alt": "Living room with sofas and windows, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4848.HEIC": {
+  "alt": "Living room with white leather sofas, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4849.HEIC": {
+  "alt": "Living area towards the kitchen, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4851.HEIC": {
+  "alt": "Bathroom with glass shower, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4852.HEIC": {
+  "alt": "Bathroom vanity, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5B Furnished/IMG_4853.HEIC": {
+  "alt": "Glass shower, unit 5B (furnished) at 181 St. Paul"
+ },
+ "5E move out/Bedroom": {
+  "alt": "Long room with maple floors and tin ceiling, unit 5E at 181 St. Paul"
+ },
+ "5E move out/Bedroom to living": {
+  "alt": "Double doors from the bedroom to the living area, unit 5E at 181 St. Paul"
+ },
+ "5E move out/Closet": {
+  "alt": "Closet with shelf and rail, unit 5E at 181 St. Paul"
+ },
+ "5E move out/Dining": {
+  "alt": "Dining area with windows, unit 5E at 181 St. Paul"
+ },
+ "5E move out/IMG_5802.JPG": {
+  "alt": "Living area with windows on two sides, unit 5E at 181 St. Paul"
+ },
+ "5E move out/Kitchen": {
+  "alt": "Kitchen with cabinets, range and refrigerator, unit 5E at 181 St. Paul"
+ },
+ "5E move out/closet": {
+  "alt": "Walk-in closet, unit 5E at 181 St. Paul"
+ },
+ "6E Furnished/IMG_4564.HEIC": {
+  "alt": "Furnished studio with daybed and dining table, unit 6E (furnished) at 181 St. Paul"
+ },
+ "6E Furnished/IMG_4565.HEIC": {
+  "alt": "Seating corner, unit 6E (furnished) at 181 St. Paul"
+ },
+ "6E Furnished/IMG_4567.HEIC": {
+  "alt": "Studio with TV and bed, unit 6E (furnished) at 181 St. Paul"
+ },
+ "6E Furnished/IMG_4568.HEIC": {
+  "alt": "Kitchen with breakfast bar, unit 6E (furnished) at 181 St. Paul"
+ },
+ "6E Furnished/IMG_4569.HEIC": {
+  "alt": "Studio towards the window, unit 6E (furnished) at 181 St. Paul"
+ },
+ "6E Unfurnished/IMG_3282.jpeg": {
+  "alt": "Kitchen with range, refrigerator and cabinets, unit 6E at 181 St. Paul"
+ },
+ "6E Unfurnished/IMG_3283.jpeg": {
+  "alt": "Long studio towards the window, unit 6E at 181 St. Paul"
+ },
+ "6E Unfurnished/IMG_3284.jpeg": {
+  "alt": "Studio towards the entry, unit 6E at 181 St. Paul"
+ },
+ "6E Unfurnished/IMG_3286.jpeg": {
+  "alt": "Bathroom with shower and vanity, unit 6E at 181 St. Paul"
+ },
+ "6E Unfurnished/IMG_3287.jpeg": {
+  "alt": "Door into the bedroom area, unit 6E at 181 St. Paul"
+ },
+ "6F Move out/IMG_7548.JPG": {
+  "alt": "Bathroom vanity, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7549.JPG": {
+  "alt": "Shower and toilet, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7550.JPG": {
+  "alt": "Closet with sliding door, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7551.JPG": {
+  "alt": "Closet with rail, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7552.JPG": {
+  "alt": "Hall towards the windows, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7553.JPG": {
+  "alt": "Living area with tall windows, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7554.JPG": {
+  "alt": "Large window with a city view, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7555.JPG": {
+  "alt": "Corner windows, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7556.JPG": {
+  "alt": "Sleeping area behind a half wall, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7557.JPG": {
+  "alt": "Kitchen with range and refrigerator, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7558.JPG": {
+  "alt": "Kitchen and entry, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7559.JPG": {
+  "alt": "Half wall and windows, unit 6F at 181 St. Paul"
+ },
+ "6F Move out/IMG_7560.JPG": {
+  "alt": "Entry door, unit 6F at 181 St. Paul"
+ },
+ "181 St. Paul Exterior/IMG_2957.JPG": {
+  "skip": true,
+  "why": "Side by side with a white-painted mockup of the building: not how it looks."
+ },
+ "181 St. Paul Exterior/PTSC_0014.JPG": {
+  "alt": "Red-brick front of 181 St. Paul, with trees along St. Paul Street, downtown Rochester"
+ }
+}

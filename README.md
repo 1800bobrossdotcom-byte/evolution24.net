@@ -200,6 +200,44 @@ statistics.
   zooms only after a click into the map.
 - **The privacy page** says what the map loads and from whom.
 
+## Unit photos, from the leasing team's Google Drive
+
+Every units table (a building's page, *Available now*, the city and search pages, the home
+page) shows a unit with photos as its number underlined, with *12 photos* under it; pressing
+it opens them in the lightbox, one by one, each with its words. A unit without photos of its
+own, in a building where units on the same letter share a layout (181 St. Paul: 2D, 3D, 6D),
+shows those of the nearest unit on its line, labelled *Similar unit* and, in the lightbox,
+*Representative photos: unit 2D, the same layout*. A furnished home gets a furnished set
+where there is one. Opening a unit's photos counts as `gallery_open` on that building and
+unit in the statistics.
+
+**Where they come from.** The *Apartment Photos* folder on Google Drive (`data/drive.json`,
+shared as *Anyone with the link can view*). `python3 scripts/unit_photos.py --fetch`
+downloads what is new into `source/drive/` (not kept in git: the Drive is the source),
+turns each photo into AVIF and WebP at 480, 960 and 1600 px in `assets/img/<building>/`,
+rotated and stripped of all metadata (phone photos carry GPS), and writes
+`data/unit-photos.json`; then `python3 scripts/build.py`. Needs `pip install gdown
+pillow-heif` (iPhone photos are HEIC).
+
+**How to file photos in the Drive** (the script reads folder names):
+
+- `181 St. Paul/6D/…`, or for 181 St. Paul alone just `6D/…`: that unit's photos. The
+  folder's first word is the unit; anything after it is a note and is not shown
+  (*2D move out*), except **Furnished** or **Unfurnished**, which make a separate set.
+- A folder named after another building (`Water Street/402RV/…`, `The Biltmore/17/…`):
+  that building's units. The names it takes are in `data/drive.json`.
+- `181 St. Paul Exterior/…`: the building itself; these join its gallery.
+- *179 commercial* and *50 Charlotte Square* are left out (not homes on this site), and so
+  are videos.
+
+**What is shown, and in what words: `data/unit-photo-notes.json`.** Each photo's alt text
+(what a screen reader and an image search read), the photo each set opens on (`_cover`), and
+what is left out, with why: 3D (photographed while lived in: a resident's belongings
+throughout), a closet full of someone's things in 5B, a paper notice in 6F, and the
+side-by-side with a white-painted mockup of 181 St. Paul. A new photo with no note gets
+plain words from its folder and file name ("Kitchen, unit 4B at 181 St. Paul"); look at new
+ones before they go on the site, and add a note for anything that should not.
+
 ## SEO
 
 - **One host.** `SITE = https://evolution24.net`, the apex that the old site already used

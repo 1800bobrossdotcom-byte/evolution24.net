@@ -51,6 +51,11 @@ PET_DEPOSIT, PET_FEE = 300, 45
 
 DATA = json.loads((ROOT / "data" / "properties.json").read_text())
 PHOTOS = json.loads((ROOT / "data" / "photos.json").read_text())
+# Each unit's photos, and more of each building's, from the leasing team's Google Drive
+# (scripts/unit_photos.py; where the folder is and how it is read: data/drive.json).
+UNIT_PHOTOS_FILE = ROOT / "data" / "unit-photos.json"
+UNIT_PHOTOS = {k: v for k, v in json.loads(UNIT_PHOTOS_FILE.read_text()).items() if not k.startswith("_")} if UNIT_PHOTOS_FILE.exists() else {}
+DRIVE_LINES = set(json.loads((ROOT / "data" / "drive.json").read_text()).get("lines", []))
 PROPS = DATA["properties"]
 REGIONS = DATA["regions"]
 UNITS_AS_OF = DATA["units_as_of"]
@@ -132,7 +137,10 @@ def photo(slug, pid):
 
 
 def gallery_photos(slug):
-    return [p for p in PHOTOS[slug] if not p["thumb"]]
+    """The building's own photos, with those of the building from the Drive (its exterior)
+    second, after the first: they are new, so they show in the gallery's first five."""
+    own = [p for p in PHOTOS[slug] if not p["thumb"]]
+    return own[:1] + UNIT_PHOTOS.get(slug, {}).get("building", []) + own[1:]
 
 
 def src(slug, p, w, ext="webp"):
@@ -237,6 +245,7 @@ def icon(name):
         "instagram": '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
         "pin": '<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
         "ext": '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+        "camera": '<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7H7l1.6-2.2h6.8L17 7h2.5A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="12.8" r="3.6"/>',
         "grid": '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
     }
     return f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{paths[name]}</svg>'
@@ -547,6 +556,7 @@ def page(*, url, title, desc, body, graph=(), crumbs=None, og=None, preload=None
 <main id="main">
 {body}
 </main>
+{lightbox() if 'data-photos=' in body and 'class="lightbox"' not in body else ''}
 {footer()}
 {"" if url in ("/privacy/", "/404.html") else deal_dialog()}
 </body>
@@ -780,8 +790,77 @@ def deal_dialog():
 </dialog>"""
 
 
+# ---------------------------------------------------------------- unit photos
+LINE = re.compile(r"^(\d+)([A-Z]+)$")
+
+
+def unit_photo_set(p, u):
+    """The photos to show for one home: its own (scripts/unit_photos.py, from the Drive), or, in
+    a building whose units on the same letter share a layout (data/drive.json "lines"), those
+    of the nearest unit on its line, as representative photos. Furnished homes get a furnished
+    set where there is one. None when there are none."""
+    units = UNIT_PHOTOS.get(p["slug"], {}).get("units", {})
+    if not units:
+        return None
+    name = str(u["unit"]).upper()
+    want = "Furnished" if furnished_unit(u) else "Unfurnished"
+
+    def pick(sets):
+        return (next((s for s in sets if s["set"] == want), None) or next((s for s in sets if not s["set"]), None)
+                or sets[0])
+
+    of = name if name in units else None
+    if not of and p["slug"] in DRIVE_LINES and LINE.match(name):
+        floor, line = int(LINE.match(name)[1]), LINE.match(name)[2]
+        near = sorted((abs(int(m[1]) - floor), int(m[1]), k) for k in units if (m := LINE.match(k)) and m[2] == line)
+        of = near[0][2] if near else None
+    if not of:
+        return None
+    s = pick(units[of])
+    if not s["photos"]:
+        return None
+    own = of == name
+    kind = f" ({s['set'].lower()})" if s["set"] else ""
+    note = "" if own else f"Representative photos: unit {of}{kind}, the same layout"
+    return {"key": f"{p['slug']}/{name}", "own": own, "of": of, "photos": s["photos"],
+            "title": f"Unit {u['unit']} · {p['name']}", "note": note, "set": s["set"] if own else None}
+
+
+def photo_button(p, u, ups):
+    """The unit's number as a button that opens its photos, with how many and whose."""
+    n = len(ups["photos"])
+    what = f"{n} photo{'s' if n != 1 else ''}" if ups["own"] else "Similar unit"
+    label = (f"Photos of unit {u['unit']} at {p['name']} ({n})" if ups["own"]
+             else f"Representative photos for unit {u['unit']} at {p['name']}: unit {ups['of']}, the same layout ({n})")
+    return (f'<button class="u-pics" type="button" data-photos="{esc(ups["key"])}" aria-label="{esc(label)}">'
+            f'<span class="u-num">{esc(u["unit"])}</span><span class="u-cam">{icon("camera")}{what}</span></button>')
+
+
+def photos_blob(sets):
+    """The photo sets a page's buttons open, for main.js's lightbox."""
+    if not sets:
+        return ""
+    out = {}
+    for s in sets:
+        slug = s["key"].split("/")[0]
+        out[s["key"]] = {"title": s["title"], "note": s["note"], "photos": [
+            {"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "avif": srcset(slug, ph, "avif"),
+             "alt": ph["alt"], "w": ph["w"], "h": ph["h"]} for ph in s["photos"]]}
+    blob = json.dumps(out, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    return f'<script type="application/json" class="unit-photos-data">{blob}</script>'
+
+
+def lightbox(label="Photos"):
+    return f"""<div class="lightbox" role="dialog" aria-modal="true" aria-label="{esc(label)}" inert>
+  <div class="lb-top"><span class="lb-count"></span><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
+  <div class="lb-stage"><picture><source type="image/avif"><img alt=""></picture><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
+  <p class="lb-cap"></p>
+</div>"""
+
+
 def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
     trs = []
+    sets = []
     for p, u in rows:
         prop_cell = (f'<td class="u-prop"><a href="{prop_url(p)}">{esc(p["name"])}</a><small>{esc(p["city"])}</small></td>'
                      if show_prop else "")
@@ -790,8 +869,12 @@ def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
         if u.get("available"):   # on notice or being readied: Rent Manager's move-out date
             d = dt.date.fromisoformat(u["available"])
             note += f' · <span class="u-when">From {d.strftime("%b")} {d.day}</span>'
+        ups = unit_photo_set(p, u)
+        if ups:
+            sets.append(ups)
+        unit_cell = photo_button(p, u, ups) if ups else esc(u["unit"])
         trs.append(f"""<tr data-tags="{unit_tag(u)} {p['region']}">
-  {prop_cell}<td data-k="Unit">{esc(u['unit'])}</td><td>{unit_type(u)}{note}</td><td data-k="">{size}</td>
+  {prop_cell}<td data-k="Unit">{unit_cell}</td><td>{unit_type(u)}{note}</td><td data-k="">{size}</td>
   <td class="u-rent">{money(u['rent'])}<small>/mo</small>{'<span class="u-special">Special</span>' if u.get('special') else ''}</td>
   <td class="u-act"><a class="btn" href="{apply_url(p, u)}" data-apply data-property="{p['slug']}" data-unit="{esc(u['unit'])}" aria-label="Apply for unit {esc(u['unit'])} at {esc(p['name'])}">Apply {icon('arrow')}</a></td>
 </tr>""")
@@ -800,7 +883,7 @@ def units_table(rows, show_prop=True, group="units", contact="/contact-us/"):
 <caption>Availability and rents as listed on {fmt_date(UNITS_AS_OF)}. Our leasing team confirms the current rent and move-in date.</caption>
 <thead><tr>{head_prop}<th>Unit</th><th>Type</th><th>Size</th><th>Rent</th><th><span class="sr-only">Apply</span></th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
-<p class="lead" data-filter-empty="{group}" hidden>Nothing of that size is open right now. <a href="{contact}">Tell us what you are looking for</a> and we will be in touch.</p>"""
+<p class="lead" data-filter-empty="{group}" hidden>Nothing of that size is open right now. <a href="{contact}">Tell us what you are looking for</a> and we will be in touch.</p>{photos_blob(sets)}"""
 
 
 def unit_filters(rows, group="units"):
@@ -1253,11 +1336,7 @@ def property_page(p):
 </section>
 {mbar}
 {cta_block(contact=contact)}
-<div class="lightbox" role="dialog" aria-modal="true" aria-label="Photos of {esc(p['name'])}" inert>
-  <div class="lb-top"><span class="lb-count"></span><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
-  <div class="lb-stage"><picture><source type="image/avif"><img alt=""></picture><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
-  <p class="lb-cap"></p>
-</div>
+{lightbox(f"Photos of {p['name']}")}
 <script type="application/json" id="gallery-data">{gdata}</script>"""
 
     # Structured data: the building, its address, its photos, and what is open now.

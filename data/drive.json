@@ -1,0 +1,34 @@
+{
+ "_about": "Where the unit photos come from: the leasing team's Google Drive folder, read by scripts/unit_photos.py. 'folder' is its ID (shared as Anyone with the link can view). Unit folders at the top level are units of 'top_level'. A folder named after a building ('buildings' lists the names it may go by) holds that building's unit folders. Folders in 'building' are photos of the building itself. Folders in 'skip' are left out. 'lines' are buildings where units on the same letter share a layout (2D, 3D and 6D), so a unit without photos of its own shows those of the nearest one on its line, as representative photos.",
+ "folder": "1dz-D1K236dQCwMhFCbFseU9KD_nJqk1u",
+ "top_level": "181-st-paul-street",
+ "buildings": {
+  "181 St. Paul": "181-st-paul-street",
+  "181 St Paul": "181-st-paul-street",
+  "181 St. Paul Street": "181-st-paul-street",
+  "301 Central Avenue": "301-central-avenue",
+  "301 Central": "301-central-avenue",
+  "145 South Fitzhugh": "145-south-fitzhugh-street",
+  "145 South Fitzhugh Street": "145-south-fitzhugh-street",
+  "Water Street": "water-street",
+  "The Biltmore": "biltmore",
+  "Biltmore": "biltmore",
+  "2215 James Street": "2215-james-street",
+  "121 Park Drive": "121-park-drive",
+  "379 South Main": "379-south-main-street",
+  "379 South Main Street": "379-south-main-street",
+  "561 South Main": "561-south-main-street",
+  "561 South Main Street": "561-south-main-street",
+  "31 Genesee Street": "31-genesee-street"
+ },
+ "building": {
+  "181 St. Paul Exterior": "181-st-paul-street"
+ },
+ "skip": [
+  "179 commercial",
+  "50 Charlotte Square"
+ ],
+ "lines": [
+  "181-st-paul-street"
+ ]
+}

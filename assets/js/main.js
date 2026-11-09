@@ -141,12 +141,13 @@
   const region = new URLSearchParams(location.search).get('region');
   if (region) { const chip = $(`[data-filter-group="props"] .chip[data-value="${CSS.escape(region)}"]`); if (chip) chip.click(); }
 
-  /* ---- Lightbox for property galleries */
-  const gallery = $('[data-gallery]');
-  if (gallery) {
-    const data = JSON.parse($('#gallery-data').textContent);
-    const lb = $('.lightbox'), img = $('.lb-stage img', lb), avif = $('.lb-stage source', lb), cap = $('.lb-cap', lb), count = $('.lb-count', lb);
-    let at = 0, opener = null;
+  /* ---- Lightbox: a building's gallery, and each unit's photos (the unit's number in a units
+     table, data-photos; its sets are in .unit-photos-data, from the leasing team's Drive). */
+  const lb = $('.lightbox');
+  if (lb) {
+    const img = $('.lb-stage img', lb), avif = $('.lb-stage source', lb), cap = $('.lb-cap', lb), count = $('.lb-count', lb);
+    const galleryLabel = lb.getAttribute('aria-label');
+    let data = [], at = 0, opener = null, note = '';
     // Fetches a photo the way the stage would show it (AVIF where the browser takes it), so the
     // next swipe is instant. A detached <picture> loads like a detached new Image() does.
     const warm = q => {
@@ -157,14 +158,32 @@
       const p = data[at];
       avif.srcset = p.avif; img.src = p.src; img.srcset = p.srcset; img.alt = p.alt; img.width = p.w; img.height = p.h;
       img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
-      cap.textContent = p.alt; count.textContent = `${at + 1} / ${data.length}`;
+      cap.textContent = p.alt;
+      if (note) { const s = document.createElement('small'); s.textContent = note; cap.append(s); }   // "Representative photos: unit 6D…"
+      count.textContent = `${at + 1} / ${data.length}`;
       [at + 1, at - 1].forEach(n => warm(data[(n + data.length) % data.length]));
     };
-    const open = n => { opener = document.activeElement; at = n; render(); lb.classList.add('is-open'); lb.removeAttribute('inert'); document.body.classList.add('lb-open'); $('.lb-close', lb).focus(); };
+    const open = (list, n, label, why = '') => {
+      if (!list || !list.length) return;
+      data = list; note = why; opener = document.activeElement; at = n;
+      lb.setAttribute('aria-label', label || galleryLabel || 'Photos');
+      render(); lb.classList.add('is-open'); lb.removeAttribute('inert'); document.body.classList.add('lb-open'); $('.lb-close', lb).focus();
+    };
     const close = () => { lb.classList.remove('is-open'); lb.setAttribute('inert', ''); document.body.classList.remove('lb-open'); opener && opener.focus(); };
     const step = d => { at = (at + d + data.length) % data.length; render(); };
-    $$('button[data-index]', gallery).forEach(b => b.addEventListener('click', () => open(+b.dataset.index)));
-    $('[data-open-gallery]') && $('[data-open-gallery]').addEventListener('click', () => open(0));
+    const gallery = $('[data-gallery]');
+    if (gallery) {
+      const photos = JSON.parse($('#gallery-data').textContent);
+      $$('button[data-index]', gallery).forEach(b => b.addEventListener('click', () => open(photos, +b.dataset.index)));
+      $('[data-open-gallery]') && $('[data-open-gallery]').addEventListener('click', () => open(photos, 0));
+    }
+    const sets = {};
+    $$('.unit-photos-data').forEach(s => { try { Object.assign(sets, JSON.parse(s.textContent)); } catch { /* that table's buttons do nothing */ } });
+    document.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('[data-photos]');
+      const s = b && sets[b.dataset.photos];
+      if (s) open(s.photos, 0, s.title, s.note);
+    });
     $('.lb-close', lb).addEventListener('click', close);
     $('.lb-prev', lb).addEventListener('click', () => step(-1));
     $('.lb-next', lb).addEventListener('click', () => step(1));

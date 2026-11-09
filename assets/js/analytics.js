@@ -86,6 +86,10 @@
     if (!b) return undefined;
     if (b.closest('[data-map]')) return send('map_click');
     if (b.closest('[data-gallery]') || b.hasAttribute('data-open-gallery')) return send('gallery_open');
+    if (b.dataset.photos) {   // a unit's photos, from its number in a units table: "181-st-paul-street/6D"
+      const [property, unit] = b.dataset.photos.split('/');
+      return send('gallery_open', { unit: String(unit || '').slice(0, 20) }, property);
+    }
     return undefined;
   }, { capture: true });
 
