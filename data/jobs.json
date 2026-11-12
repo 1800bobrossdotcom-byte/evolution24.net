@@ -1,0 +1,28 @@
+{
+ "_about": "Open jobs, for /careers/ (scripts/build.py). Each is a section of the page and a JobPosting for Google's job search. 'posted' and 'until' are dates: past 'until', the job leaves the page at the next build. 'contact' is who to ask. With no jobs, the page says so and asks for a note anyway.",
+ "jobs": [
+  {
+   "slug": "maintenance-technician",
+   "title": "Maintenance Technician",
+   "type": "Full-time",
+   "schema_type": "FULL_TIME",
+   "where": "Rochester, NY, across our buildings",
+   "posted": "2026-11-12",
+   "until": "2027-01-31",
+   "summary": "Our first hire beyond the family: an experienced, hands-on maintenance person to keep our buildings and the homes in them in great shape.",
+   "do": [
+    "Work through residents' repair requests, from a dripping tap to a dead outlet, and keep them posted",
+    "Turn apartments between residents: repairs, paint, fixtures and a final check before move-in",
+    "Look after our buildings: common areas, systems, seasonal and preventive work",
+    "Spot problems early and say what a bigger job needs, and who should do it"
+   ],
+   "bring": [
+    "Solid experience in building, apartment or property maintenance",
+    "Good all-round skills: basic plumbing, electrical and carpentry, drywall and paint, appliances",
+    "Your own tools and reliable transport between buildings",
+    "Care for people's homes, and clear, friendly communication with residents"
+   ],
+   "contact": {"name": "Tatum Hartmann", "short": "Tatum", "phone": "585-748-5588", "email": "tatum@evolution24.net"}
+  }
+ ]
+}

@@ -582,7 +582,7 @@ def footer():
     </div>
     <div class="foot-legal">
       <span class="eho">{EHO} Equal Housing Opportunity</span>
-      <span><a href="{PORTAL}" rel="noopener">Resident portal</a> · <a href="/faqs/">FAQs</a> · <a href="/privacy/">Privacy &amp; fair housing</a></span>
+      <span><a href="{PORTAL}" rel="noopener">Resident portal</a> · <a href="/faqs/">FAQs</a> · <a href="/careers/">Careers{' (hiring)' if JOBS else ''}</a> · <a href="/privacy/">Privacy &amp; fair housing</a></span>
       <span>© {dt.date.today().year} {NAME}</span>
     </div>
   </div>
@@ -1533,6 +1533,78 @@ def about():
                 body=body, page_type="AboutPage", crumbs=[("Home", "/"), ("About us", "/about-us/")])
 
 
+# Open jobs (data/jobs.json): each a section of /careers/ and a JobPosting for Google's job search.
+JOBS = [j for j in json.loads((ROOT / "data" / "jobs.json").read_text())["jobs"]
+        if dt.date.fromisoformat(j["until"]) >= dt.date.today()]
+
+
+def careers():
+    posts, graph = "", []
+    for j in JOBS:
+        c = j["contact"]
+        tel = "+1" + re.sub(r"\D", "", c["phone"])
+        subject = f"{j['title']} at Evolution24"
+        mail = f"mailto:{c['email']}?subject={subject.replace(' ', '%20')}"
+        lis = lambda xs: "".join(f"<li>{esc(x)}</li>" for x in xs)
+        posts += f"""<section class="section job" id="{j['slug']}">
+  <div class="wrap">
+    <div class="job-head">
+      <div>
+        <p class="label" data-reveal>Now hiring · {esc(j['type'])}</p>
+        <h2 data-reveal class="i1">{esc(j['title'])}</h2>
+        <p class="lead" data-reveal>{esc(j['summary'])}</p>
+      </div>
+      <dl class="job-facts" data-reveal>
+        <div><dt>Hours</dt><dd>{esc(j['type'])}</dd></div>
+        <div><dt>Where</dt><dd>{esc(j['where'])}</dd></div>
+        <div><dt>Pay</dt><dd>Based on experience: ask {esc(c['short'])}</dd></div>
+        <div><dt>Posted</dt><dd>{fmt_date(j['posted'])}</dd></div>
+      </dl>
+    </div>
+    <div class="job-cols">
+      <div data-reveal><h3>What you will do</h3><ul class="job-list">{lis(j['do'])}</ul></div>
+      <div data-reveal class="i1"><h3>What you bring</h3><ul class="job-list">{lis(j['bring'])}</ul></div>
+    </div>
+    <div class="job-ask" data-reveal>
+      {icon('wrench')}
+      <div><h3>Interested? Talk to {esc(c['short'])}.</h3>
+        <p>{esc(c['name'])} has the details: the hours, the pay and what a week looks like. Call, or email a few lines about your experience.</p></div>
+      <div class="job-acts"><a class="btn btn--solid" href="tel:{tel}">{icon('phone')} Call {esc(c['phone'])}</a>
+        <a class="btn" href="{esc(mail)}">{icon('mail')} Email {esc(c['short'])}</a></div>
+    </div>
+  </div>
+</section>"""
+        graph.append({"@type": "JobPosting", "@id": f"{SITE}/careers/#{j['slug']}", "title": j["title"],
+                      "description": f"<p>{j['summary']}</p><p>What you will do:</p><ul>{lis(j['do'])}</ul><p>What you bring:</p><ul>{lis(j['bring'])}</ul><p>Contact {c['name']}, {c['phone']}, {c['email']}.</p>",
+                      "datePosted": j["posted"], "validThrough": j["until"] + "T23:59:59-05:00", "employmentType": j["schema_type"],
+                      "hiringOrganization": {"@id": f"{SITE}/#organization"}, "directApply": False,
+                      "jobLocation": {"@type": "Place", "address": {"@type": "PostalAddress", "streetAddress": OFFICE["street"],
+                                      "addressLocality": OFFICE["city"], "addressRegion": OFFICE["region"], "postalCode": OFFICE["zip"], "addressCountry": "US"}}})
+    if not posts:
+        posts = f"""<section class="section"><div class="wrap"><h2 data-reveal>No openings <em>right now.</em></h2>
+<p class="lead" data-reveal>We are a small team and we hire rarely, but we like to hear from good people. Call <a href="tel:{PHONE_TEL}">{PHONE}</a> or email {emails_html()}.</p></div></section>"""
+    n = len(JOBS)
+    lead = ("A small, family-owned team looking after apartments across Rochester, Syracuse and Geneva. "
+            + (f"{'One role is' if n == 1 else f'{n} roles are'} open now." if n else "Nothing is open right now."))
+    body = f"""{page_hero('Careers', 'Work with|*us.*', lead, [('Home', '/'), ('Careers', '/careers/')])}
+{posts}
+<section class="section ink">
+  <div class="wrap">
+    <div class="section-head"><div><p class="label" data-reveal>Why here</p><h2 data-reveal class="i1">Small team, <em>real work.</em></h2></div></div>
+    <div class="tiles">
+      <div class="tile" data-reveal>{icon('key')}<h3>Buildings with character</h3><p>Renovated lofts, classic East End buildings and Victorian houses, not cookie-cutter units.</p></div>
+      <div class="tile i1" data-reveal>{icon('phone')}<h3>The owners, directly</h3><p>You work with the family who own the buildings, not layers of management.</p></div>
+      <div class="tile i2" data-reveal>{icon('wrench')}<h3>Work that shows</h3><p>Every repair and every turned apartment is a home someone moves into.</p></div>
+    </div>
+  </div>
+</section>
+<section class="section section--tight"><div class="wrap"><p class="eho-line">{EHO} {NAME} is an equal opportunity employer.</p></div></section>"""
+    title = f"Now Hiring: {JOBS[0]['title']}, Rochester NY | Evolution24" if n == 1 else "Careers | Evolution24 Properties"
+    desc = (f"Now hiring: {', '.join(j['title'] + ' (' + j['type'].lower() + ')' for j in JOBS)} with Evolution24 Properties, "
+            "a family-owned property manager in Rochester, NY." if n else "Careers at Evolution24 Properties, a family-owned property manager in Rochester, Syracuse and Geneva, NY.")
+    return page(url="/careers/", title=title, desc=fit(desc), body=body, graph=graph, crumbs=[("Home", "/"), ("Careers", "/careers/")])
+
+
 def faqs():
     items = "".join(f'<details data-reveal><summary>{esc(q)}<span class="pm" aria-hidden="true"></span></summary><div class="ans"><p>{a}</p></div></details>' for q, a, _ in FAQS)
     graph = [{"@type": "FAQPage", "@id": f"{SITE}/faqs/#faq", "mainEntity": [
@@ -1789,7 +1861,7 @@ def search_page(key, slug, words, home, building):
                 og=og_for(f"city-{key}", f"{words} in {name}, New York"), preload=None)
 
 
-REDIRECTS = [("/careers/", "/about-us/"), ("/home/", "/"), ("/feed/", "/"), ("/comments/feed/", "/"),
+REDIRECTS = [("/home/", "/"), ("/feed/", "/"), ("/comments/feed/", "/"),
              ("/apartments/", "/properties/"), ("/about/", "/about-us/"), ("/contact/", "/contact-us/")]
 
 
@@ -2027,6 +2099,7 @@ def main():
             write(f"{search_url(key, slug).strip('/')}/index.html", search_page(key, slug, words, home_, building))
     write("about-us/index.html", about())
     write("faqs/index.html", faqs())
+    write("careers/index.html", careers())
     write("contact-us/index.html", contact())
     write("privacy/index.html", privacy())
     write("404.html", not_found())
@@ -2042,7 +2115,7 @@ def main():
             ("/properties/", [])] + [(city_url(k), []) for k in REGIONS] + [(search_url(k, s[0]), []) for k in REGIONS for s in SEARCHES.get(k, [])]
     for p in PROPS:
         urls.append((prop_url(p), [(src(p["slug"], ph, ph["widths"][-1]), ph["alt"]) for ph in gallery_photos(p["slug"])]))
-    urls += [("/about-us/", []), ("/faqs/", []), ("/contact-us/", []), ("/privacy/", [])]
+    urls += [("/about-us/", []), ("/faqs/", []), ("/contact-us/", []), ("/careers/", []), ("/privacy/", [])]
     write("sitemap.xml", sitemap(urls))
     # The old /property-detail/ and /unit-detail/ URLs stay crawlable: search engines must see
     # their redirects to move the old rankings onto the new pages.

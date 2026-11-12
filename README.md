@@ -41,6 +41,7 @@ Never hand-edit the generated `*.html`, `sitemap.xml`, `llms.txt`, `speculation-
 | `/properties/<slug>/` | One per building: photos with lightbox, description, amenities, available units with Apply links, map, nearby |
 | `/apartments/rochester-ny/`, `/apartments/syracuse-ny/`, `/apartments/geneva-ny/` | One per city: its buildings on the map (as on `/properties/`), every unit open there, each address, and answers to the usual questions. These are the pages meant to rank for "apartments in Rochester, NY" |
 | `/about-us/`, `/faqs/`, `/contact-us/` | Same URLs as the old site, so no rankings are lost |
+| `/careers/` | Open jobs, from `data/jobs.json`: each a section with what the job is, who to ask (call or email), and a JobPosting for Google's job search; past its `until` date a job leaves the page at the next build. The footer says *Careers (hiring)* while one is open |
 | `/privacy/` | Fair housing, privacy and accessibility statement |
 | `404.html` | Not found |
 
@@ -51,7 +52,6 @@ The old URLs that are going away are redirected:
 | --- | --- | --- |
 | `/property-detail/?pid=8` | `/properties/water-street/` | 301 from `vercel.json`, matched on the query string; `assets/js/legacy.js` elsewhere |
 | `/unit-detail/?uid=62` | `/properties/water-street/#units` | same, one per available unit |
-| `/careers/` | `/about-us/` | 301 from `vercel.json` (or `_redirects`), plus a stub page |
 | `www.evolution24.net/*` | `evolution24.net/*` | 301 from `vercel.json` (or `_redirects`) |
 
 On Vercel the query-string redirects are real 301s, so the rankings of the old building
@@ -888,7 +888,7 @@ python3 tools/ads/deals.py --only special-biltmore,half-off-water-street --no-vi
 
 ```
 index.html, properties/, apartments/, about-us/, faqs/, contact-us/, privacy/, 404.html   generated pages
-property-detail/, unit-detail/, careers/        redirect stubs for old URLs
+property-detail/, unit-detail/                  redirect stubs for old URLs
 assets/css/main.css      design system        assets/js/main.js   behaviour
 assets/js/legacy.js      old-URL redirects    assets/fonts/       self-hosted, OFL
 assets/vendor/leaflet/   the Properties map's library (BSD-2), loaded only there
