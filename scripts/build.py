@@ -15,6 +15,7 @@ import html
 import json
 import re
 import shutil
+import urllib.parse
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -246,9 +247,48 @@ def icon(name):
         "pin": '<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
         "ext": '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
         "camera": '<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7H7l1.6-2.2h6.8L17 7h2.5A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="12.8" r="3.6"/>',
+        "link": '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+        "chat": '<path d="M4 5h16v11H9.5L5 20v-4H4z"/>',
+        "share": '<path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/>',
+        "check": '<path d="M5 12.5l4.5 4.5L19 7"/>',
         "grid": '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
     }
     return f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{paths[name]}</svg>'
+
+
+# Brand marks for the share buttons: filled, not stroked like the icons above.
+BRANDS = {
+    "facebook": '<path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.9v3h2.6V21z"/>',
+    "linkedin": '<path d="M5 9h3v11H5zM6.5 4a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zM10 9h2.9v1.5c.4-.8 1.4-1.7 3-1.7 3.1 0 3.6 2 3.6 4.7V20h-3v-5.6c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9V20H10z"/>',
+    "x": '<path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L2 3h6.4l4.4 5.8zm-1.1 16.2h1.7L7.4 4.7H5.6z"/>',
+}
+
+
+def brand(name):
+    return f'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{BRANDS[name]}</svg>'
+
+
+def share_bar(url, title, text, heading="Know someone good? <em>Pass it on.</em>"):
+    """Share buttons for one page: email, text, Facebook, LinkedIn, X, copy link, and the
+    phone's own share sheet where there is one (main.js shows it). Each network's link
+    carries its own utm_source, so the visits it brings show up by name in the admin."""
+    q = urllib.parse.quote
+    tag = lambda via: f"{url}?utm_source={via}&utm_medium=share&utm_campaign=careers"
+    nets = [
+        ("email", "Email", icon("mail"), f"mailto:?subject={q(title)}&body={q(text + chr(10) + chr(10) + tag('email'))}"),
+        ("sms", "Text", icon("chat"), f"sms:?&body={q(text + ' ' + tag('sms'))}"),
+        ("facebook", "Facebook", brand("facebook"), f"https://www.facebook.com/sharer/sharer.php?u={q(tag('facebook'), safe='')}"),
+        ("linkedin", "LinkedIn", brand("linkedin"), f"https://www.linkedin.com/sharing/share-offsite/?url={q(tag('linkedin'), safe='')}"),
+        ("x", "X", brand("x"), f"https://twitter.com/intent/tweet?text={q(text)}&url={q(tag('x'), safe='')}"),
+    ]
+    away = ' target="_blank" rel="noopener"'
+    links = "".join(f'<a class="sh-btn" href="{esc(h)}" data-via="{v}"{"" if v in ("email", "sms") else away}>{ic}<span>{n}</span></a>'
+                    for v, n, ic, h in nets)
+    return f"""<div class="job-share" data-share data-url="{esc(tag('native'))}" data-title="{esc(title)}" data-text="{esc(text)}" data-reveal>
+      <p class="sh-h">{heading}</p>
+      <div class="sh-row"><button type="button" class="sh-btn sh-native" data-via="native" hidden>{icon('share')}<span>Share</span></button>{links}<button type="button" class="sh-btn sh-copy" data-via="copy" data-copy="{esc(tag('link'))}">{icon('link')}<span>Copy link</span></button></div>
+      <p class="sh-said" role="status" aria-live="polite"></p>
+    </div>"""
 
 
 EHO = ('<svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 3 2 13h3v15h22V13h3zM9 16h14v3H9zm0 6h14v3H9z" fill-rule="evenodd"/></svg>')
@@ -457,6 +497,12 @@ def og_jobs():
         lead = next(p for p in PROPS if p["region"] == key)
         jobs.append({"name": f"city-{key}", "photo": best(*r.get("photo", (lead["slug"], lead["cover"]))), "kicker": "Evolution24 Properties",
                      "title": f"Apartments in <em>{esc(r['name'])}</em>", "sub": esc(r["blurb"])})
+    if JOBS:   # the card a shared Careers link shows
+        j = JOBS[0]
+        first, _, last = j["title"].rpartition(" ")
+        jobs.append({"name": "careers", "photo": best("181-st-paul-street", "03-studio-brick"), "kicker": "Careers · Rochester, New York",
+                     "title": f"{esc(first)} <em>{esc(last)}.</em>" if first else f"<em>{esc(last)}.</em>",
+                     "sub": f"{esc(j['type'])} · join a small, family-owned team", "tag": "Now hiring"})
     return jobs
 
 
@@ -1572,6 +1618,7 @@ def careers():
       <div class="job-acts"><a class="btn btn--solid" href="tel:{tel}">{icon('phone')} Call {esc(c['phone'])}</a>
         <a class="btn" href="{esc(mail)}">{icon('mail')} Email {esc(c['short'])}</a></div>
     </div>
+    {share_bar(f"{SITE}/careers/", f"Now hiring: {j['title']} at Evolution24", f"Evolution24 Properties is hiring a {j['type'].lower()} {j['title'].lower()} in Rochester, NY. Thought of you:")}
   </div>
 </section>"""
         graph.append({"@type": "JobPosting", "@id": f"{SITE}/careers/#{j['slug']}", "title": j["title"],
@@ -1602,7 +1649,8 @@ def careers():
     title = f"Now Hiring: {JOBS[0]['title']}, Rochester NY | Evolution24" if n == 1 else "Careers | Evolution24 Properties"
     desc = (f"Now hiring: {', '.join(j['title'] + ' (' + j['type'].lower() + ')' for j in JOBS)} with Evolution24 Properties, "
             "a family-owned property manager in Rochester, NY." if n else "Careers at Evolution24 Properties, a family-owned property manager in Rochester, Syracuse and Geneva, NY.")
-    return page(url="/careers/", title=title, desc=fit(desc), body=body, graph=graph, crumbs=[("Home", "/"), ("Careers", "/careers/")])
+    return page(url="/careers/", title=title, desc=fit(desc), body=body, graph=graph, crumbs=[("Home", "/"), ("Careers", "/careers/")],
+                og=og_for("careers", f"Now hiring at {NAME}" if n else f"Careers at {NAME}"))
 
 
 def faqs():

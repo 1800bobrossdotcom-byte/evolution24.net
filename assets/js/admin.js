@@ -689,7 +689,7 @@
     map_click: 'Opened a map', gallery_open: 'Opened a photo',
     outbound: 'Followed a link off the site', form_start: 'Started the enquiry form',
     deal_open: 'Saw the leasing special', deal_click: 'Clicked through the leasing special',
-    filter: 'Filtered the homes',
+    filter: 'Filtered the homes', share: 'Shared a page',
   };
 
   const TOPIC = {

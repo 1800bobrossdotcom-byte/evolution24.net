@@ -589,6 +589,35 @@
     }
   }
 
+  /* ---- Share bars (the Careers page): the phone's own share sheet where there is one,
+     and Copy link; the email, text and network links are plain links. */
+  $$('[data-share]').forEach((bar) => {
+    const said = $('.sh-said', bar);
+    const say = (t) => { said.textContent = t; clearTimeout(bar.saidT); bar.saidT = setTimeout(() => { said.textContent = ''; }, 4000); };
+    const native = $('.sh-native', bar);
+    if (native && navigator.share) {
+      native.hidden = false;
+      native.addEventListener('click', () => {
+        navigator.share({ title: bar.dataset.title, text: bar.dataset.text, url: bar.dataset.url }).catch(() => {});
+      });
+    }
+    const copy = $('.sh-copy', bar);
+    if (copy) copy.addEventListener('click', async () => {
+      const url = copy.dataset.copy;
+      try { await navigator.clipboard.writeText(url); } catch {
+        const t = document.createElement('textarea');
+        t.value = url; t.setAttribute('readonly', ''); t.className = 'sr-only';
+        document.body.append(t); t.select();
+        try { document.execCommand('copy'); } catch { /* the message below shows either way */ }
+        t.remove();
+      }
+      copy.classList.add('is-done');
+      $('span', copy).textContent = 'Copied';
+      say('Link copied. Paste it anywhere.');
+      setTimeout(() => { copy.classList.remove('is-done'); $('span', copy).textContent = 'Copy link'; }, 2400);
+    });
+  });
+
   /* ---- Apply, on the building's own page: chooses the home and "Applying" in its form
      and goes there, without loading the page again. From anywhere else the link loads
      the building's page, whose form reads the same choices from the address. */

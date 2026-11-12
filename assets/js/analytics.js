@@ -64,6 +64,8 @@
   /* ---- Named events, delegated from the document: nothing else needs to know
      this file exists. */
   document.addEventListener('click', (e) => {
+    const shared = e.target.closest && e.target.closest('[data-share] [data-via]');
+    if (shared) return send('share', { via: shared.dataset.via });   // before mailto: a shared email is not an email to us
     const a = e.target.closest && e.target.closest('a');
     if (a) {
       const href = a.getAttribute('href') || '';
