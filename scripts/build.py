@@ -389,7 +389,7 @@ CSP_BASE = ("default-src 'self'; base-uri 'none'; object-src 'none'; form-action
             "upgrade-insecure-requests")
 CSP_HEADER = CSP_BASE + "; frame-ancestors 'none'"
 
-NAV = [("Properties", "/properties/"), ("Available now", "/properties/#available"), ("About", "/about-us/"), ("FAQs", "/faqs/"), ("Contact", "/contact-us/")]
+NAV = [("Properties", "/properties/"), ("Available now", "/properties/#available"), ("About", "/about-us/"), ("FAQs", "/faqs/"), ("Careers", "/careers/"), ("Contact", "/contact-us/")]
 
 
 def asset_version(path):
