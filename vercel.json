@@ -390,18 +390,6 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "91"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "128"
     }
    ],
@@ -430,18 +418,6 @@
     }
    ],
    "destination": "/properties/biltmore/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "184"
-    }
-   ],
-   "destination": "/properties/181-st-paul-street/#units",
    "permanent": true
   },
   {

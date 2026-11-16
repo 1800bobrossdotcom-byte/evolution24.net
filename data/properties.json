@@ -1,6 +1,6 @@
 {
  "_about": "Facts about each building. Everything here was read off evolution24.net and its Rent Manager listings on 22 September 2026 unless a field says otherwise. 'desc_source' is 'site' when the words are the old site's own, 'written' when the old site had no description and one was written from the listing facts and photos only. Review every 'written' one.",
- "units_as_of": "2026-11-11",
+ "units_as_of": "2026-11-16",
  "properties": [
   {
    "slug": "301-central-avenue",
@@ -192,14 +192,6 @@
      "baths": 1,
      "sqft": 734,
      "rent": 1595
-    },
-    {
-     "uid": 91,
-     "unit": "602RV",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 619,
-     "rent": 1400
     }
    ],
    "geo": [
@@ -282,16 +274,7 @@
     "Tall windows",
     "Exposed brick"
    ],
-   "units": [
-    {
-     "uid": 184,
-     "unit": "6D",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 1140,
-     "rent": 1500
-    }
-   ],
+   "units": [],
    "geo": [
     43.16032,
     -77.61054

@@ -16,7 +16,7 @@
      "bedrooms": "1"
     },
     "4": {
-     "label": "Unit 4 · 2 bed · $1,795/mo",
+     "label": "Unit 4 · 2 bed · $1,895/mo",
      "bedrooms": "2"
     },
     "6": {
@@ -63,10 +63,6 @@
    "region": "rochester",
    "pid": 8,
    "units": {
-    "91": {
-     "label": "Unit 602RV · 1 bed · $1,495/mo",
-     "bedrooms": "1"
-    },
     "82": {
      "label": "Unit 405RV · 1 bed · $1,595/mo",
      "bedrooms": "1"
@@ -110,12 +106,7 @@
    "city": "Rochester",
    "region": "rochester",
    "pid": 11,
-   "units": {
-    "184": {
-     "label": "Unit 6D · 1 bed · $1,500/mo",
-     "bedrooms": "1"
-    }
-   }
+   "units": {}
   },
   "2215-james-street": {
    "name": "2215 James Street",
@@ -200,6 +191,6 @@
  "site": "https://evolution24.net",
  "office_phone": "585-759-7117",
  "office_address": "176 N Water Street, Rochester, NY 14604",
- "units_as_of": "2026-11-11",
- "open_units": 21
+ "units_as_of": "2026-11-16",
+ "open_units": 19
 }
