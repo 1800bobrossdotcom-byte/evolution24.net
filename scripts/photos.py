@@ -57,6 +57,8 @@ def main(force=False):
     (ROOT / "data" / "photos.json").write_text(json.dumps(data, indent=1) + "\n")
     size = lambda ext: sum(f.stat().st_size for f in OUT.rglob(f"*.{ext}")) / 1e6
     print(f"{sum(len(v) for v in data.values())} photos, {size('avif'):.1f} MB of AVIF, {size('webp'):.1f} MB of WebP")
+    import downloads  # noqa: PLC0415 - the full-size JPG each photo's Download button gives
+    downloads.main(force)
 
 
 if __name__ == "__main__":

@@ -179,6 +179,8 @@ def build():
     print(f"{count} photos for {sum(len(b['units']) for b in data.values())} units; {made} image files written")
     for s in skipped:
         print("left out:", s)
+    import downloads  # noqa: PLC0415 - the full-size JPG each photo's Download button gives
+    downloads.main()
 
 
 if __name__ == "__main__":

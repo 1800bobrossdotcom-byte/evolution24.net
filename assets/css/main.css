@@ -620,6 +620,7 @@ body.lb-open { overflow: hidden; }
 .lightbox .lb-apply { --b: var(--tan); background: var(--tan); border-color: var(--tan); color: var(--ink); min-height: 46px; }
 .lightbox .lb-apply::before { background: var(--cream); }
 .lightbox .lb-apply:hover { color: var(--ink); }
+.lightbox .lb-apply[hidden], .lightbox .lb-dl[hidden] { display: none; }
 .lb-cap { padding: 12px var(--gutter) 10px; min-height: 0; }
 .lb-cap small { display: block; margin-top: 4px; font-size: 13px; color: var(--tan); }
 .lb-rooms { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 var(--gutter) 12px; }

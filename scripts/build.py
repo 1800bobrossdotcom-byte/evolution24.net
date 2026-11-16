@@ -236,6 +236,7 @@ def icon(name):
         "arrow": '<path d="M4 12h15M13 6l6 6-6 6"/>',
         "arrow-l": '<path d="M20 12H5M11 6l-6 6 6 6"/>',
         "close": '<path d="M6 6l12 12M18 6L6 18"/>',
+        "download": '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
         "phone": '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
         "key": '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/>',
         "wrench": '<path d="M14.7 6.3a4 4 0 0 0 5 5L22 14l-8 8-2.3-2.3a4 4 0 0 0-5-5L2 10l8-8z" transform="scale(.9) translate(1 1)"/>',
@@ -889,7 +890,7 @@ def room_of(alt):
 def lb_photo(slug, ph):
     """One photo as the lightbox shows it: every size, its words, and its room."""
     return {"src": src(slug, ph, ph["widths"][-1]), "srcset": srcset(slug, ph), "avif": srcset(slug, ph, "avif"),
-            "alt": ph["alt"], "w": ph["w"], "h": ph["h"], "room": room_of(ph["alt"])}
+            "jpg": f"/assets/img/{slug}/{slug}-{ph['id']}.jpg", "alt": ph["alt"], "w": ph["w"], "h": ph["h"], "room": room_of(ph["alt"])}
 
 
 def photo_button(p, u, ups):
@@ -925,7 +926,7 @@ def lightbox(label="Photos"):
   <div class="lb-top">
     <span class="lb-count"></span>
     <div class="lb-info" hidden><p class="lb-title"></p><p class="lb-facts"></p></div>
-    <div class="lb-acts"><a class="btn btn--solid lb-apply" hidden></a><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
+    <div class="lb-acts"><a class="btn btn--solid lb-apply" hidden></a><a class="lb-btn lb-dl" download aria-label="Download this photo (JPG)" title="Download (JPG)">{icon('download')}</a><button class="lb-btn lb-close" type="button" aria-label="Close photos">{icon('close')}</button></div>
   </div>
   <div class="lb-stage"><picture><source type="image/avif"><img alt=""></picture><button class="lb-btn lb-prev" type="button" aria-label="Previous photo">{icon('arrow-l')}</button><button class="lb-btn lb-next" type="button" aria-label="Next photo">{icon('arrow')}</button></div>
   <p class="lb-cap"></p>

@@ -150,7 +150,7 @@
   if (lb) {
     const img = $('.lb-stage img', lb), avif = $('.lb-stage source', lb), cap = $('.lb-cap', lb), count = $('.lb-count', lb);
     const info = $('.lb-info', lb), title = $('.lb-title', lb), facts = $('.lb-facts', lb), apply = $('.lb-apply', lb);
-    const rooms = $('.lb-rooms', lb), strip = $('.lb-strip', lb);
+    const rooms = $('.lb-rooms', lb), strip = $('.lb-strip', lb), dl = $('.lb-dl', lb);
     const galleryLabel = lb.getAttribute('aria-label');
     let data = [], at = 0, opener = null, note = '', touring = false;
     const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
@@ -168,6 +168,8 @@
       const p = data[at];
       avif.srcset = p.avif; img.src = p.src; img.srcset = p.srcset; img.alt = p.alt; img.width = p.w; img.height = p.h;
       img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
+      // The full-size JPG, named for the building and photo: AVIF and WebP open in too few apps.
+      if (dl) { dl.hidden = !p.jpg; if (p.jpg) { dl.href = p.jpg; dl.download = p.jpg.split('/').pop(); } }
       cap.textContent = p.alt;
       if (note && !touring) cap.append(el('small', '', note));    // "Representative photos: unit 2D…"
       count.textContent = `${at + 1} / ${data.length}`;
