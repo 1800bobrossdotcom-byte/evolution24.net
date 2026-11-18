@@ -12,7 +12,8 @@
   "5E move out": "IMG_5802.JPG",
   "6E Furnished": "IMG_4564.HEIC",
   "6E Unfurnished": "IMG_3283.jpeg",
-  "6F Move out": "IMG_7553.JPG"
+  "6F Move out": "IMG_7553.JPG",
+  "Water Street/405RV": "01 Kitchen and living room.jpg"
  },
  "3D/": {
   "skip": true,
@@ -347,5 +348,20 @@
  },
  "181 St. Paul Exterior/PTSC_0014.JPG": {
   "alt": "Red-brick front of 181 St. Paul, with trees along St. Paul Street, downtown Rochester"
+ },
+ "Water Street/405RV/01 Kitchen and living room.jpg": {
+  "alt": "Kitchen open to the living room, with tall windows on two walls, unit 405RV, Water Street"
+ },
+ "Water Street/405RV/02 Living room.jpg": {
+  "alt": "Living room with a row of tall windows and a high ceiling, unit 405RV, Water Street"
+ },
+ "Water Street/405RV/03 Bedroom.jpg": {
+  "alt": "Bedroom with a high ceiling, an original column and a closet, unit 405RV, Water Street"
+ },
+ "Water Street/405RV/04 Bathroom.jpg": {
+  "alt": "Bathroom with a tub and shower and a wood vanity, unit 405RV, Water Street"
+ },
+ "Water Street/405RV/05 Entry.jpg": {
+  "alt": "Entry hall, looking through to the kitchen and windows, unit 405RV, Water Street"
  }
 }
