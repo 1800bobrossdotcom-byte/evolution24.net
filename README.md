@@ -890,6 +890,22 @@ python3 tools/ads/deals.py                  # all, into tools/ads/out/deals/
 python3 tools/ads/deals.py --only special-biltmore,half-off-water-street --no-video
 ```
 
+**A series for one building.** `tools/ads/series/series.py` makes six 15-second motion-graphic
+video ads for a building (written for 145 South Fitzhugh), each a different idea: *Now renting*
+(the stamp and the rent counting up), *Room by room* (a fast tour on the beat, every room named),
+*Studios* and *1-bedrooms* (each kind's rent, size and how many are open), *The details* (a
+checklist that ticks itself off) and *Where it is* (a pin, the address typing itself). Each comes
+in the feed and Stories shapes, with a still, `ads.md` (the words to post and each ad's own link)
+and `overview.jpg`. The soundtracks are made in `music.py` from sine waves and noise, a different
+key and groove for each ad with swooshes, ticks and an end-card hit on the same beat as the
+pictures, so they belong to us. `series.js` draws any moment of an ad, and the Instagram story
+kit's `frames.cjs` renders it (about a minute per video).
+
+```bash
+python3 tools/ads/series/series.py                       # all six, into tools/ads/out/series/<slug>/
+python3 tools/ads/series/series.py --only studios,details --stills-only   # check the layout first
+```
+
 ## Structure
 
 ```

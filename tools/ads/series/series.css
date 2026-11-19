@@ -1,0 +1,75 @@
+/*FONTS*/
+:root{--ink:#151613;--ink2:#1f201c;--paper:#f4f1ea;--tan:#debb92;--cream:#eeeadf;--accent:#8a6232;--muted:#5c5d55}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:var(--W);height:var(--H);overflow:hidden;background:var(--ink)}
+#stage{position:absolute;inset:0;overflow:hidden;color:var(--cream);font-family:Manrope}
+.bg{position:absolute;inset:0}
+.bg.ink{background:var(--ink)} .bg.paper{background:var(--paper)}
+.shot{position:absolute;overflow:hidden;visibility:hidden;will-change:transform,clip-path}
+.shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%}
+.shot.round{border-radius:28px}
+.shade{position:absolute;inset:0;pointer-events:none}
+.shade.full{background:linear-gradient(180deg,rgba(21,22,19,.7),rgba(21,22,19,0) 22%,rgba(21,22,19,0) 38%,rgba(21,22,19,.88) 72%,rgba(21,22,19,.96))}
+.shade.heavy{background:linear-gradient(90deg,rgba(21,22,19,.82),rgba(21,22,19,.55) 55%,rgba(21,22,19,.15)),linear-gradient(180deg,rgba(21,22,19,.55),rgba(21,22,19,0) 20%,rgba(21,22,19,0) 75%,rgba(21,22,19,.7))}
+.shade.top{background:linear-gradient(180deg,rgba(21,22,19,.7),rgba(21,22,19,0) 22%)}
+.item{position:absolute;visibility:hidden;transform-origin:0 50%;will-change:transform,opacity}
+.item.center{transform-origin:50% 50%}
+.ln{overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.ln>span{display:inline-block;will-change:transform}
+.w{display:inline-block;will-change:transform,opacity}
+em{font-style:italic;color:var(--tan)}
+.on-paper em{color:var(--accent)}
+.kicker{font:800 24px/1 Manrope;letter-spacing:.28em;text-transform:uppercase;color:var(--tan)}
+.on-paper .kicker,.on-paper.kicker{color:var(--accent)}
+.huge{font:400 150px/.92 'Instrument Serif';letter-spacing:-.015em}
+.big{font:400 112px/.95 'Instrument Serif';letter-spacing:-.01em}
+.mid{font:400 76px/1 'Instrument Serif'}
+.facts{font:500 36px/1.3 Manrope;color:rgba(238,234,223,.92)}
+.on-paper .facts,.on-paper.facts{color:var(--ink)}
+.on-paper{color:var(--ink)}
+.small{font:600 19px/1.3 Manrope;letter-spacing:.05em;color:rgba(238,234,223,.65)}
+.price{display:flex;align-items:baseline;gap:14px;white-space:nowrap}
+.price .pre{font:800 24px/1 Manrope;letter-spacing:.24em;text-transform:uppercase;color:var(--tan)}
+.price .num{font:400 128px/1 'Instrument Serif'}
+.price small{font:600 34px Manrope;color:rgba(238,234,223,.75)}
+.on-paper .price .pre,.on-paper.price .pre{color:var(--accent)} .on-paper .price small,.on-paper.price small{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:14px;padding:16px 26px;border-radius:999px;background:var(--tan);color:var(--ink);
+  font:800 26px/1 Manrope;letter-spacing:.2em;text-transform:uppercase}
+.pill i{font-style:normal;opacity:.55}
+.rule{height:3px;background:var(--tan);transform-origin:0 50%}
+.typed{font:700 34px/1 Manrope;letter-spacing:.04em}
+.caret{display:inline-block;width:3px;height:1em;margin-left:4px;background:var(--tan);vertical-align:-.12em}
+.tick{display:flex;align-items:center;gap:26px}
+.tick .box{flex:none;width:64px;height:64px;border-radius:14px;background:var(--tan);display:grid;place-items:center}
+.tick svg{width:44px;height:44px}
+.tick .mark{fill:none;stroke:var(--ink);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40}
+.tick .ttx{font:400 64px/1 'Instrument Serif'}
+.stamp{width:250px;height:250px}
+.stamp .disc{fill:var(--tan)} .stamp .rul{fill:none;stroke:var(--ink);stroke-width:2;opacity:.35}
+.stamp .ringt{font:800 25px Manrope;letter-spacing:.2em;text-transform:uppercase;fill:var(--ink)}
+.stamp .count{font:400 112px 'Instrument Serif';text-anchor:middle;fill:var(--ink)}
+.stamp .unit{font:800 18px Manrope;letter-spacing:.28em;text-transform:uppercase;text-anchor:middle;fill:var(--ink)}
+.pin svg{overflow:visible}
+.pin .ring{fill:none;stroke:var(--tan);stroke-width:3}
+.pin .pinhead path{fill:var(--tan)} .pin .pinhead circle{fill:var(--ink)}
+.barw{display:flex;flex-direction:column;gap:14px}
+.bar{position:relative;height:6px;border-radius:3px;background:rgba(238,234,223,.22);overflow:hidden}
+.bar .fill{position:absolute;inset:0;background:var(--tan);transform-origin:0 50%}
+.segs{display:flex;justify-content:space-between;font:800 19px/1 Manrope;letter-spacing:.2em;text-transform:uppercase}
+.seg{color:rgba(238,234,223,.4);transition:none} .seg.on{color:var(--cream)}
+#chrome{position:absolute;inset:0;pointer-events:none}
+.lockup{position:absolute;width:300px;filter:drop-shadow(0 1px 10px rgba(21,22,19,.45))}
+.eho{position:absolute;display:flex;align-items:center;gap:10px;font:600 18px/1.3 Manrope;letter-spacing:.05em;color:rgba(238,234,223,.7)}
+.eho svg{width:22px;height:22px;flex:none}
+.on-paper-chrome .eho{color:var(--muted)}
+#end{position:absolute;inset:0;background:var(--paper);color:var(--ink);visibility:hidden;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:0 80px}
+#endmark{width:150px;height:auto}
+.e-lab{margin-top:40px;font:800 22px/1 Manrope;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
+.e-big{margin-top:24px;font:400 124px/.96 'Instrument Serif';letter-spacing:-.01em}
+.e-big em{color:var(--accent)}
+.e-rule{margin:40px auto 0;width:120px;height:3px;background:var(--tan)}
+.e-phone{margin-top:36px;font:400 76px/1 'Instrument Serif'}
+.e-url{margin-top:16px;font:700 28px/1 Manrope;letter-spacing:.06em;color:var(--muted)}
+.e-small{margin-top:44px;display:flex;align-items:center;justify-content:center;gap:10px;font:600 19px/1.35 Manrope;letter-spacing:.05em;color:var(--muted)}
+.e-small svg{width:22px;height:22px;flex:none}
