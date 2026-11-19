@@ -604,6 +604,21 @@
  ],
  "145-south-fitzhugh-street": [
   {
+   "id": "15-studio-bedroom",
+   "alt": "Studio sleeping area with ceiling fan",
+   "w": 1284,
+   "h": 1502,
+   "thumb": false,
+   "widths": [
+    240,
+    480,
+    720,
+    960,
+    1200,
+    1284
+   ]
+  },
+  {
    "id": "01-exterior",
    "alt": "Brick apartment buildings at 145 South Fitzhugh Street, Rochester",
    "w": 1058,
@@ -633,183 +648,6 @@
    ]
   },
   {
-   "id": "03-kitchen",
-   "alt": "White kitchen with stainless range",
-   "w": 1320,
-   "h": 1749,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1320
-   ]
-  },
-  {
-   "id": "04-kitchen-2",
-   "alt": "Breakfast counter with stools, granite and a red refrigerator",
-   "w": 1320,
-   "h": 1755,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1320
-   ]
-  },
-  {
-   "id": "05-bedroom",
-   "alt": "Bedroom with window and grey bedding",
-   "w": 1320,
-   "h": 1756,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1320
-   ]
-  },
-  {
-   "id": "06-bathroom",
-   "alt": "Bathroom with tub",
-   "w": 1320,
-   "h": 1756,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1320
-   ]
-  },
-  {
-   "id": "07-living-room-2",
-   "alt": "Bright living room with dark hardwood floors",
-   "w": 2427,
-   "h": 2427,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1400,
-    1600,
-    2000
-   ]
-  },
-  {
-   "id": "08-living-room-3",
-   "alt": "Living room with ceiling fan",
-   "w": 2992,
-   "h": 2992,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1400,
-    1600,
-    2000
-   ]
-  },
-  {
-   "id": "09-kitchen-red-fridge",
-   "alt": "Kitchen with gas range and a red retro refrigerator",
-   "w": 2074,
-   "h": 2074,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1400,
-    1600,
-    2000
-   ]
-  },
-  {
-   "id": "10-bathroom-2",
-   "alt": "Bathroom with tub, subway tile and black fixtures",
-   "w": 2158,
-   "h": 2158,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1400,
-    1600,
-    2000
-   ]
-  },
-  {
-   "id": "11-hallway",
-   "alt": "Hallway with dark wood floors",
-   "w": 2363,
-   "h": 2363,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1400,
-    1600,
-    2000
-   ]
-  },
-  {
-   "id": "12-hallway-2",
-   "alt": "Hall with a closet, leading to the kitchen",
-   "w": 2689,
-   "h": 2689,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1400,
-    1600,
-    2000
-   ]
-  },
-  {
-   "id": "13-studio-living",
-   "alt": "Studio living area with desk and television",
-   "w": 1284,
-   "h": 1434,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1284
-   ]
-  },
-  {
    "id": "14-studio-kitchen",
    "alt": "Studio kitchen with stainless range",
    "w": 1284,
@@ -825,10 +663,10 @@
    ]
   },
   {
-   "id": "15-studio-bedroom",
-   "alt": "Studio sleeping area with ceiling fan",
+   "id": "13-studio-living",
+   "alt": "Studio living area with desk and television",
    "w": 1284,
-   "h": 1502,
+   "h": 1434,
    "thumb": false,
    "widths": [
     240,
@@ -855,36 +693,6 @@
    ]
   },
   {
-   "id": "17-studio-bathroom",
-   "alt": "Bathroom with subway tile and black fixtures",
-   "w": 1284,
-   "h": 1690,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1284
-   ]
-  },
-  {
-   "id": "18-studio-vanity",
-   "alt": "Corner with a wall sink and a desk",
-   "w": 1284,
-   "h": 1868,
-   "thumb": false,
-   "widths": [
-    240,
-    480,
-    720,
-    960,
-    1200,
-    1284
-   ]
-  },
-  {
    "id": "19-studio-living-2",
    "alt": "Studio with seating and kitchen beyond",
    "w": 1260,
@@ -900,10 +708,10 @@
    ]
   },
   {
-   "id": "20-studio-living-3",
-   "alt": "Studio living and dining area",
-   "w": 1213,
-   "h": 1617,
+   "id": "08-living-room-3",
+   "alt": "Living room with ceiling fan",
+   "w": 2992,
+   "h": 2992,
    "thumb": false,
    "widths": [
     240,
@@ -911,7 +719,9 @@
     720,
     960,
     1200,
-    1213
+    1400,
+    1600,
+    2000
    ]
   },
   {
@@ -932,10 +742,10 @@
    ]
   },
   {
-   "id": "22-studio-bedroom-3",
-   "alt": "Bed beneath two windows",
-   "w": 1348,
-   "h": 1797,
+   "id": "20-studio-living-3",
+   "alt": "Studio living and dining area",
+   "w": 1213,
+   "h": 1617,
    "thumb": false,
    "widths": [
     240,
@@ -943,14 +753,14 @@
     720,
     960,
     1200,
-    1348
+    1213
    ]
   },
   {
-   "id": "23-studio-bedroom-4",
-   "alt": "Bed with dark headboard",
-   "w": 1473,
-   "h": 1965,
+   "id": "09-kitchen-red-fridge",
+   "alt": "Kitchen with gas range and a red retro refrigerator",
+   "w": 2074,
+   "h": 2074,
    "thumb": false,
    "widths": [
     240,
@@ -959,7 +769,38 @@
     960,
     1200,
     1400,
-    1473
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "04-kitchen-2",
+   "alt": "Breakfast counter with stools, granite and a red refrigerator",
+   "w": 1320,
+   "h": 1755,
+   "thumb": false,
+   "widths": [
+    240,
+    480,
+    720,
+    960,
+    1200,
+    1320
+   ]
+  },
+  {
+   "id": "17-studio-bathroom",
+   "alt": "Bathroom with subway tile and black fixtures",
+   "w": 1284,
+   "h": 1690,
+   "thumb": false,
+   "widths": [
+    240,
+    480,
+    720,
+    960,
+    1200,
+    1284
    ]
   },
   {
@@ -979,10 +820,10 @@
    ]
   },
   {
-   "id": "25-studio-shower",
-   "alt": "Tiled shower with black fixtures",
-   "w": 1609,
-   "h": 2145,
+   "id": "10-bathroom-2",
+   "alt": "Bathroom with tub, subway tile and black fixtures",
+   "w": 2158,
+   "h": 2158,
    "thumb": false,
    "widths": [
     240,
@@ -992,7 +833,7 @@
     1200,
     1400,
     1600,
-    1609
+    2000
    ]
   }
  ],
