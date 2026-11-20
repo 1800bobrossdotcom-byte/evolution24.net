@@ -98,6 +98,14 @@ module.exports = [
      window_start BIGINT  NOT NULL DEFAULT 0  -- when the count began, unix seconds
    )`,
 
+  // api/collect.js: events per connection per window, so a script cannot pad the statistics.
+  `CREATE TABLE IF NOT EXISTS collect_attempts (
+     ip           TEXT    PRIMARY KEY,
+     count        INTEGER NOT NULL DEFAULT 0,
+     window_start BIGINT  NOT NULL DEFAULT 0
+   )`,
+  'CREATE INDEX IF NOT EXISTS idx_collect_attempts_window ON collect_attempts(window_start)',
+
   `CREATE TABLE IF NOT EXISTS insights (
      key  TEXT    PRIMARY KEY,
      ts   BIGINT  NOT NULL,
@@ -163,6 +171,6 @@ module.exports = [
    )`,
   'CREATE INDEX IF NOT EXISTS idx_held_ts ON held(ts DESC)',
 
-  ...['events', 'login_attempts', 'inquiries', 'inquiry_attempts', 'insights', 'reports', 'email_prefs', 'emails', 'lead_sync', 'held']
+  ...['events', 'login_attempts', 'inquiries', 'inquiry_attempts', 'collect_attempts', 'insights', 'reports', 'email_prefs', 'emails', 'lead_sync', 'held']
     .map((table) => `ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`),
 ];

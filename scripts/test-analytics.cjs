@@ -193,6 +193,22 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
     assert.strictEqual(rows[0].property, 'water-street');
   });
 
+  await test('one connection can send only so many events in ten minutes; the rest are dropped quietly', async () => {
+    const { MAX_PER_WINDOW } = require(path.join(API, 'collect.js'));
+    const count = async () => (await q("SELECT COUNT(*) AS n FROM events WHERE path = '/flood/'"))[0].n;
+    for (let i = 0; i < MAX_PER_WINDOW + 5; i++) {
+      const r = await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/flood/' }, ip: '10.9.9.9' });
+      assert.strictEqual(r.status, 202);
+    }
+    assert.strictEqual(await count(), MAX_PER_WINDOW);
+    // another connection is not held back by it, and an old window starts again
+    await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/flood/' }, ip: '10.9.9.10' });
+    assert.strictEqual(await count(), MAX_PER_WINDOW + 1);
+    await q("UPDATE collect_attempts SET window_start = window_start - 700 WHERE ip = '10.9.9.9'");
+    await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/flood/' }, ip: '10.9.9.9' });
+    assert.strictEqual(await count(), MAX_PER_WINDOW + 2);
+  });
+
   await test('an enquiry with no tag on the form takes the visitor’s first pageview as its source', async () => {
     await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/properties/biltmore/', ref: 'https://l.facebook.com/', utm: { source: 'facebook', medium: 'paid_social', campaign: 'biltmore-oct' } }, ip: '10.3.0.7' });
     const r = await call('/api/inquiry/', { method: 'POST', body: { ...enquiry, property: 'biltmore', unit: '', email: 'pat.test@example.com', page: '/properties/biltmore/' }, ip: '10.3.0.7' });
@@ -314,7 +330,7 @@ const { toPostgres, forget, options } = require(path.join(API, '_lib', 'db.js'))
     await forget();
     const r = await call('/api/collect/', { method: 'POST', body: { kind: 'pageview', path: '/faqs/' } });
     assert.ok(r.status < 300, `collect answered ${r.status}`);
-    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM pg_tables WHERE schemaname = 'public' AND rowsecurity")).at(0).n, 10);
+    assert.strictEqual((await q("SELECT COUNT(*) AS n FROM pg_tables WHERE schemaname = 'public' AND rowsecurity")).at(0).n, 11);
   });
 
   await test('spam is held: the sender hears it went, nothing is sent, the dashboard lists it', async () => {

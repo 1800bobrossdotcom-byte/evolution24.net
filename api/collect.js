@@ -3,9 +3,11 @@
    Charlotte Square's collector, with the building each event is about.
 
    Open by design: it is how the site reports itself. What keeps it honest is
-   that it stores nothing personal, writes a fixed set of columns, and caps
-   everything it is handed. A failed write still answers 202: a metric is never
-   worth a broken page.
+   that it stores nothing personal, writes a fixed set of columns, caps
+   everything it is handed, and takes at most MAX_PER_WINDOW events from one
+   connection in ten minutes (far more than a person browsing sends), so a
+   script cannot pad the statistics or fill the database. Past that, and on a
+   failed write, it still answers 202: a metric is never worth a broken page.
    ============================================================================= */
 'use strict';
 
@@ -17,6 +19,28 @@ const KINDS = new Set(['pageview', 'phone_click', 'email_click', 'apply_click', 
   'gallery_open', 'outbound', 'form_start', 'filter', 'deal_open', 'deal_click', 'share']);
 const DEVICES = new Set(['mobile', 'tablet', 'desktop']);
 const BOTS = /bot|crawl|spider|slurp|preview|headless|lighthouse|pingdom|monitor|curl|wget|python-requests/i;
+const MAX_PER_WINDOW = 150;
+const WINDOW_S = 10 * 60;
+
+/** True when this connection has sent its share for now. One round trip: the
+ *  row's count goes up, or starts again when its window has passed. Windows
+ *  long gone are cleared now and then. A throttle that cannot be read lets the
+ *  event through. */
+async function overLimit(db, ip, now) {
+  try {
+    const row = await db.prepare(
+      `INSERT INTO collect_attempts (ip, count, window_start) VALUES (?, 1, ?)
+       ON CONFLICT(ip) DO UPDATE SET
+         count = CASE WHEN collect_attempts.window_start <= ? THEN 1 ELSE collect_attempts.count + 1 END,
+         window_start = CASE WHEN collect_attempts.window_start <= ? THEN excluded.window_start ELSE collect_attempts.window_start END
+       RETURNING count`,
+    ).bind(ip, now, now - WINDOW_S, now - WINDOW_S).first();
+    if (Math.random() < 0.01) await db.prepare('DELETE FROM collect_attempts WHERE window_start < ?').bind(now - WINDOW_S).run();
+    return Boolean(row && row.count > MAX_PER_WINDOW);
+  } catch {
+    return false;
+  }
+}
 
 /** A campaign tag, folded to one spelling ("Facebook " and "facebook" are one row). */
 const tag = (v) => {
@@ -45,6 +69,8 @@ async function POST({ request, env }) {
   if (!env.DB) return json({ ok: false, error: 'No database.' }, 202);
   const ua = request.headers.get('User-Agent') || '';
   if (BOTS.test(ua)) return json({ ok: true }, 202);
+
+  if (await overLimit(env.DB, clientIp(request), Math.floor(Date.now() / 1000))) return json({ ok: true }, 202);
 
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Bad JSON.' }, 400); }
@@ -86,3 +112,4 @@ async function POST({ request, env }) {
 }
 
 module.exports = serve({ POST });
+module.exports.MAX_PER_WINDOW = MAX_PER_WINDOW;
