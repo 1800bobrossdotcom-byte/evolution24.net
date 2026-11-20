@@ -530,5 +530,17 @@
    "alt": "Fitness room",
    "source": "https://rm12filereader.rentmanager.com/files/get/?EID=evolution&FKey=WU9GMWM4cTZlQzA9TEhjaGVUbGdqeFlxRGM0WjNoYUZHdz09dWRWSGZRRS9aMVQrR2xmWk9HNFoyRFFtRjRqVUgrcHgxOW02L1FzZDNvb3ZPUGhiZ3B0a2NhR2J4R1Bsb2ZsSXgrN0RLZFU4YXdna1Y1MGFVRDVSRjRFZVcyNjMrWkI3aml6OHJUbUY2S05tMldEaTJRcHB3SldRclVDYzBhWE55T041dnRDenVBODRpRnY2Y3JXcVhVUjhzWVVnWmlnazZxb0h2T0Y3L0daRHVWdkh0cWZobHJ4SFcrNVNMdkNtb3F0QW5yT2JxMHdrdUs1TlJlSmtMWFB2N3dWMEVTRHQ3SjhqbnBtU2x3OD0="
   }
+ ],
+ "301-central-commercial": [
+  {
+   "file": "301-central-commercial/01-storefront.jpg",
+   "alt": "Street-level storefront at 301 Central Avenue, Rochester: red brick, two large display windows and a recessed entrance",
+   "source": "Evolution24, 2026"
+  },
+  {
+   "file": "301-central-commercial/02-interior.jpg",
+   "alt": "Open ground-floor commercial space at 301 Central Avenue with wood-look floors, recessed lighting and a raised rear area",
+   "source": "Evolution24, 2026"
+  }
  ]
 }

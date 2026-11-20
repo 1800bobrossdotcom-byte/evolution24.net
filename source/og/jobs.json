@@ -116,6 +116,14 @@
   "sub": "Houses on South Main and Genesee Street, above Seneca Lake in the Finger Lakes."
  },
  {
+  "name": "commercial",
+  "photo": "assets/img/301-central-commercial/301-central-commercial-01-storefront-1600.webp",
+  "kicker": "Commercial \u00b7 Rochester, New York",
+  "title": "Space for <em>business.</em>",
+  "sub": "Street-level storefront \u00b7 301 Central Avenue",
+  "tag": "For lease"
+ },
+ {
   "name": "careers",
   "photo": "assets/img/181-st-paul-street/181-st-paul-street-03-studio-brick-1426.webp",
   "kicker": "Careers \u00b7 Rochester, New York",

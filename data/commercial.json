@@ -1,0 +1,30 @@
+{
+ "_about": "Commercial spaces for lease, for /commercial/ (scripts/build.py). 'property' is the building's slug in properties.json; 'photos' is a folder of source/photos/ (run scripts/photos.py after adding photos). Leave a fact out rather than guess it: the page asks people to call for whatever is not here. Set 'available' to false to take a space off the site.",
+ "spaces": [
+  {
+   "slug": "301-central-avenue-storefront",
+   "available": true,
+   "posted": "2026-11-20",
+   "property": "301-central-avenue",
+   "photos": "301-central-commercial",
+   "title": "Street-level storefront",
+   "where": "Ground floor, facing Central Avenue",
+   "summary": "A street-facing ground floor in the red-brick block at 301 Central Avenue, a short walk from downtown Rochester: its own entrance, big display windows and an open floor ready to fit out.",
+   "features": [
+    "Its own recessed street entrance",
+    "Two large display windows on Central Avenue, and two more beside the door",
+    "Open plan with wood-look floors throughout",
+    "Drop ceiling with recessed lighting and ducted heating and air",
+    "Raised rear area, good for a stage, a display or a back office",
+    "Rear door to the back of the building",
+    "Apartments upstairs in the same building"
+   ],
+   "uses": [
+    "Retail",
+    "Office",
+    "Studio or gallery",
+    "Showroom"
+   ]
+  }
+ ]
+}
