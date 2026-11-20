@@ -164,7 +164,8 @@
   "availability": "Availability and pricing",
   "apply": "Applying",
   "waitlist": "Joining the waitlist",
-  "question": "A question"
+  "question": "A question",
+  "commercial": "Commercial space"
  },
  "bedrooms": {
   "studio": "Studio",

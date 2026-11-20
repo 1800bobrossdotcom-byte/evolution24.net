@@ -106,7 +106,7 @@ FAQS = [
 # (tools/lead-sheet/Code.gs), so the three cannot drift apart.
 LEAD_OPTIONS = {
     "interest": [("tour", "Booking a tour"), ("availability", "Availability and pricing"), ("apply", "Applying"),
-                 ("waitlist", "Joining the waitlist"), ("question", "A question")],
+                 ("waitlist", "Joining the waitlist"), ("question", "A question"), ("commercial", "Commercial space")],
     "bedrooms": [("studio", "Studio"), ("1", "1 bedroom"), ("2", "2 bedrooms"), ("3", "3 bedrooms"), ("any", "Not sure yet")],
     "move_in": [("asap", "As soon as possible"), ("1-2", "In 1–2 months"), ("3-6", "In 3–6 months"),
                 ("later", "Later than that"), ("browsing", "Just looking")],
@@ -269,12 +269,12 @@ def brand(name):
     return f'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{BRANDS[name]}</svg>'
 
 
-def share_bar(url, title, text, heading="Know someone good? <em>Pass it on.</em>"):
+def share_bar(url, title, text, heading="Know someone good? <em>Pass it on.</em>", campaign="careers"):
     """Share buttons for one page: email, text, Facebook, LinkedIn, X, copy link, and the
     phone's own share sheet where there is one (main.js shows it). Each network's link
     carries its own utm_source, so the visits it brings show up by name in the admin."""
     q = urllib.parse.quote
-    tag = lambda via: f"{url}?utm_source={via}&utm_medium=share&utm_campaign=careers"
+    tag = lambda via: f"{url}?utm_source={via}&utm_medium=share&utm_campaign={campaign}"
     nets = [
         ("email", "Email", icon("mail"), f"mailto:?subject={q(title)}&body={q(text + chr(10) + chr(10) + tag('email'))}"),
         ("sms", "Text", icon("chat"), f"sms:?&body={q(text + ' ' + tag('sms'))}"),
@@ -498,6 +498,11 @@ def og_jobs():
         lead = next(p for p in PROPS if p["region"] == key)
         jobs.append({"name": f"city-{key}", "photo": best(*r.get("photo", (lead["slug"], lead["cover"]))), "kicker": "Evolution24 Properties",
                      "title": f"Apartments in <em>{esc(r['name'])}</em>", "sub": esc(r["blurb"])})
+    if COMMERCIAL:   # the card a shared Commercial link shows
+        c = COMMERCIAL[0]
+        b = next(p for p in PROPS if p["slug"] == c["property"])
+        jobs.append({"name": "commercial", "photo": best(c["photos"], PHOTOS[c["photos"]][0]["id"]), "kicker": f"Commercial · {b['city']}, New York",
+                     "title": f"Space for <em>business.</em>", "sub": f"{esc(c['title'])} · {esc(b['name'])}", "tag": "For lease"})
     if JOBS:   # the card a shared Careers link shows
         j = JOBS[0]
         first, _, last = j["title"].rpartition(" ")
@@ -629,7 +634,7 @@ def footer():
     </div>
     <div class="foot-legal">
       <span class="eho">{EHO} Equal Housing Opportunity</span>
-      <span><a href="{PORTAL}" rel="noopener">Resident portal</a> · <a href="/faqs/">FAQs</a> · <a href="/careers/">Careers{' (hiring)' if JOBS else ''}</a> · <a href="/privacy/">Privacy &amp; fair housing</a></span>
+      <span><a href="{PORTAL}" rel="noopener">Resident portal</a> · <a href="/faqs/">FAQs</a> · <a href="/careers/">Careers{' (hiring)' if JOBS else ''}</a> · <a href="/commercial/">Commercial space{' (for lease)' if COMMERCIAL else ''}</a> · <a href="/privacy/">Privacy &amp; fair housing</a></span>
       <span>© {dt.date.today().year} {NAME}</span>
     </div>
   </div>
@@ -1181,6 +1186,7 @@ def properties_index():
     {finder(order, 'props')}
   </div>
 </section>
+{commercial_block()}
 <section class="section ink" id="available">
   <div class="wrap">
     <div class="section-head">
@@ -1224,13 +1230,13 @@ def enquiry_form(p):
     slug, n = p["slug"], len(p["units"])
     units = sorted(p["units"], key=lambda u: u["rent"])
     if n:
-        interests = [(v, t) for v, t in LEAD_OPTIONS["interest"] if v != "waitlist"]
+        interests = [(v, t) for v, t in LEAD_OPTIONS["interest"] if v not in ("waitlist", "commercial")]
         home = choose("unit", "Home you’d like to see", "q-unit", [(str(u["uid"]), unit_label(u)) for u in units], first="Any of them")
         lead = (f"Book a tour, ask about a home, or ask anything about {esc(p['name'])}. "
                 "It goes straight to our leasing team.")
         submit, picked = "Send to the leasing team", "tour"
     else:
-        interests = LEAD_OPTIONS["interest"]
+        interests = [(v, t) for v, t in LEAD_OPTIONS["interest"] if v != "commercial"]
         home = choose("bedrooms", "Bedrooms", "q-bedrooms")
         lead = (f"Nothing is open at {esc(p['name'])} today. Tell us what you are looking for and "
                 "we will let you know as soon as something comes up.")
@@ -1403,6 +1409,7 @@ def property_page(p):
     </div>
   </div>
 </section>
+{commercial_block("building") if any(c["property"] == p["slug"] for c in COMMERCIAL) else ""}
 <section class="section">
   <div class="wrap">
     <div class="section-head"><div><p class="label" data-reveal>Keep looking</p><h2 data-reveal class="i1">More <em>nearby.</em></h2></div>
@@ -1581,6 +1588,7 @@ def about():
 
 
 # Open jobs (data/jobs.json): each a section of /careers/ and a JobPosting for Google's job search.
+COMMERCIAL = [c for c in json.loads((ROOT / "data" / "commercial.json").read_text())["spaces"] if c.get("available")]
 JOBS = [j for j in json.loads((ROOT / "data" / "jobs.json").read_text())["jobs"]
         if dt.date.fromisoformat(j["until"]) >= dt.date.today()]
 
@@ -1652,6 +1660,135 @@ def careers():
             "a family-owned property manager in Rochester, NY." if n else "Careers at Evolution24 Properties, a family-owned property manager in Rochester, Syracuse and Geneva, NY.")
     return page(url="/careers/", title=title, desc=fit(desc), body=body, graph=graph, crumbs=[("Home", "/"), ("Careers", "/careers/")],
                 og=og_for("careers", f"Now hiring at {NAME}" if n else f"Careers at {NAME}"))
+
+
+def commercial_block(where="properties"):
+    """A band that points to /commercial/ while a space is open: on the Properties page,
+    and on the page of the building the space is in."""
+    if not COMMERCIAL:
+        return ""
+    c = COMMERCIAL[0]
+    b = next(p for p in PROPS if p["slug"] == c["property"])
+    head = (f"Also at {esc(b['name'])}: <em>a storefront.</em>" if where == "building"
+            else "Space for <em>business</em>, too.")
+    lead = (f"A {esc(c['title'].lower())} below the apartments, facing Central Avenue: its own entrance, big windows and an open floor." if where == "building"
+            else f"{esc(c['title'])} at {esc(b['name'])}, {esc(b['city'])}. {esc(c['where'])}.")
+    ph = PHOTOS[c["photos"]][0]
+    return f"""<section class="section section--tight">
+  <div class="wrap">
+    <a class="cx-band" href="/commercial/#{c['slug']}" data-reveal>
+      <span class="cx-band-pic">{img(c['photos'], ph['id'], '(max-width: 760px) 100vw, 40vw', alt='', fit=960)}</span>
+      <span class="cx-band-tx"><span class="label">Commercial · for lease</span><span class="cx-band-h">{head}</span><span class="cx-band-p">{lead}</span>
+      <span class="link">See the space {icon('arrow')}</span></span>
+    </a>
+  </div>
+</section>"""
+
+
+def commercial():
+    posts, graph, gallery = "", [], []
+    for c in COMMERCIAL:
+        b = next(p for p in PROPS if p["slug"] == c["property"])
+        pics = [ph for ph in PHOTOS[c["photos"]] if not ph["thumb"]]
+        first = len(gallery)
+        gallery += [lb_photo(c["photos"], ph) for ph in pics]
+        tiles = "".join(
+            f'<button type="button" data-index="{first + i}" aria-label="Open photo {i + 1} of {len(pics)}: {esc(ph["alt"])}" class="cx-pic{" cx-pic--main" if i == 0 else ""}" data-reveal="clip">'
+            f'{img(c["photos"], ph["id"], "(max-width: 860px) 100vw, 60vw" if i == 0 else "(max-width: 860px) 100vw, 40vw", alt="", fit=1600 if i == 0 else 960)}</button>'
+            for i, ph in enumerate(pics))
+        feats = "".join(f"<li>{esc(x)}</li>" for x in c["features"])
+        uses = "".join(f"<span>{esc(u)}</span>" for u in c.get("uses", []))
+        posts += f"""<section class="section cx" id="{c['slug']}">
+  <div class="wrap">
+    <div class="cx-pics" data-gallery>{tiles}</div>
+    <div class="job-head">
+      <div>
+        <p class="label" data-reveal>For lease · {esc(b['area'])}</p>
+        <h2 data-reveal class="i1">{esc(c['title'])}, <em>{esc(b['name'])}.</em></h2>
+        <p class="lead" data-reveal>{esc(c['summary'])}</p>
+        {f'<p class="cx-uses" data-reveal>{uses}</p>' if uses else ''}
+      </div>
+      <dl class="job-facts" data-reveal>
+        <div><dt>Address</dt><dd>{esc(full_addr(b))}</dd></div>
+        <div><dt>Where</dt><dd>{esc(c['where'])}</dd></div>
+        <div><dt>Size and rent</dt><dd>Call us for the floor plan and terms</dd></div>
+        <div><dt>Viewings</dt><dd>By appointment: <a href="tel:{PHONE_TEL}">{PHONE}</a></dd></div>
+      </dl>
+    </div>
+    <div class="job-cols">
+      <div data-reveal><h3>The space</h3><ul class="job-list">{feats}</ul></div>
+      <div data-reveal class="i1"><h3>Upstairs and around</h3><ul class="job-list">
+        <li>{esc(b['name'])} is our own building, so you deal with the owners directly</li>
+        <li>{esc(b['area'])}, with Central Avenue traffic passing the windows</li>
+        <li>Apartments above: <a href="{prop_url(b)}">see {esc(b['name'])}</a></li>
+      </ul></div>
+    </div>
+    {share_bar(f"{SITE}/commercial/", f"For lease: {c['title'].lower()} at {b['name']}, Rochester", f"Commercial space for lease at {b['name']}, Rochester NY: {c['title'].lower()}, {c['where'].lower()}.", heading="Know a business that needs a home? <em>Pass it on.</em>", campaign="commercial")}
+  </div>
+</section>"""
+        graph.append({"@type": "RealEstateListing", "@id": f"{SITE}/commercial/#{c['slug']}", "name": f"{c['title']}, {b['name']}",
+                      "url": f"{SITE}/commercial/#{c['slug']}", "datePosted": c["posted"], "description": c["summary"],
+                      "image": [SITE + src(c["photos"], ph, ph["widths"][-1]) for ph in pics],
+                      "offers": {"@type": "Offer", "businessFunction": "http://purl.org/goodrelations/v1#LeaseOut",
+                                 "availability": "https://schema.org/InStock", "seller": {"@id": f"{SITE}/#organization"}},
+                      "about": {"@type": "Place", "name": f"{b['name']}, ground floor",
+                                "address": {"@type": "PostalAddress", "streetAddress": b["street"], "addressLocality": b["city"],
+                                            "addressRegion": "NY", "postalCode": b["zip"], "addressCountry": "US"},
+                                "geo": {"@type": "GeoCoordinates", "latitude": b["geo"][0], "longitude": b["geo"][1]}}})
+    if not posts:
+        posts = f"""<section class="section"><div class="wrap"><h2 data-reveal>Nothing open <em>right now.</em></h2>
+<p class="lead" data-reveal>Our commercial spaces are all let. Call <a href="tel:{PHONE_TEL}">{PHONE}</a> and we will tell you when one opens.</p></div></section>"""
+    n = len(COMMERCIAL)
+    form = f"""<section class="section ink" id="enquire" aria-labelledby="enquire-h">
+  <div class="wrap contact-grid">
+    <div>
+      <p class="label" data-reveal>Talk to us</p>
+      <h2 id="enquire-h" data-reveal class="i1">Tell us about <em>your business.</em></h2>
+      <p class="lead" data-reveal>What you do, how much room you need and when. We will send the floor plan and terms, and set up a viewing.</p>
+      <p class="lead" data-reveal>Or call the office: <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+    </div>
+    <div class="contact-main">
+      <div class="form-flash" id="sent" tabindex="-1" role="status">
+        <h2>Thank you<span class="flash-name"></span>. Your message is with our team.</h2>
+        <p>We will be in touch soon, and you will get an email to say it arrived. For anything urgent, call <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+      </div>
+      <div class="form-flash form-flash--error" id="not-sent" tabindex="-1" role="alert">
+        <h2>Sorry, your message did not go through.</h2>
+        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email {emails_html()}.</p>
+      </div>
+      <form class="form" id="commercial-form" data-lead action="/api/inquiry/" method="post" data-reveal>
+        <input type="hidden" name="form" value="contact"><input type="hidden" name="page" value="/commercial/"><input type="hidden" name="interest" value="commercial">
+        <div class="field"><label for="x-first">First name</label><input id="x-first" name="first_name" autocomplete="given-name" maxlength="80" required></div>
+        <div class="field"><label for="x-last">Last name</label><input id="x-last" name="last_name" autocomplete="family-name" maxlength="80" required></div>
+        <div class="field"><label for="x-email">Email</label><input id="x-email" name="email" type="email" autocomplete="email" maxlength="160" required></div>
+        <div class="field"><label for="x-phone">Phone</label><input id="x-phone" name="phone" type="tel" autocomplete="tel" maxlength="40"></div>
+        <div class="field field--full"><label for="x-message">Your business, and what you need</label><textarea id="x-message" name="message" maxlength="2000" required></textarea><span class="count" aria-live="polite"></span></div>
+        {ATTRIBUTION}
+        {HONEYPOT}
+        <p class="form-note">Your message goes straight to our team, who use it only to reply to you. <a href="/privacy/">Privacy</a>.</p>
+        <div><button class="btn btn--solid" type="submit">Ask about the space {icon('arrow')}</button></div>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</section>"""
+    gdata = json.dumps(gallery, ensure_ascii=False).replace("</", "<\\/")
+    lead = ("Storefronts and ground floors in our own buildings, for shops, studios and offices. "
+            + (f"{'One space is' if n == 1 else f'{n} spaces are'} open now." if n else "Nothing is open right now."))
+    body = f"""{page_hero('Commercial', 'Space for|*business.*', lead, [('Home', '/'), ('Commercial', '/commercial/')])}
+{posts}
+{form}
+{lightbox("Photos of the commercial space")}
+<script type="application/json" id="gallery-data">{gdata}</script>"""
+    c0 = COMMERCIAL[0] if n else None
+    b0 = next(p for p in PROPS if p["slug"] == c0["property"]) if c0 else None
+    title = (f"Commercial Space for Lease: {b0['name']}, Rochester NY | Evolution24" if n == 1
+             else "Commercial Space for Lease, Rochester NY | Evolution24")
+    desc = (f"For lease: {c0['title'].lower()} at {b0['name']}, {b0['city']}, NY. {c0['where']}, with display windows and an open floor. Call {PHONE}."
+            if n == 1 else "Commercial space for lease from Evolution24 Properties, a family-owned landlord in Rochester, NY.")
+    return page(url="/commercial/", title=title, desc=fit(desc), body=body, graph=graph, page_type="CollectionPage",
+                crumbs=[("Home", "/"), ("Commercial", "/commercial/")],
+                og=og_for("commercial", f"Commercial space for lease at {b0['name']}" if n else f"Commercial space at {NAME}"))
 
 
 def faqs():
@@ -2149,6 +2286,7 @@ def main():
     write("about-us/index.html", about())
     write("faqs/index.html", faqs())
     write("careers/index.html", careers())
+    write("commercial/index.html", commercial())
     write("contact-us/index.html", contact())
     write("privacy/index.html", privacy())
     write("404.html", not_found())
@@ -2164,7 +2302,7 @@ def main():
             ("/properties/", [])] + [(city_url(k), []) for k in REGIONS] + [(search_url(k, s[0]), []) for k in REGIONS for s in SEARCHES.get(k, [])]
     for p in PROPS:
         urls.append((prop_url(p), [(src(p["slug"], ph, ph["widths"][-1]), ph["alt"]) for ph in gallery_photos(p["slug"])]))
-    urls += [("/about-us/", []), ("/faqs/", []), ("/contact-us/", []), ("/careers/", []), ("/privacy/", [])]
+    urls += [("/about-us/", []), ("/faqs/", []), ("/contact-us/", []), ("/careers/", []), ("/commercial/", [(src(c["photos"], ph, ph["widths"][-1]), ph["alt"]) for c in COMMERCIAL for ph in PHOTOS[c["photos"]]]), ("/privacy/", [])]
     write("sitemap.xml", sitemap(urls))
     # The old /property-detail/ and /unit-detail/ URLs stay crawlable: search engines must see
     # their redirects to move the old rankings onto the new pages.

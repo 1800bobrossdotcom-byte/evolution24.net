@@ -1465,5 +1465,41 @@
     164
    ]
   }
+ ],
+ "301-central-commercial": [
+  {
+   "id": "01-storefront",
+   "alt": "Street-level storefront at 301 Central Avenue, Rochester: red brick, two large display windows and a recessed entrance",
+   "w": 3056,
+   "h": 2139,
+   "thumb": false,
+   "widths": [
+    240,
+    480,
+    720,
+    960,
+    1200,
+    1400,
+    1600,
+    2000
+   ]
+  },
+  {
+   "id": "02-interior",
+   "alt": "Open ground-floor commercial space at 301 Central Avenue with wood-look floors, recessed lighting and a raised rear area",
+   "w": 2934,
+   "h": 2200,
+   "thumb": false,
+   "widths": [
+    240,
+    480,
+    720,
+    960,
+    1200,
+    1400,
+    1600,
+    2000
+   ]
+  }
  ]
 }
