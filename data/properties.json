@@ -224,6 +224,14 @@
    ],
    "units": [
     {
+     "uid": 128,
+     "unit": "10",
+     "beds": 0,
+     "baths": 1,
+     "sqft": 365,
+     "rent": 1100
+    },
+    {
      "uid": 131,
      "unit": "12B",
      "beds": 0,

@@ -390,6 +390,18 @@
     {
      "type": "query",
      "key": "uid",
+     "value": "128"
+    }
+   ],
+   "destination": "/properties/biltmore/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
      "value": "131"
     }
    ],
