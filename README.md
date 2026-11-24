@@ -595,6 +595,21 @@ model or a down unit is never listed. A unit named with `-F` is furnished. A bui
 Rent Manager yet). It writes nothing if the answer looks wrong: nothing open anywhere
 while the site lists some, or more than a quarter of all units open at once.
 
+**The lease worksheet decides what is open.** The leasing team's *LEASE WORKSHEETS 2026* (Google
+Sheets, one tab per building, updated daily) is the say on which units are vacant. A unit counts
+when its tenant cell says **VACANT**, or when its latest month with an entry, within the last
+three months, says VACANT. `scripts/vacancy_sheet.py` reads the workbook (exported as .xlsx) and
+writes `data/vacancy-sheet.json`: per building, those unit numbers and the day it was read, and
+nothing about any tenant. For the buildings it names, the sync lists exactly those units
+(Rent Manager still gives each one's rent, size and bedrooms, and the worksheet's "203" is Rent
+Manager's "203RV"; "4-F" is "4"); Show On Web is not used there. A unit the worksheet lists
+that Rent Manager does not know is named in the run's report. If the file is more than 3 days
+old, the sync goes back to Rent Manager alone, so a forgotten worksheet cannot freeze the site.
+
+```bash
+python3 scripts/vacancy_sheet.py "LEASE WORKSHEETS 2026.xlsx"   # then commit data/vacancy-sheet.json
+```
+
 **Show On Web.** Each unit in Rent Manager has a user-defined field, *Show On Web*
 (beside *Show on Zillow?*), that the leasing team turns to No when a home is rented, often
 before the lease or move-in is entered. A home whose Show On Web says No is never listed,

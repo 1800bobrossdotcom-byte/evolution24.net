@@ -58,6 +58,12 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = join(ROOT, 'data', 'properties.json');
+export const SHEET = join(ROOT, 'data', 'vacancy-sheet.json');
+/* The leasing team's LEASE WORKSHEETS, read by scripts/vacancy_sheet.py: for each building with a
+   tab, the units it marks vacant. While it is at most STALE_DAYS old it decides which units a
+   building lists (Rent Manager still gives each one's rent, size and bedrooms); older than that,
+   or for a building it does not name, Rent Manager's statuses and Show On Web decide, as before. */
+const STALE_DAYS = 3;
 
 const PAGE = 1000;
 const MAX_WAIT_S = 90;
@@ -330,6 +336,17 @@ export function siteUnit(n, kept, today) {
   return unit;
 }
 
+/** A unit's name as both sides can agree on it: "4-F" and "4" are one, "1-1F" and "1-1", and the
+ *  worksheet's "203" is Rent Manager's "203RV" at Water Street. */
+export const unitKey = (s) => String(s).toUpperCase().replace(/\s+/g, '').replace(/(\d)-?F$/, '$1').replace(/(\d)RV$/, '$1');
+
+/** The worksheet's list, when it is recent enough to trust; else null. */
+export function sheetFor(sheet, today) {
+  if (!sheet || !sheet.as_of || !sheet.buildings) return null;
+  const age = (Date.parse(`${today}T12:00:00Z`) - Date.parse(`${sheet.as_of}T12:00:00Z`)) / 86400000;
+  return age <= STALE_DAYS && age >= -1 ? sheet : null;
+}
+
 const natural = (s) => String(s).split(/(\d+)/).map((t) => (/^\d+$/.test(t) ? t.padStart(8, '0') : t)).join('');
 const kind = (u) => (u.beds ? `${u.beds} bed` : 'studio');
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -364,7 +381,7 @@ async function webSwitches(rm, pid) {
 
 /** data, updated in place from each building's units as read. Returns the report.
  *  web: UnitID → 'yes' | 'no' | null, Show On Web for every building read; omitted, it is not used. */
-export function apply(data, unitsByPid, today, web = null) {
+export function apply(data, unitsByPid, today, web = null, sheet = null) {
   const webOn = Boolean(web && [...web.values()].includes('yes'));
   const report = [];
   const skipped = [];
@@ -378,10 +395,18 @@ export function apply(data, unitsByPid, today, web = null) {
     const hidden = new Set((p.hide_units || []).map(String));
     const kept = new Map((p.units || []).map((u) => [u.uid, u]));
     const units = [];
-    for (const n of read.filter((x) => isOpen(x, today))) {
+    const listed = sheet && Array.isArray(sheet.buildings[p.slug]) ? new Set(sheet.buildings[p.slug].map(unitKey)) : null;
+    if (listed) {
+      const known = new Set(read.map((n) => unitKey(n.unit)));
+      for (const k of listed) if (!known.has(k)) skipped.push(`${p.name} unit ${k}: vacant in the lease worksheet, but Rent Manager has no home by that number`);
+    }
+    // The worksheet's units when it names this building (as vacant now: no "from" date); else Rent Manager's open ones.
+    const candidates = listed ? read.filter((x) => listed.has(unitKey(x.unit))).map((x) => ({ ...x, available: null }))
+      : read.filter((x) => isOpen(x, today));
+    for (const n of candidates) {
       if (hidden.has(n.unit.replace(FURNISHED, ''))) continue;
       const label = `${p.name} unit ${n.unit.replace(FURNISHED, '')}`;
-      if (webOn && web.get(n.id) === 'no') { skipped.push(`${label}: open by its status, but Show On Web is No in Rent Manager`); continue; }
+      if (!listed && webOn && web.get(n.id) === 'no') { skipped.push(`${label}: open by its status, but Show On Web is No in Rent Manager`); continue; }
       if (!n.rent) { skipped.push(`${label}: open, but no market rent in Rent Manager`); continue; }
       if (n.rent < MIN_RENT) { skipped.push(`${label}: open at ${money(n.rent)} a month, too little for a home (parking or storage?)`); continue; }
       if (n.available && n.available > soon) { skipped.push(`${label}: free from ${n.available}, more than ${SOON_DAYS} days off; listed once it is nearer`); continue; }
@@ -525,10 +550,17 @@ export async function run({ env = process.env, argv = process.argv.slice(2), fil
   const web = new Map();
   for (const pid of pids) for (const [id, v] of await webSwitches(rm, pid)) web.set(id, v);
 
-  const { report, skipped, total, open, webOn } = apply(data, unitsByPid, today, web);
+  // The worksheet's list sits beside the data file (data/vacancy-sheet.json beside data/properties.json).
+  let sheet = null;
+  try { sheet = JSON.parse(readFileSync(join(dirname(file), 'vacancy-sheet.json'), 'utf8')); } catch { /* none yet */ }
+  const fresh = sheetFor(sheet, today);
+
+  const { report, skipped, total, open, webOn } = apply(data, unitsByPid, today, web, fresh);
   log(`Rent Manager: ${total} units read across ${pids.length} buildings, ${open} open; ${rm.state.requests} requests.`
     + (embeds.length < KNOWN_EMBEDS.length ? ` (It took only these embeds: ${embeds.join(', ') || 'none'}.)` : ''));
   if (!webOn) log('Show On Web: no unit says Yes, so it is not in use yet; homes are listed by their status alone.');
+  if (sheet && !fresh) log(`Lease worksheet: last read ${sheet.as_of}, more than ${STALE_DAYS} days ago, so Rent Manager alone decides what is open.`);
+  if (fresh) log(`Lease worksheet (read ${fresh.as_of}) decides which units are open in ${Object.keys(fresh.buildings).length} buildings; Rent Manager gives their rents.`);
   log(report.length ? report.join('\n') : 'No change to what is open or its rents.');
   skipped.forEach((s) => log(`Left off: ${s}`));
   if (open === 0 && before > 0 && !argv.includes('--allow-empty')) {
