@@ -702,10 +702,13 @@ def beds_range(p):
 
 
 def leasing_phone(p):
-    """(shown, tel:) — Charlotte Square leases from its own office."""
+    """(shown, tel:) — Charlotte Square leases from its own office; a building with its own
+    "phone" in data/properties.json (The Biltmore) is called there; the rest call the office."""
     if p.get("external"):
         shown = p["leasing"]["phone"]
         return shown, "+1" + re.sub(r"\D", "", shown)
+    if p.get("phone"):
+        return p["phone"], "+1" + re.sub(r"\D", "", p["phone"])
     return PHONE, PHONE_TEL
 
 
@@ -1227,6 +1230,7 @@ HONEYPOT = '<div class="hp" aria-hidden="true"><label>Leave this empty <input na
 def enquiry_form(p):
     """A building's own enquiry form: the homes it has open to pick from, a tour by default,
     and everything landing on the building's tab of the lead sheet (api/inquiry.js)."""
+    ph, ph_tel = leasing_phone(p)
     slug, n = p["slug"], len(p["units"])
     units = sorted(p["units"], key=lambda u: u["rent"])
     if n:
@@ -1247,16 +1251,16 @@ def enquiry_form(p):
       <p class="label" data-reveal>Talk to us</p>
       <h2 id="enquire-h" data-reveal class="i1">Ask about <em>{esc(p['name'])}.</em></h2>
       <p class="lead" data-reveal>{lead}</p>
-      <p class="lead" data-reveal>Or call the office: <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+      <p class="lead" data-reveal>Or call {"us" if p.get("phone") else "the office"}: <a href="tel:{ph_tel}">{ph}</a>.</p>
     </div>
     <div class="contact-main">
       <div class="form-flash" id="sent" tabindex="-1" role="status">
         <h2>Thank you<span class="flash-name"></span>. Your message is with our team.</h2>
-        <p>A team member will reply soon, and you will get an email to say it arrived. For anything urgent, call <a href="tel:{PHONE_TEL}">{PHONE}</a>.</p>
+        <p>A team member will reply soon, and you will get an email to say it arrived. For anything urgent, call <a href="tel:{ph_tel}">{ph}</a>.</p>
       </div>
       <div class="form-flash form-flash--error" id="not-sent" tabindex="-1" role="alert">
         <h2>Sorry, your message did not go through.</h2>
-        <p>Please call us on <a href="tel:{PHONE_TEL}">{PHONE}</a>, or email {emails_html()}.</p>
+        <p>Please call us on <a href="tel:{ph_tel}">{ph}</a>, or email {emails_html()}.</p>
       </div>
       <form class="form" id="enquiry-form" data-lead action="/api/inquiry/" method="post" data-reveal>
         <input type="hidden" name="form" value="property"><input type="hidden" name="property" value="{slug}"><input type="hidden" name="page" value="{prop_url(p)}">
@@ -1326,7 +1330,8 @@ def property_page(p):
         l = p["leasing"]
         facts.append(("Leasing", f'{esc(l["name"])}, <a href="tel:+1{re.sub(r"[^0-9]", "", l["phone"])}">{esc(l["phone"])}</a><br><small>{esc(l["hours"])}</small>'))
     else:
-        facts.append(("Office", f'<a href="tel:{PHONE_TEL}">{PHONE}</a>'))
+        ph, ph_tel = leasing_phone(p)
+        facts.append(("Phone" if p.get("phone") else "Office", f'<a href="tel:{ph_tel}">{ph}</a>'))
     dl = "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in facts)
     amen = "".join(f"<li>{esc(a)}</li>" for a in p["amenities"])
 
@@ -1335,7 +1340,7 @@ def property_page(p):
   <div class="wrap">
     <div class="section-head">
       <div><p class="label" data-reveal>Available now</p><h2 data-reveal class="i1">{n} {'home' if n == 1 else 'homes'} at <em>{esc(p['name'])}.</em></h2></div>
-      <p class="lead" data-reveal>Press Apply on an apartment and tell us a little about yourself; our leasing team sends the application. Questions first? Call {PHONE}.</p>
+      <p class="lead" data-reveal>Press Apply on an apartment and tell us a little about yourself; our leasing team sends the application. Questions first? Call {leasing_phone(p)[0]}.</p>
     </div>
     <div data-reveal>{units_table([(p, u) for u in sorted(p['units'], key=lambda u: u['rent'])], show_prop=False, group='p-units', contact=contact)}</div>
   </div>
@@ -1360,7 +1365,7 @@ def property_page(p):
     else:
         main_act = (f'<a class="btn btn--solid" href="#units">See {n} available</a>' if n else
                     f'<a class="btn btn--solid" href="#enquire">Join the waitlist</a>')
-        call = PHONE_TEL
+        call = leasing_phone(p)[1]
     mbar = (f'<div class="m-bar" data-mbar aria-label="Quick actions for {esc(p["name"])}" role="region" inert>'
             f'<a class="btn" href="tel:{call}">{icon("phone")} Call</a>{main_act}</div>')
     others = [o for o in PROPS if o["region"] == p["region"] and o is not p][:3]
@@ -1441,6 +1446,8 @@ def property_page(p):
     if p["type"] == "Apartment community":
         node["numberOfAccommodationUnits"] = 72
         node["telephone"] = "+1-585-748-5588"
+    elif p.get("phone"):
+        node["telephone"] = "+1-" + re.sub(r"\D", "", p["phone"])[-10:-7] + "-" + re.sub(r"\D", "", p["phone"])[-7:-4] + "-" + re.sub(r"\D", "", p["phone"])[-4:]
     if n:
         node["numberOfAvailableAccommodationUnits"] = n
         node["containsPlace"] = [{"@type": "Apartment", "name": f"{p['name']} unit {u['unit']}",
@@ -2151,6 +2158,7 @@ def leads_config():
     return json.dumps({
         "_about": "Generated by scripts/build.py from data/properties.json and LEAD_OPTIONS. Edit those, not this.",
         "properties": {p["slug"]: {"name": p["name"], "city": p["city"], "region": p["region"], "pid": p["pid"],
+                                   **({"phone": p["phone"]} if p.get("phone") else {}),
                                    "units": {str(u["uid"]): {"label": unit_label(u), "bedrooms": "studio" if u["beds"] == 0 else str(min(u["beds"], 3))}
                                              for u in sorted(p["units"], key=lambda u: u["rent"])}}
                        for p in LEAD_PROPS},

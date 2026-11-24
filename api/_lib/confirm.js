@@ -34,6 +34,11 @@ const token = () => Buffer.from(crypto.getRandomValues(new Uint8Array(18))).toSt
 /** Subject, HTML and text. Pure: it takes its links, so it can be previewed. */
 function confirmationEmail(row, links) {
   const name = greetName(row.first_name);
+  // The building's own number where it has one (The Biltmore), else the office's.
+  const own = row.property && CONFIG.properties[row.property] && CONFIG.properties[row.property].phone;
+  const phone = own || PHONE;
+  const phoneTel = own ? `+1${own.replace(/[^\d]/g, '')}` : PHONE_TEL;
+  const callLine = own ? 'If it can’t wait, call us at' : 'If it can’t wait, call the office at';
   const building = row.property_name || '';
   const tour = row.interest === 'tour';
   const hello = name ? `Thanks, ${name}.` : 'Thank you.';
@@ -81,7 +86,7 @@ function confirmationEmail(row, links) {
           <td>
             <h1 class="h1" style="margin:0 0 14px;font-family:${serif};font-weight:400;font-size:36px;line-height:1.12;color:#151613;">${esc(hello)}</h1>
             <p style="margin:0 0 14px;${cell('font-size:16px;line-height:1.6;color:#3b3c36;')}">${esc(got)}</p>
-            <p style="margin:0 0 18px;${cell('font-size:16px;line-height:1.6;color:#3b3c36;')}">If it can’t wait, call the office at <a href="tel:${PHONE_TEL}" style="color:#8a6232;font-weight:600;text-decoration:underline;white-space:nowrap;">${esc(PHONE)}</a>.</p>${told.length ? `
+            <p style="margin:0 0 18px;${cell('font-size:16px;line-height:1.6;color:#3b3c36;')}">${callLine} <a href="tel:${phoneTel}" style="color:#8a6232;font-weight:600;text-decoration:underline;white-space:nowrap;">${esc(phone)}</a>.</p>${told.length ? `
             <p style="margin:0 0 18px;${cell('font-size:14px;line-height:1.75;color:#5c5d55;')}">${told.map(([k, v]) => `${esc(k)}: <strong style="color:#151613;font-weight:600;">${esc(v)}</strong>`).join('<br>')}</p>` : ''}
             <p style="margin:0 0 28px;${cell('font-size:16px;line-height:1.6;')}"><a href="${esc(see[0])}" style="color:#8a6232;font-weight:600;text-decoration:underline;">${esc(see[1])}</a></p>
             <p style="margin:0;${cell('font-size:16px;line-height:1.5;color:#151613;')}">The Evolution24 Properties leasing team</p>
@@ -108,7 +113,7 @@ function confirmationEmail(row, links) {
 </body>
 </html>`;
   const text = [
-    hello, '', got, '', `If it can’t wait, call the office at ${PHONE}.`,
+    hello, '', got, '', `${callLine} ${phone}.`,
     ...(told.length ? ['', ...told.map(([k, v]) => `${k}: ${v}`)] : []),
     '', `${see[1]}: ${see[0]}`, '', 'The Evolution24 Properties leasing team', STREET, '', '--',
     'Family-owned apartments in Rochester, Syracuse and Geneva · Equal Housing Opportunity',
