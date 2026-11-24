@@ -105,30 +105,6 @@
      "baths": 1,
      "sqft": 450,
      "rent": 1020
-    },
-    {
-     "uid": 48,
-     "unit": "4-2",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 450,
-     "rent": 1600
-    },
-    {
-     "uid": 50,
-     "unit": "4-4",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 450,
-     "rent": 1020
-    },
-    {
-     "uid": 54,
-     "unit": "5-4",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 650,
-     "rent": 1365
     }
    ],
    "geo": [
@@ -186,12 +162,36 @@
      "rent": 1725
     },
     {
+     "uid": 111,
+     "unit": "208IL",
+     "beds": 2,
+     "baths": 1,
+     "sqft": 905,
+     "rent": 2000
+    },
+    {
+     "uid": 80,
+     "unit": "403RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 568,
+     "rent": 1630
+    },
+    {
      "uid": 82,
      "unit": "405RV",
      "beds": 1,
      "baths": 1,
      "sqft": 734,
      "rent": 1595
+    },
+    {
+     "uid": 88,
+     "unit": "505RV",
+     "beds": 1,
+     "baths": 1,
+     "sqft": 807,
+     "rent": 1725
     }
    ],
    "geo": [
@@ -416,7 +416,15 @@
     "On-site laundry",
     "Fireplaces"
    ],
-   "units": [],
+   "units": [
+    {
+     "uid": 152,
+     "unit": "2",
+     "beds": 3,
+     "baths": 1,
+     "rent": 3300
+    }
+   ],
    "geo": [
     42.8661,
     -76.98465

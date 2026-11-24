@@ -306,42 +306,6 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "48"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "50"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "54"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "102"
     }
    ],
@@ -378,7 +342,43 @@
     {
      "type": "query",
      "key": "uid",
+     "value": "111"
+    }
+   ],
+   "destination": "/properties/water-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "80"
+    }
+   ],
+   "destination": "/properties/water-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
      "value": "82"
+    }
+   ],
+   "destination": "/properties/water-street/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "88"
     }
    ],
    "destination": "/properties/water-street/#units",
@@ -442,6 +442,18 @@
     }
    ],
    "destination": "/properties/121-park-drive/#units",
+   "permanent": true
+  },
+  {
+   "source": "/unit-detail/",
+   "has": [
+    {
+     "type": "query",
+     "key": "uid",
+     "value": "152"
+    }
+   ],
+   "destination": "/properties/379-south-main-street/#units",
    "permanent": true
   },
   {
