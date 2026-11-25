@@ -6,14 +6,15 @@
 # and, only if they differ from the defaults, repository variables RM_COMPANY
 # ("evolution") and RM_LOCATION_ID.
 #
-# Runs at 7 and 10 am, 1, 4, 7 and 10 pm in Rochester (Eastern daylight time;
-# an hour earlier in winter), and from the Actions tab: "Run workflow". A failed
+# Runs every hour from about 7 am to 10 pm in Rochester (Eastern daylight time;
+# an hour earlier in winter), so a change in the lease worksheet is on the site
+# within the hour, and from the Actions tab: "Run workflow". A failed
 # run emails the repository's owner; the site keeps its last good list.
 name: Availability from Rent Manager
 
 on:
   schedule:
-    - cron: "17 11,14,17,20,23,2 * * *"
+    - cron: "17 11-23,0-3 * * *"     # every hour, about 7 am to 10 pm in Rochester
   workflow_dispatch:
     inputs:
       dry_run:
@@ -46,6 +47,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # The leasing team's LEASE WORKSHEETS say which units are vacant and their rents
+      # (tools/lease-sheet/Vacancies.gs); without the two secrets, or if it cannot be
+      # reached, the last answer stays (trusted for three days).
+      - name: Read the lease worksheet
+        env:
+          VACANCY_SHEET_URL: ${{ secrets.VACANCY_SHEET_URL }}
+          VACANCY_SHEET_TOKEN: ${{ secrets.VACANCY_SHEET_TOKEN }}
+        run: node scripts/fetch-vacancies.mjs
 
       - name: Read Rent Manager
         id: rm
@@ -81,7 +91,7 @@ jobs:
           git config user.name "evolution24-availability[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Availability from Rent Manager, $(TZ=America/New_York date +%F)"
+          git commit -m "Availability from the lease worksheet and Rent Manager, $(TZ=America/New_York date +%F)"
           git push
           echo "published=yes" >> "$GITHUB_OUTPUT"
 

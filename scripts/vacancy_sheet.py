@@ -12,9 +12,10 @@ and bedrooms, and the rent where the cell is blank), while the file is at most S
 (see there), so the worksheet, which the team updates every day before Rent Manager, decides
 what the website shows and what it costs.
 
-A unit is vacant when its tenant cell says VACANT, or when the most recent month that has
-anything in it says VACANT and that month is within the last three (nothing paid since; a unit
-vacant in June and paid since is not). Parking, garages, storage and offices are left out: the website lists homes.
+A unit is vacant when its tenant cell says VACANT. A name there means it is taken, even while
+the months still say VACANT (a new lease is entered there first). Only when the tenant cell is
+blank does the most recent month with anything in it decide: VACANT, within the last three
+months, is vacant. Parking, garages, storage and offices are left out: the website lists homes.
 Google Sheets turned some unit numbers into dates ("1-3" became 1 March); they are read back.
 """
 import datetime as dt
@@ -106,7 +107,10 @@ def read_building(ws, spec, today):
         seen[name] = None
         filled = [(m, r[j]) for j, m in months if r[j] not in (None, "")]
         last_month, last = filled[-1] if filled else (None, None)
-        if vacant(r[tenant]) or (vacant(last) and last_month in recent):
+        # The tenant cell decides: VACANT is vacant, a name is taken (a new lease is entered there
+        # first, before its months are). Only a blank one falls back to the latest month.
+        blank = r[tenant] is None or str(r[tenant]).strip() == ""
+        if vacant(r[tenant]) or (blank and vacant(last) and last_month in recent):
             seen[name] = {"unit": name, "rent": round(rent) if rent else None}
             out.append(seen[name])
     return out

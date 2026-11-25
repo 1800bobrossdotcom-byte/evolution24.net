@@ -597,8 +597,8 @@ while the site lists some, or more than a quarter of all units open at once.
 
 **The lease worksheet decides what is open.** The leasing team's *LEASE WORKSHEETS 2026* (Google
 Sheets, one tab per building, updated daily) is the say on which units are vacant. A unit counts
-when its tenant cell says **VACANT**, or when its latest month with an entry, within the last
-three months, says VACANT. `scripts/vacancy_sheet.py` reads the workbook (exported as .xlsx) and
+when its tenant cell says **VACANT** (a name there means taken); only a blank tenant cell falls
+back to the latest month with an entry, within the last three months. `scripts/vacancy_sheet.py` reads the workbook (exported as .xlsx) and
 writes `data/vacancy-sheet.json`: per building, those unit numbers and the day it was read, and
 nothing about any tenant. For the buildings it names, the sync lists exactly those units
 (at its **Total Amount Due**, the rent the team updates first; Rent Manager gives size and
@@ -607,9 +607,22 @@ Manager's "203RV"; "4-F" is "4"); Show On Web is not used there. A unit the work
 that Rent Manager does not know is named in the run's report. If the file is more than 3 days
 old, the sync goes back to Rent Manager alone, so a forgotten worksheet cannot freeze the site.
 
+**Reading the worksheet every hour.** `tools/lease-sheet/Vacancies.gs` is a small script inside
+the LEASE WORKSHEETS spreadsheet (setup steps at its top: paste, Run setup, deploy as a web app,
+then two GitHub secrets, `VACANCY_SHEET_URL` and `VACANCY_SHEET_TOKEN`). Each sync asks it first
+(`scripts/fetch-vacancies.mjs`) and it answers, with the token, unit numbers and rents only;
+the sync runs every hour from about 7 am to 10 pm, so an edit in the worksheet is on the site
+within the hour. Its menu, *Evolution24 website → What the website will list*, shows the team what
+the next update will list. Without the secrets, or if the script cannot be reached, the last
+answer is used for up to three days. By hand, from an exported copy:
+
 ```bash
 python3 scripts/vacancy_sheet.py "LEASE WORKSHEETS 2026.xlsx"   # then commit data/vacancy-sheet.json
 ```
+
+Each tab: the tenant cell says **VACANT** for an empty unit (a name there means taken, even while
+the months still say VACANT); **Total Amount Due** is the rent the site shows. A new tab next year
+is a one-line change in `TABS` in both `Vacancies.gs` and `vacancy_sheet.py`.
 
 **Show On Web.** Each unit in Rent Manager has a user-defined field, *Show On Web*
 (beside *Show on Zillow?*), that the leasing team turns to No when a home is rented, often
