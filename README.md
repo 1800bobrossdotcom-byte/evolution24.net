@@ -607,9 +607,10 @@ Manager's "203RV"; "4-F" is "4"); Show On Web is not used there. A unit the work
 that Rent Manager does not know is named in the run's report. If the file is more than 3 days
 old, the sync goes back to Rent Manager alone, so a forgotten worksheet cannot freeze the site.
 
-**Reading the worksheet every hour.** `tools/lease-sheet/Vacancies.gs` is a small script inside
-the LEASE WORKSHEETS spreadsheet (setup steps at its top: paste, Run setup, deploy as a web app,
-then two GitHub secrets, `VACANCY_SHEET_URL` and `VACANCY_SHEET_TOKEN`). Each sync asks it first
+**Reading the worksheet every hour.** `tools/lease-sheet/Vacancies.gs` is a small script, in
+its own Apps Script project (script.google.com) that reads the LEASE WORKSHEETS spreadsheet:
+View access to it is enough. Setup steps are at its top: paste, Run setup, deploy as a web app,
+then two GitHub secrets, `VACANCY_SHEET_URL` and `VACANCY_SHEET_TOKEN`. Each sync asks it first
 (`scripts/fetch-vacancies.mjs`) and it answers, with the token, unit numbers and rents only;
 the sync runs every hour from about 7 am to 10 pm, so an edit in the worksheet is on the site
 within the hour. Its menu, *Evolution24 website → What the website will list*, shows the team what

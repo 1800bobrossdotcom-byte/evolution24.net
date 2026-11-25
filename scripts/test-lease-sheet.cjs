@@ -14,7 +14,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e24-lease-'));
 fs.copyFileSync(path.join(__dirname, '..', 'tools', 'lease-sheet', 'Vacancies.gs'), path.join(dir, 'Vacancies.cjs'));
 const gs = require(path.join(dir, 'Vacancies.cjs'));
 
-const HEAD = ['Apartment #', 'Tenant Name', 'Phone Number', 'Rent Amount', 'Total Amount Due', 'Max Market', 'August', 'September', 'October', 'November'];
+const HEAD = ['Apartment #', 'Tenant Name', 'Phone Number', 'Rent Amount', 'Total Amount Due', '# of Beds', 'August', 'September', 'October', 'November'];
 const TAB = [
   HEAD,
   ['', '', '', '', '', '', '', '', '', ''],
@@ -25,6 +25,7 @@ const TAB = [
   [new Date(2024, 2, 1), 'VACANT', '', 900, 1020, 900, '', '', '', ''],         // "1-3", turned into 1 March by Sheets
   ['Spot 8', 'VACANT', '', 50, 50, '', '', '', '', ''],                          // parking: never a home
   ['105-F', 'VACANT', '', 1700, '', '', '', '', '', ''],                         // no rent in the sheet: null
+  [14, 'VACANT', '', 1850, 1850, 'Commercial', '', '', '', ''],                  // a shop, by its "# of Beds": never a home
   ['TOTAL', '', '', '', '', '', '', '', '', ''],
 ];
 

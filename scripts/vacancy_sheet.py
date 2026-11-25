@@ -93,6 +93,7 @@ def read_building(ws, spec, today):
     head = rows[h]
     tenant = next(j for j, c in enumerate(head) if who(c))
     total = next((j for j, c in enumerate(head) if re.search(r"total (amount due|rent)", str(c or ""), re.I)), None)
+    beds = next((j for j, c in enumerate(head) if re.search(r"beds?\b", str(c or ""), re.I)), None)   # "Commercial" there: a shop
     months = [(j, month_of(c)) for j, c in enumerate(head) if j > tenant and month_of(c)]
     recent = {(today.month - k - 1) % 12 + 1 for k in range(3)}          # this month and the two before
     out, seen = [], {}
@@ -102,7 +103,7 @@ def read_building(ws, spec, today):
         if name in seen and seen[name] is not None and seen[name].get("rent") is None and rent:
             seen[name]["rent"] = round(rent)              # a unit listed twice: the first row with a rent
         if (not name or name.lower().startswith("unit") or name in seen
-                or any(NOT_A_HOME.search(str(c or "")) for c in [name, *r[1:tenant]])):   # a shop or a parking spot
+                or any(NOT_A_HOME.search(str(c or "")) for c in [name, *r[1:tenant], r[beds] if beds is not None else ""])):
             continue
         seen[name] = None
         filled = [(m, r[j]) for j, m in months if r[j] not in (None, "")]

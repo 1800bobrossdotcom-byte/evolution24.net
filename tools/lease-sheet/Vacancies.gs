@@ -15,9 +15,11 @@
  * months, is vacant. Parking, garages, storage, offices and shops are left out. The same rules
  * as scripts/vacancy_sheet.py, which reads an exported copy; keep the two in step.
  *
- * ONE-TIME SETUP (about five minutes, by someone who can edit the spreadsheet)
- *   1. Open LEASE WORKSHEETS 2026 → Extensions → Apps Script. Delete the sample code, paste
- *      this whole file in, and press Save.
+ * ONE-TIME SETUP (about five minutes; View access to the spreadsheet is enough)
+ *   1. Go to script.google.com, signed in with an account that can open LEASE WORKSHEETS 2026,
+ *      and press New project. Name it "Evolution24 website: lease worksheet". Delete the
+ *      sample code, paste this whole file in, and press Save. (Or, with Edit access: from the
+ *      spreadsheet, Extensions → Apps Script, which also adds a menu to the spreadsheet.)
  *   2. Check the function menu says "setup" and press Run. Allow access when Google asks (if
  *      it says the app isn't verified: Advanced → Go to the project). The Execution log shows
  *      what each tab reads as vacant now, and the connection token.
@@ -27,6 +29,7 @@
  *   4. On GitHub: the evolution24.net repository → Settings → Secrets and variables → Actions →
  *      New repository secret: VACANCY_SHEET_URL (the Web app URL) and VACANCY_SHEET_TOKEN (the
  *      token from step 2).
+ * The script reads the spreadsheet as whoever deployed it (SHEET_ID below), and only reads it.
  * From then on each sync reads the worksheet first. If it cannot (the script is off, a tab was
  * renamed), the run says so and the last answer is used, for up to three days.
  *
@@ -49,6 +52,7 @@ const TABS = {
   '379-south-main-street': { tab: '31 Gen/379 Main 2025-2026', block: '379 Main' },
   '561-south-main-street': { tab: '561 Main 2026' },
 };
+const SHEET_ID = '1YNx2XbJUaOh2_Hva4guDibWJsYWQf3haY-VQWugqqwo';   // LEASE WORKSHEETS 2026
 const NOT_A_HOME = /spot|garage|parking|storage|office|commercial|airbnb|total/i;
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const ZONE = 'America/New_York';
@@ -86,6 +90,7 @@ function readBuilding_(rows, spec, month) {
   const head = rows[h];
   const tenant = head.findIndex(who);
   const total = head.findIndex((c) => /total (amount due|rent)/i.test(String(c || '')));
+  const beds = head.findIndex((c) => /beds?\b/i.test(String(c || '')));   // "# of Beds": "Commercial" there is a shop
   const months = head.map((c, j) => [j, j > tenant ? monthOf_(c) : 0]).filter(([, m]) => m);
   const recent = [0, 1, 2].map((k) => ((month - k - 1 + 12) % 12) + 1);
   const out = [];
@@ -94,7 +99,7 @@ function readBuilding_(rows, spec, month) {
     const name = unitName_(r[0]);
     const rent = total >= 0 && typeof r[total] === 'number' && r[total] > 0 ? Math.round(r[total]) : null;
     if (name in seen) { if (seen[name] && seen[name].rent === null && rent) seen[name].rent = rent; return; }
-    if (!name || /^unit/i.test(name) || [name, ...r.slice(1, tenant)].some((c) => NOT_A_HOME.test(String(c || '')))) return;
+    if (!name || /^unit/i.test(name) || [name, ...r.slice(1, tenant), beds >= 0 ? r[beds] : ''].some((c) => NOT_A_HOME.test(String(c || '')))) return;
     seen[name] = null;
     const filled = months.filter(([j]) => !isBlank(r[j]));
     const [lastJ, lastM] = filled.length ? filled[filled.length - 1] : [-1, 0];
@@ -122,6 +127,11 @@ function vacancies_(ss) {
   return { as_of: Utilities.formatDate(now, ZONE, 'yyyy-MM-dd'), buildings };
 }
 
+/** The spreadsheet: the one this script is in, or, as a project of its own, SHEET_ID. */
+function book_() {
+  return SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+}
+
 const json_ = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 
 /** The website's question: POST {"token": "…"}. */
@@ -130,7 +140,7 @@ function doPost(e) {
   try { body = JSON.parse(e.postData.contents); } catch (err) { return json_({ error: 'Bad request.' }); }
   if (!body.token || body.token !== tokenFor_()) return json_({ error: 'Wrong token.' });
   try {
-    return json_(vacancies_(SpreadsheetApp.getActiveSpreadsheet()));
+    return json_(vacancies_(book_()));
   } catch (err) {
     return json_({ error: `The worksheet could not be read: ${err.message}` });
   }
@@ -138,7 +148,7 @@ function doPost(e) {
 
 /** Run once from the editor: checks every tab reads, and prints the token. */
 function setup() {
-  const out = vacancies_(SpreadsheetApp.getActiveSpreadsheet());
+  const out = vacancies_(book_());
   Object.keys(out.buildings).forEach((slug) => console.log(`${slug}: ${out.buildings[slug].map((u) => `${u.unit} $${u.rent}`).join(', ') || 'none'}`));
   console.log('Connection token. Paste the next line, and only that, into GitHub as VACANCY_SHEET_TOKEN:');
   console.log(tokenFor_());
@@ -152,7 +162,7 @@ function onOpen() {
 }
 
 function showVacancies() {
-  const out = vacancies_(SpreadsheetApp.getActiveSpreadsheet());
+  const out = vacancies_(book_());
   const lines = Object.keys(out.buildings).map((slug) => `${TABS[slug].tab}: ${out.buildings[slug].map((u) => `${u.unit} ($${u.rent})`).join(', ') || 'none'}`);
   SpreadsheetApp.getUi().alert('Vacant, as the website will list them at its next update', lines.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
 }
