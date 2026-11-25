@@ -1359,6 +1359,27 @@ def property_page(p):
   <div class="hero-actions" data-reveal><a class="btn btn--solid" href="#enquire">Join the waitlist {icon('arrow')}</a><a class="btn" href="/properties/#available">See what’s available elsewhere</a></div>
 </div></section>"""
 
+    # Commercial space the lease worksheet marks vacant (data/properties.json "commercial", from
+    # scripts/availability.mjs): listed apart from the homes, never counted or filtered as one.
+    shops = p.get("commercial") or []
+    if shops:
+        rows = "".join(f'''<tr><td data-k="Unit">{esc(c['unit'])}</td><td>Commercial space</td>
+  <td data-k="">{f"{c['sqft']:,} sq ft" if c.get('sqft') else '—'}</td>
+  <td class="u-rent">{money(c['rent'])}<small>/mo</small></td>
+  <td class="u-act"><a class="btn" href="#enquire" aria-label="Ask about commercial unit {esc(c['unit'])} at {esc(p['name'])}">Ask about it {icon('arrow')}</a></td></tr>'''
+                       for c in sorted(shops, key=lambda c: c['rent']))
+        units += f"""<section class="section ink section--tight" id="commercial">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="label" data-reveal>Commercial space</p><h2 data-reveal class="i1">For <em>business.</em></h2></div>
+      <p class="lead" data-reveal>{'This space is' if len(shops) == 1 else 'These spaces are'} for commercial use, not a home. Ask us about it, or call {leasing_phone(p)[0]}.</p>
+    </div>
+    <div data-reveal><table class="units"><caption class="sr-only">Commercial space at {esc(p['name'])}</caption>
+<thead><tr><th>Unit</th><th>Type</th><th>Size</th><th>Rent</th><th><span class="sr-only">Ask</span></th></tr></thead>
+<tbody>{rows}</tbody></table></div>
+  </div>
+</section>"""
+
     if p.get("external"):
         main_act = f'<a class="btn btn--solid" href="{p["external"]}" rel="noopener">Visit site</a>'
         call = "+1" + re.sub(r"[^0-9]", "", p["leasing"]["phone"])

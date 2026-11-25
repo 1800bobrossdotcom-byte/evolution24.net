@@ -41,7 +41,7 @@ export function checked(answer) {
       const num = (v, lo, hi) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) || Number(v) < lo || Number(v) > hi ? null : Number(v));
       const rent = num(u.rent, 1, 99999);
       return { unit, rent: rent && Math.round(rent), beds: num(u.beds, 0, 6), baths: num(u.baths, 0.5, 6),
-        sqft: num(u.sqft, 150, 5000), furnished: u.furnished === true };
+        sqft: num(u.sqft, 150, 20000), furnished: u.furnished === true, commercial: u.commercial === true };
     });
   }
   if (!Object.keys(buildings).length) throw new Error('its answer names no buildings');

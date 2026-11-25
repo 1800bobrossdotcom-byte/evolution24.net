@@ -12,7 +12,8 @@
  * A unit is vacant when its tenant cell says VACANT. A name there means it is taken, even
  * while the months still say VACANT (a new lease is entered there first). Only a blank tenant
  * cell falls back to the latest month with anything in it: VACANT, within the last three
- * months, is vacant. Parking, garages, storage, offices and shops are left out. The same rules
+ * months, is vacant. Parking, garages, storage and offices are left out; a unit marked Commercial
+ * is kept, as commercial space, which the website lists apart from homes. The same rules
  * as scripts/vacancy_sheet.py, which reads an exported copy; keep the two in step.
  *
  * ONE-TIME SETUP (about five minutes; View access to the spreadsheet is enough)
@@ -53,7 +54,8 @@ const TABS = {
   '561-south-main-street': { tab: '561 Main 2026' },
 };
 const SHEET_ID = '1YNx2XbJUaOh2_Hva4guDibWJsYWQf3haY-VQWugqqwo';   // LEASE WORKSHEETS 2026
-const NOT_A_HOME = /spot|garage|parking|storage|office|commercial|airbnb|total/i;
+const NOT_A_HOME = /spot|garage|parking|storage|office|airbnb|total/i;   // never listed
+const COMMERCIAL = /commercial/i;                                          // listed as commercial space, apart from homes
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const ZONE = 'America/New_York';
 
@@ -109,14 +111,15 @@ function readBuilding_(rows, spec, month) {
     const name = unitName_(r[0]);
     const rent = total >= 0 && typeof r[total] === 'number' && r[total] > 0 ? Math.round(r[total]) : null;
     if (name in seen) { if (seen[name] && seen[name].rent === null && rent) seen[name].rent = rent; return; }
-    if (!name || /^unit/i.test(name) || [name, ...r.slice(1, tenant), beds >= 0 ? r[beds] : ''].some((c) => NOT_A_HOME.test(String(c || '')))) return;
+    if (!name || /^unit/i.test(name) || [name, ...r.slice(1, tenant)].some((c) => NOT_A_HOME.test(String(c || '')))) return;
     seen[name] = null;
     const filled = months.filter(([j]) => !isBlank(r[j]));
     const [lastJ, lastM] = filled.length ? filled[filled.length - 1] : [-1, 0];
     if (isVacant(r[tenant]) || (isBlank(r[tenant]) && lastJ >= 0 && isVacant(r[lastJ]) && recent.includes(lastM))) {
-      const [b, ba] = beds >= 0 ? layout_(r[beds]) : [null, null];
+      const shop = [name, ...r.slice(1, tenant), beds >= 0 ? r[beds] : ''].some((c) => COMMERCIAL.test(String(c || '')));
+      const [b, ba] = beds >= 0 && !shop ? layout_(r[beds]) : [null, null];
       const size = sqft >= 0 && typeof r[sqft] === 'number' && r[sqft] >= 150 && r[sqft] <= 5000 ? Math.round(r[sqft]) : null;
-      seen[name] = { unit: name, rent, beds: b, baths: ba, sqft: size, furnished: /\d\s*-?\s*F$/i.test(name) };
+      seen[name] = { unit: name, rent, beds: b, baths: ba, sqft: size, furnished: /\d\s*-?\s*F$/i.test(name), commercial: shop };
       out.push(seen[name]);
     }
   });

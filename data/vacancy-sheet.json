@@ -9,7 +9,8 @@
     "beds": 2,
     "baths": null,
     "sqft": null,
-    "furnished": true
+    "furnished": true,
+    "commercial": false
    },
    {
     "unit": "6-F",
@@ -17,7 +18,8 @@
     "beds": 2,
     "baths": null,
     "sqft": null,
-    "furnished": true
+    "furnished": true,
+    "commercial": false
    },
    {
     "unit": "11",
@@ -25,7 +27,17 @@
     "beds": 2,
     "baths": null,
     "sqft": null,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "14",
+    "rent": 1850,
+    "beds": null,
+    "baths": null,
+    "sqft": null,
+    "furnished": false,
+    "commercial": true
    }
   ],
   "water-street": [
@@ -35,7 +47,8 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": 568,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    },
    {
     "unit": "205",
@@ -43,7 +56,8 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": 807,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    },
    {
     "unit": "403",
@@ -51,7 +65,8 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": 568,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    },
    {
     "unit": "505",
@@ -59,7 +74,8 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": 807,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    },
    {
     "unit": "107IL",
@@ -67,7 +83,8 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": null,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    },
    {
     "unit": "208IL",
@@ -75,7 +92,8 @@
     "beds": 2,
     "baths": 1.0,
     "sqft": 905,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    }
   ],
   "145-south-fitzhugh-street": [
@@ -85,10 +103,21 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": 650,
-    "furnished": true
+    "furnished": true,
+    "commercial": false
    }
   ],
-  "181-st-paul-street": [],
+  "181-st-paul-street": [
+   {
+    "unit": "179",
+    "rent": 3200,
+    "beds": null,
+    "baths": null,
+    "sqft": null,
+    "furnished": false,
+    "commercial": true
+   }
+  ],
   "biltmore": [
    {
     "unit": "10-F",
@@ -96,7 +125,8 @@
     "beds": 0,
     "baths": null,
     "sqft": 365,
-    "furnished": true
+    "furnished": true,
+    "commercial": false
    },
    {
     "unit": "12B",
@@ -104,7 +134,8 @@
     "beds": 0,
     "baths": null,
     "sqft": 365,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    },
    {
     "unit": "20",
@@ -112,7 +143,8 @@
     "beds": 1,
     "baths": 1.0,
     "sqft": 470,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    }
   ],
   "2215-james-street": [],
@@ -123,7 +155,8 @@
     "beds": 2,
     "baths": null,
     "sqft": null,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    }
   ],
   "31-genesee-street": [],
@@ -134,7 +167,8 @@
     "beds": 3,
     "baths": null,
     "sqft": null,
-    "furnished": false
+    "furnished": false,
+    "commercial": false
    }
   ],
   "561-south-main-street": []

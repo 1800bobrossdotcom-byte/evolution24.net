@@ -15,7 +15,8 @@ what the website shows and what it costs.
 A unit is vacant when its tenant cell says VACANT. A name there means it is taken, even while
 the months still say VACANT (a new lease is entered there first). Only when the tenant cell is
 blank does the most recent month with anything in it decide: VACANT, within the last three
-months, is vacant. Parking, garages, storage and offices are left out: the website lists homes.
+months, is vacant. Parking, garages, storage and offices are left out. A unit marked Commercial (in its "# of
+Beds" or beside its number) is kept, as commercial space: the website lists it apart from homes.
 Google Sheets turned some unit numbers into dates ("1-3" became 1 March); they are read back.
 """
 import datetime as dt
@@ -42,7 +43,8 @@ TABS = {
     "379-south-main-street": dict(tab="31 Gen/379 Main 2025-2026", block="379 Main"),
     "561-south-main-street": dict(tab="561 Main 2026"),
 }
-NOT_A_HOME = re.compile(r"spot|garage|parking|storage|office|commercial|airbnb|total", re.I)
+NOT_A_HOME = re.compile(r"spot|garage|parking|storage|office|airbnb|total", re.I)    # never listed
+COMMERCIAL = re.compile(r"commercial", re.I)          # listed, as commercial space, not as a home
 MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
 
@@ -116,7 +118,7 @@ def read_building(ws, spec, today):
         if name in seen and seen[name] is not None and seen[name].get("rent") is None and rent:
             seen[name]["rent"] = round(rent)              # a unit listed twice: the first row with a rent
         if (not name or name.lower().startswith("unit") or name in seen
-                or any(NOT_A_HOME.search(str(c or "")) for c in [name, *r[1:tenant], r[beds] if beds is not None else ""])):
+                or any(NOT_A_HOME.search(str(c or "")) for c in [name, *r[1:tenant]])):
             continue
         seen[name] = None
         filled = [(m, r[j]) for j, m in months if r[j] not in (None, "")]
@@ -125,10 +127,12 @@ def read_building(ws, spec, today):
         # first, before its months are). Only a blank one falls back to the latest month.
         blank = r[tenant] is None or str(r[tenant]).strip() == ""
         if vacant(r[tenant]) or (blank and vacant(last) and last_month in recent):
-            b, ba = layout(r[beds]) if beds is not None else (None, None)
+            shop = any(COMMERCIAL.search(str(c or "")) for c in [name, *r[1:tenant], r[beds] if beds is not None else ""])
+            b, ba = layout(r[beds]) if beds is not None and not shop else (None, None)
             size = r[sqft] if sqft is not None and isinstance(r[sqft], (int, float)) and 150 <= r[sqft] <= 5000 else None
             seen[name] = {"unit": name, "rent": round(rent) if rent else None, "beds": b, "baths": ba,
-                          "sqft": round(size) if size else None, "furnished": bool(re.search(r"\d\s*-?\s*F$", name, re.I))}
+                          "sqft": round(size) if size else None, "furnished": bool(re.search(r"\d\s*-?\s*F$", name, re.I)),
+                          "commercial": shop}
             out.append(seen[name])
     return out
 

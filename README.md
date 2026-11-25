@@ -621,7 +621,10 @@ answer is used for up to three days. By hand, from an exported copy:
 python3 scripts/vacancy_sheet.py "LEASE WORKSHEETS 2026.xlsx"   # then commit data/vacancy-sheet.json
 ```
 
-Each tab: the tenant cell says **VACANT** for an empty unit (a name there means taken, even while
+A unit marked **Commercial** (its "# of Beds", or beside its number) and VACANT is listed too,
+as commercial space: its own *Commercial space* section on the building's page, at its Total
+Amount Due, with "Ask about it" to the building's form; never counted, filtered or described as
+a home. Each tab: the tenant cell says **VACANT** for an empty unit (a name there means taken, even while
 the months still say VACANT); **Total Amount Due** is the rent the site shows. A new tab next year
 is a one-line change in `TABS` in both `Vacancies.gs` and `vacancy_sheet.py`.
 

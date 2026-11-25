@@ -392,17 +392,35 @@ export function apply(data, unitsByPid, today, web = null, sheet = null) {
   const soon = new Date(Date.parse(`${today}T12:00:00Z`) + SOON_DAYS * 86400000).toISOString().slice(0, 10);
   for (const p of data.properties) {
     if (p.external || !p.pid || !unitsByPid.has(p.pid)) continue;
-    const read = unitsByPid.get(p.pid).map((u) => normalize(u, today)).filter((n) => n && n.home);
+    const readAll = unitsByPid.get(p.pid).map((u) => normalize(u, today)).filter(Boolean);
+    const read = readAll.filter((n) => n.home);
     total += read.length;
     const hidden = new Set((p.hide_units || []).map(String));
     const kept = new Map((p.units || []).map((u) => [u.uid, u]));
     const units = [];
     // unit key → what the worksheet says of it ({rent, beds, baths, sqft, furnished}, any of them
     // missing); entries are those objects, or bare unit numbers in an older file.
-    const listed = sheet && Array.isArray(sheet.buildings[p.slug])
-      ? new Map(sheet.buildings[p.slug].map((e) => (typeof e === 'object' && e ? [unitKey(e.unit), e] : [unitKey(e), {}])))
-      : null;
     const has = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
+    const entries = sheet && Array.isArray(sheet.buildings[p.slug]) ? sheet.buildings[p.slug] : null;
+    const listed = entries
+      ? new Map(entries.filter((e) => !(e && e.commercial)).map((e) => (typeof e === 'object' && e ? [unitKey(e.unit), e] : [unitKey(e), {}])))
+      : null;
+    // Commercial space the worksheet marks vacant: listed apart from the homes, at its rent; its
+    // size from the worksheet, or Rent Manager's unit by that number (a non-home there).
+    if (entries) {
+      const before = JSON.stringify(p.commercial || []);
+      const byKey = new Map(readAll.map((n) => [unitKey(n.unit), n]));
+      const shops = entries.filter((e) => e && e.commercial && Number(e.rent) > 0).map((e) => {
+        const rm = byKey.get(unitKey(e.unit));
+        const sqft = has(e.sqft) ? Number(e.sqft) : rm && rm.sqft ? Math.round(rm.sqft) : null;
+        return { unit: String(e.unit), ...(sqft ? { sqft } : {}), rent: Math.round(Number(e.rent)), note: 'Commercial space' };
+      });
+      if (shops.length) p.commercial = shops; else delete p.commercial;
+      if (JSON.stringify(p.commercial || []) !== before) {
+        report.push(`${p.name}: commercial space ${shops.map((c) => `${c.unit} ${money(c.rent)}`).join(', ') || 'none open'}`);
+      }
+    }
+
     if (listed) {
       const known = new Set(read.map((n) => unitKey(n.unit)));
       for (const k of listed.keys()) if (!known.has(k)) skipped.push(`${p.name} unit ${k}: vacant in the lease worksheet, but Rent Manager has no home by that number`);
