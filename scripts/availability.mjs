@@ -60,9 +60,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = join(ROOT, 'data', 'properties.json');
 export const SHEET = join(ROOT, 'data', 'vacancy-sheet.json');
 /* The leasing team's LEASE WORKSHEETS, read by scripts/vacancy_sheet.py: for each building with a
-   tab, the units it marks vacant. While it is at most STALE_DAYS old it decides which units a
-   building lists (Rent Manager still gives each one's rent, size and bedrooms); older than that,
-   or for a building it does not name, Rent Manager's statuses and Show On Web decide, as before. */
+   tab, the units it marks vacant and the rent to advertise (its Total Amount Due), which the team
+   updates before Rent Manager. While it is at most STALE_DAYS old it decides which units a
+   building lists and at what rent (Rent Manager gives size and bedrooms, and the rent where the
+   worksheet has none); older than that, or for a building it does not name, Rent Manager's
+   statuses, rents and Show On Web decide, as before. */
 const STALE_DAYS = 3;
 
 const PAGE = 1000;
@@ -395,13 +397,18 @@ export function apply(data, unitsByPid, today, web = null, sheet = null) {
     const hidden = new Set((p.hide_units || []).map(String));
     const kept = new Map((p.units || []).map((u) => [u.uid, u]));
     const units = [];
-    const listed = sheet && Array.isArray(sheet.buildings[p.slug]) ? new Set(sheet.buildings[p.slug].map(unitKey)) : null;
+    // unit key → the worksheet's rent (or null); entries are {unit, rent}, or bare unit numbers.
+    const listed = sheet && Array.isArray(sheet.buildings[p.slug])
+      ? new Map(sheet.buildings[p.slug].map((e) => (typeof e === 'object' && e
+        ? [unitKey(e.unit), Number(e.rent) > 0 ? Number(e.rent) : null] : [unitKey(e), null])))
+      : null;
     if (listed) {
       const known = new Set(read.map((n) => unitKey(n.unit)));
-      for (const k of listed) if (!known.has(k)) skipped.push(`${p.name} unit ${k}: vacant in the lease worksheet, but Rent Manager has no home by that number`);
+      for (const k of listed.keys()) if (!known.has(k)) skipped.push(`${p.name} unit ${k}: vacant in the lease worksheet, but Rent Manager has no home by that number`);
     }
     // The worksheet's units when it names this building (as vacant now: no "from" date); else Rent Manager's open ones.
-    const candidates = listed ? read.filter((x) => listed.has(unitKey(x.unit))).map((x) => ({ ...x, available: null }))
+    const candidates = listed ? read.filter((x) => listed.has(unitKey(x.unit)))
+      .map((x) => ({ ...x, available: null, rent: listed.get(unitKey(x.unit)) || x.rent }))
       : read.filter((x) => isOpen(x, today));
     for (const n of candidates) {
       if (hidden.has(n.unit.replace(FURNISHED, ''))) continue;

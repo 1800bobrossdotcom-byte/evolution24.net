@@ -601,7 +601,8 @@ when its tenant cell says **VACANT**, or when its latest month with an entry, wi
 three months, says VACANT. `scripts/vacancy_sheet.py` reads the workbook (exported as .xlsx) and
 writes `data/vacancy-sheet.json`: per building, those unit numbers and the day it was read, and
 nothing about any tenant. For the buildings it names, the sync lists exactly those units
-(Rent Manager still gives each one's rent, size and bedrooms, and the worksheet's "203" is Rent
+(at its **Total Amount Due**, the rent the team updates first; Rent Manager gives size and
+bedrooms, and the rent only where that cell is blank. The worksheet's "203" is Rent
 Manager's "203RV"; "4-F" is "4"); Show On Web is not used there. A unit the worksheet lists
 that Rent Manager does not know is named in the run's report. If the file is more than 3 days
 old, the sync goes back to Rent Manager alone, so a forgotten worksheet cannot freeze the site.
