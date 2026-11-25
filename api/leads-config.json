@@ -12,11 +12,11 @@
      "bedrooms": "1"
     },
     "11": {
-     "label": "Unit 11 · 1 bed · $1,710/mo",
+     "label": "Unit 11 · 1 bed · $1,625/mo",
      "bedrooms": "1"
     },
     "4": {
-     "label": "Unit 4 · 2 bed · $1,895/mo",
+     "label": "Unit 4 · 2 bed · $1,795/mo",
      "bedrooms": "2"
     },
     "6": {
@@ -40,7 +40,7 @@
      "bedrooms": "1"
     },
     "34": {
-     "label": "Unit 1-1 · 1 bed · $1,750/mo",
+     "label": "Unit 1-1 · 1 bed · $1,550/mo",
      "bedrooms": "1"
     }
    }
@@ -51,24 +51,24 @@
    "region": "rochester",
    "pid": 8,
    "units": {
-    "82": {
-     "label": "Unit 405RV · 1 bed · $1,595/mo",
-     "bedrooms": "1"
-    },
     "68": {
-     "label": "Unit 203RV · 1 bed · $1,630/mo",
+     "label": "Unit 203RV · 1 bed · $1,600/mo",
      "bedrooms": "1"
     },
     "80": {
-     "label": "Unit 403RV · 1 bed · $1,630/mo",
+     "label": "Unit 403RV · 1 bed · $1,600/mo",
+     "bedrooms": "1"
+    },
+    "82": {
+     "label": "Unit 405RV · 1 bed · $1,600/mo",
      "bedrooms": "1"
     },
     "70": {
-     "label": "Unit 205RV · 1 bed · $1,725/mo",
+     "label": "Unit 205RV · 1 bed · $1,700/mo",
      "bedrooms": "1"
     },
     "88": {
-     "label": "Unit 505RV · 1 bed · $1,725/mo",
+     "label": "Unit 505RV · 1 bed · $1,700/mo",
      "bedrooms": "1"
     },
     "102": {
@@ -76,7 +76,7 @@
      "bedrooms": "1"
     },
     "111": {
-     "label": "Unit 208IL · 2 bed · $2,000/mo",
+     "label": "Unit 208IL · 2 bed · $1,850/mo",
      "bedrooms": "2"
     }
    }
@@ -89,7 +89,7 @@
    "phone": "585-748-5588",
    "units": {
     "128": {
-     "label": "Unit 10 · Studio · $1,100/mo",
+     "label": "Unit 10 · Studio · $1,150/mo",
      "bedrooms": "studio"
     },
     "131": {
@@ -139,7 +139,7 @@
    "pid": 10,
    "units": {
     "152": {
-     "label": "Unit 2 · 3 bed · $3,300/mo",
+     "label": "Unit 2 · 3 bed · $2,200/mo",
      "bedrooms": "3"
     }
    }

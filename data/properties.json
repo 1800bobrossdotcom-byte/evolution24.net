@@ -30,7 +30,7 @@
      "unit": "4",
      "beds": 2,
      "baths": 1,
-     "rent": 1895,
+     "rent": 1795,
      "note": "Furnished"
     },
     {
@@ -52,7 +52,7 @@
      "unit": "11",
      "beds": 1,
      "baths": 1,
-     "rent": 1710
+     "rent": 1625
     }
    ],
    "geo": [
@@ -88,7 +88,7 @@
      "beds": 1,
      "baths": 1,
      "sqft": 650,
-     "rent": 1750
+     "rent": 1550
     },
     {
      "uid": 36,
@@ -151,7 +151,7 @@
      "beds": 1,
      "baths": 1,
      "sqft": 568,
-     "rent": 1630
+     "rent": 1600
     },
     {
      "uid": 70,
@@ -159,7 +159,7 @@
      "beds": 1,
      "baths": 1,
      "sqft": 807,
-     "rent": 1725
+     "rent": 1700
     },
     {
      "uid": 111,
@@ -167,7 +167,7 @@
      "beds": 2,
      "baths": 1,
      "sqft": 905,
-     "rent": 2000
+     "rent": 1850
     },
     {
      "uid": 80,
@@ -175,7 +175,7 @@
      "beds": 1,
      "baths": 1,
      "sqft": 568,
-     "rent": 1630
+     "rent": 1600
     },
     {
      "uid": 82,
@@ -183,7 +183,7 @@
      "beds": 1,
      "baths": 1,
      "sqft": 734,
-     "rent": 1595
+     "rent": 1600
     },
     {
      "uid": 88,
@@ -191,7 +191,7 @@
      "beds": 1,
      "baths": 1,
      "sqft": 807,
-     "rent": 1725
+     "rent": 1700
     }
    ],
    "geo": [
@@ -230,7 +230,7 @@
      "beds": 0,
      "baths": 1,
      "sqft": 365,
-     "rent": 1100
+     "rent": 1150
     },
     {
      "uid": 131,
@@ -422,7 +422,7 @@
      "unit": "2",
      "beds": 3,
      "baths": 1,
-     "rent": 3300
+     "rent": 2200
     }
    ],
    "geo": [
