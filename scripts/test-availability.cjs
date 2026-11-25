@@ -275,6 +275,7 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
       'water-street': [{ unit: '502', rent: 1700 }, { unit: '103', rent: null }],   // 502RV is occupied in Rent Manager; 105RV and 302RV are vacant there
       '301-central-avenue': [{ unit: '7-F', rent: 1600, beds: 2, baths: 1, sqft: 700, furnished: true }, '99',   // 7 is occupied there; there is no 99
         { unit: '14', rent: 1850, commercial: true }],                                                                   // a shop: listed apart
+      'charlotte-square': [{ unit: '308', rent: 2195 }, { unit: '402', rent: 3695 }, { unit: '224', rent: 2995 }],   // its own site: only the range
     } }));
     try {
       write(TODAY);
@@ -287,6 +288,8 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
       assert.deepEqual(units(d, '2215-james-street').map((u) => u.unit), ['1']);          // not in the worksheet: Rent Manager decides
       assert.deepEqual(d.properties.find((p) => p.slug === '301-central-avenue').commercial, [{ unit: '14', rent: 1850, note: 'Commercial space' }]);
       assert.ok(!log.join('\n').includes('unit 14: vacant in the lease worksheet'));
+      const cs = d.properties.find((p) => p.slug === 'charlotte-square');
+      assert.deepEqual([cs.rent_range, cs.rent_as_of, cs.units || []], [[2195, 3695], TODAY, []]);
       assert.ok(log.join('\n').includes('99: vacant in the lease worksheet, but Rent Manager has no home by that number'));
       assert.ok(log.join('\n').includes('Lease worksheet (read 2026-10-19) decides'));
       write('2026-10-10');                                                                // nine days old: not trusted

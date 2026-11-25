@@ -42,6 +42,7 @@ TABS = {
     "31-genesee-street": dict(tab="31 Gen/379 Main 2025-2026", block=None, until="379 Main"),
     "379-south-main-street": dict(tab="31 Gen/379 Main 2025-2026", block="379 Main"),
     "561-south-main-street": dict(tab="561 Main 2026"),
+    "charlotte-square": dict(tab="50 Charlotte Sq 2026"),     # its own site; the price range on ours comes from here
 }
 NOT_A_HOME = re.compile(r"spot|garage|parking|storage|office|airbnb|total", re.I)    # never listed
 COMMERCIAL = re.compile(r"commercial", re.I)          # listed, as commercial space, not as a home

@@ -391,6 +391,21 @@ export function apply(data, unitsByPid, today, web = null, sheet = null) {
   let open = 0;
   const soon = new Date(Date.parse(`${today}T12:00:00Z`) + SOON_DAYS * 86400000).toISOString().slice(0, 10);
   for (const p of data.properties) {
+    // Charlotte Square leases from its own site: only its price range is ours to keep, from the
+    // worksheet's vacant homes there (their Total Amount Due), dated as the worksheet is.
+    if (p.external && sheet && Array.isArray(sheet.buildings[p.slug])) {
+      const rents = sheet.buildings[p.slug].filter((e) => e && !e.commercial && Number(e.rent) >= MIN_RENT).map((e) => Math.round(Number(e.rent)));
+      if (rents.length) {
+        const range = [Math.min(...rents), Math.max(...rents)];
+        if (JSON.stringify(range) !== JSON.stringify(p.rent_range)) {
+          report.push(`${p.name}: rents ${money(range[0])} – ${money(range[1])} (${rents.length} open in the lease worksheet)`
+            + (p.rent_range ? `, were ${money(p.rent_range[0])} – ${money(p.rent_range[1])}` : ''));
+        }
+        p.rent_range = range;
+        p.rent_as_of = sheet.as_of;
+      }
+      continue;
+    }
     if (p.external || !p.pid || !unitsByPid.has(p.pid)) continue;
     const readAll = unitsByPid.get(p.pid).map((u) => normalize(u, today)).filter(Boolean);
     const read = readAll.filter((n) => n.home);

@@ -52,6 +52,7 @@ const TABS = {
   '31-genesee-street': { tab: '31 Gen/379 Main 2025-2026', until: '379 Main' },
   '379-south-main-street': { tab: '31 Gen/379 Main 2025-2026', block: '379 Main' },
   '561-south-main-street': { tab: '561 Main 2026' },
+  'charlotte-square': { tab: '50 Charlotte Sq 2026' },     // its own site; the price range on ours comes from here
 };
 const SHEET_ID = '1YNx2XbJUaOh2_Hva4guDibWJsYWQf3haY-VQWugqqwo';   // LEASE WORKSHEETS 2026
 const NOT_A_HOME = /spot|garage|parking|storage|office|airbnb|total/i;   // never listed

@@ -171,6 +171,125 @@
     "commercial": false
    }
   ],
-  "561-south-main-street": []
+  "561-south-main-street": [],
+  "charlotte-square": [
+   {
+    "unit": "218",
+    "rent": 3295,
+    "beds": 3,
+    "baths": 2.0,
+    "sqft": 1555,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "224",
+    "rent": 2995,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 1045,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "301",
+    "rent": 2395,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 900,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "307-F",
+    "rent": 2495,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 856,
+    "furnished": true,
+    "commercial": false
+   },
+   {
+    "unit": "308",
+    "rent": 2195,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 856,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "311",
+    "rent": 2795,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 1045,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "314",
+    "rent": 3095,
+    "beds": 2,
+    "baths": 2.0,
+    "sqft": 1450,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "320",
+    "rent": 2395,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 765,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "323",
+    "rent": 2595,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 1045,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "402",
+    "rent": 3695,
+    "beds": 2,
+    "baths": 2.0,
+    "sqft": 1640,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "405-F",
+    "rent": 2695,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 900,
+    "furnished": true,
+    "commercial": false
+   },
+   {
+    "unit": "408",
+    "rent": 2195,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 856,
+    "furnished": false,
+    "commercial": false
+   },
+   {
+    "unit": "410",
+    "rent": 2395,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 890,
+    "furnished": false,
+    "commercial": false
+   }
+  ]
  }
 }

@@ -621,7 +621,9 @@ answer is used for up to three days. By hand, from an exported copy:
 python3 scripts/vacancy_sheet.py "LEASE WORKSHEETS 2026.xlsx"   # then commit data/vacancy-sheet.json
 ```
 
-A unit marked **Commercial** (its "# of Beds", or beside its number) and VACANT is listed too,
+Charlotte Square, which leases from its own site, takes only its **price range** from its tab
+(*50 Charlotte Sq 2026*): the lowest to highest Total Amount Due of its vacant homes, dated as the
+worksheet was read. A unit marked **Commercial** (its "# of Beds", or beside its number) and VACANT is listed too,
 as commercial space: its own *Commercial space* section on the building's page, at its Total
 Amount Due, with "Ask about it" to the building's form; never counted, filtered or described as
 a home. Each tab: the tenant cell says **VACANT** for an empty unit (a name there means taken, even while
