@@ -397,18 +397,23 @@ export function apply(data, unitsByPid, today, web = null, sheet = null) {
     const hidden = new Set((p.hide_units || []).map(String));
     const kept = new Map((p.units || []).map((u) => [u.uid, u]));
     const units = [];
-    // unit key → the worksheet's rent (or null); entries are {unit, rent}, or bare unit numbers.
+    // unit key → what the worksheet says of it ({rent, beds, baths, sqft, furnished}, any of them
+    // missing); entries are those objects, or bare unit numbers in an older file.
     const listed = sheet && Array.isArray(sheet.buildings[p.slug])
-      ? new Map(sheet.buildings[p.slug].map((e) => (typeof e === 'object' && e
-        ? [unitKey(e.unit), Number(e.rent) > 0 ? Number(e.rent) : null] : [unitKey(e), null])))
+      ? new Map(sheet.buildings[p.slug].map((e) => (typeof e === 'object' && e ? [unitKey(e.unit), e] : [unitKey(e), {}])))
       : null;
+    const has = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
     if (listed) {
       const known = new Set(read.map((n) => unitKey(n.unit)));
       for (const k of listed.keys()) if (!known.has(k)) skipped.push(`${p.name} unit ${k}: vacant in the lease worksheet, but Rent Manager has no home by that number`);
     }
     // The worksheet's units when it names this building (as vacant now: no "from" date); else Rent Manager's open ones.
-    const candidates = listed ? read.filter((x) => listed.has(unitKey(x.unit)))
-      .map((x) => ({ ...x, available: null, rent: listed.get(unitKey(x.unit)) || x.rent }))
+    // The worksheet's rent, bedrooms, baths and size where it has them (it is updated first); Rent Manager's where not.
+    const candidates = listed ? read.filter((x) => listed.has(unitKey(x.unit))).map((x) => {
+      const w = listed.get(unitKey(x.unit));
+      return { ...x, available: null, rent: Number(w.rent) > 0 ? Number(w.rent) : x.rent, beds: has(w.beds) ? Number(w.beds) : x.beds,
+        baths: has(w.baths) ? Number(w.baths) : x.baths, sqft: has(w.sqft) ? Number(w.sqft) : x.sqft, furnished: w.furnished };
+    })
       : read.filter((x) => isOpen(x, today));
     for (const n of candidates) {
       if (hidden.has(n.unit.replace(FURNISHED, ''))) continue;
@@ -417,7 +422,11 @@ export function apply(data, unitsByPid, today, web = null, sheet = null) {
       if (!n.rent) { skipped.push(`${label}: open, but no market rent in Rent Manager`); continue; }
       if (n.rent < MIN_RENT) { skipped.push(`${label}: open at ${money(n.rent)} a month, too little for a home (parking or storage?)`); continue; }
       if (n.available && n.available > soon) { skipped.push(`${label}: free from ${n.available}, more than ${SOON_DAYS} days off; listed once it is nearer`); continue; }
-      units.push(siteUnit(n, kept.get(n.id), today));
+      const unit = siteUnit(n, kept.get(n.id), today);
+      // Furnished, by the worksheet's "-F", when it names the building: on, or off again if it says unfurnished.
+      if (n.furnished === true && !unit.note) unit.note = 'Furnished';
+      if (n.furnished === false && unit.note === 'Furnished') delete unit.note;
+      units.push(unit);
     }
     units.sort((a, b) => (natural(a.unit) < natural(b.unit) ? -1 : 1));
     open += units.length;

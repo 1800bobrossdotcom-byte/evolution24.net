@@ -5,8 +5,8 @@
 
 Reads the leasing team's "LEASE WORKSHEETS" workbook (exported from Google Sheets as .xlsx) and
 writes data/vacancy-sheet.json: for each building with a tab, the units that are vacant now with
-the rent to advertise (the tab's "Total Amount Due", or "Total Rent charged"), and the day it was
-read. Only those leave the workbook: never a tenant's name, phone or payments.
+the rent to advertise (the tab's "Total Amount Due", or "Total Rent charged"), its bedrooms, baths
+and size where the tab has them, and whether it is furnished ("-F"), and the day it was read. Only those leave the workbook: never a tenant's name, phone or payments.
 scripts/availability.mjs then lists exactly those units, at those rents (Rent Manager gives size
 and bedrooms, and the rent where the cell is blank), while the file is at most STALE_DAYS old
 (see there), so the worksheet, which the team updates every day before Rent Manager, decides
@@ -60,6 +60,18 @@ def unit_name(v):
     return s[:-2] if re.fullmatch(r"\d+\.0", s) else s
 
 
+def layout(v):
+    """(beds, baths) from "# of Beds": 2, "1B/1B", "2B/1Ba", "1 bed/1ba", "Studio"; None where it says neither."""
+    if isinstance(v, (int, float)):
+        return (int(v), None) if 0 <= v <= 6 else (None, None)
+    s = str(v or "").strip().lower()
+    if s.startswith("studio"):
+        m = re.search(r"/\s*(\d+(?:\.5)?)\s*b", s)
+        return 0, (float(m[1]) if m else None)
+    m = re.match(r"(\d)\s*(?:b|bed|br)?\w*\s*(?:/\s*(\d+(?:\.5)?)\s*b)?", s)
+    return (int(m[1]), float(m[2]) if m[2] else None) if m else (None, None)
+
+
 def month_of(h):
     """1-12 for a month column's heading ("November", "2025-11-01", "PAID August 2025"), else None."""
     if isinstance(h, (dt.datetime, dt.date)):
@@ -94,6 +106,7 @@ def read_building(ws, spec, today):
     tenant = next(j for j, c in enumerate(head) if who(c))
     total = next((j for j, c in enumerate(head) if re.search(r"total (amount due|rent)", str(c or ""), re.I)), None)
     beds = next((j for j, c in enumerate(head) if re.search(r"beds?\b", str(c or ""), re.I)), None)   # "Commercial" there: a shop
+    sqft = next((j for j, c in enumerate(head) if re.search(r"sq\.? ?ft", str(c or ""), re.I)), None)
     months = [(j, month_of(c)) for j, c in enumerate(head) if j > tenant and month_of(c)]
     recent = {(today.month - k - 1) % 12 + 1 for k in range(3)}          # this month and the two before
     out, seen = [], {}
@@ -112,7 +125,10 @@ def read_building(ws, spec, today):
         # first, before its months are). Only a blank one falls back to the latest month.
         blank = r[tenant] is None or str(r[tenant]).strip() == ""
         if vacant(r[tenant]) or (blank and vacant(last) and last_month in recent):
-            seen[name] = {"unit": name, "rent": round(rent) if rent else None}
+            b, ba = layout(r[beds]) if beds is not None else (None, None)
+            size = r[sqft] if sqft is not None and isinstance(r[sqft], (int, float)) and 150 <= r[sqft] <= 5000 else None
+            seen[name] = {"unit": name, "rent": round(rent) if rent else None, "beds": b, "baths": ba,
+                          "sqft": round(size) if size else None, "furnished": bool(re.search(r"\d\s*-?\s*F$", name, re.I))}
             out.append(seen[name])
     return out
 

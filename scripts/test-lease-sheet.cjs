@@ -34,9 +34,19 @@ const test = (name, fn) => tests.push([name, fn]);
 
 test('the tenant cell decides; a blank one falls back to the latest month; homes only; dates read back', () => {
   const got = gs.readBuilding_(TAB, { tab: 'Test' }, 11);
-  assert.deepStrictEqual(got, [
-    { unit: '101', rent: 1495 }, { unit: '103', rent: 1250 }, { unit: '1-3', rent: 1020 }, { unit: '105-F', rent: null },
+  assert.deepStrictEqual(got.map((u) => [u.unit, u.rent, u.furnished]), [
+    ['101', 1495, false], ['103', 1250, false], ['1-3', 1020, false], ['105-F', null, true],
   ]);
+});
+
+test('bedrooms and baths read from how the tabs write them', () => {
+  assert.deepStrictEqual(gs.layout_(2), [2, null]);
+  assert.deepStrictEqual(gs.layout_('1B/1B'), [1, 1]);
+  assert.deepStrictEqual(gs.layout_('2B/1Ba'), [2, 1]);
+  assert.deepStrictEqual(gs.layout_('1 bed/1ba'), [1, 1]);
+  assert.deepStrictEqual(gs.layout_('Studio'), [0, null]);
+  assert.deepStrictEqual(gs.layout_('Studio (Furnished)'), [0, null]);
+  assert.deepStrictEqual(gs.layout_('Commercial'), [null, null]);
 });
 
 test('a month heading is a month; "Max Market" is not March', () => {
@@ -49,8 +59,9 @@ test('a month heading is a month; "Max Market" is not March', () => {
 test('two buildings on one tab are read apart', () => {
   const tab = [['Unit', 'Tenant Name', 'Total Rent charged', 'November'], [1, 'VACANT', 1000, ''], [2, 'Tenant', 1100, 1100],
     ['379 Main St', '', '', ''], ['Unit', 'Tenant Name', 'Total Rent charged', 'November'], [1, 'Tenant', 900, 900], [2, 'VACANT', 2200, '']];
-  assert.deepStrictEqual(gs.readBuilding_(tab, { tab: 'x', until: '379 Main' }, 11), [{ unit: '1', rent: 1000 }]);
-  assert.deepStrictEqual(gs.readBuilding_(tab, { tab: 'x', block: '379 Main' }, 11), [{ unit: '2', rent: 2200 }]);
+  const pick = (us) => us.map((u) => ({ unit: u.unit, rent: u.rent }));
+  assert.deepStrictEqual(pick(gs.readBuilding_(tab, { tab: 'x', until: '379 Main' }, 11)), [{ unit: '1', rent: 1000 }]);
+  assert.deepStrictEqual(pick(gs.readBuilding_(tab, { tab: 'x', block: '379 Main' }, 11)), [{ unit: '2', rent: 2200 }]);
 });
 
 (async () => {
@@ -77,7 +88,7 @@ test('two buildings on one tab are read apart', () => {
   test('the answer is saved, with the token sent in the body', async () => {
     assert.strictEqual(await run({ VACANCY_SHEET_URL: url, VACANCY_SHEET_TOKEN: 'right' }), true);
     const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
-    assert.deepStrictEqual(saved.buildings, { 'water-street': [{ unit: '203', rent: 1600 }] });
+    assert.deepStrictEqual(saved.buildings, { 'water-street': [{ unit: '203', rent: 1600, beds: null, baths: null, sqft: null, furnished: false }] });
     assert.strictEqual(saved.as_of, '2026-11-25');
     assert.deepStrictEqual(seen[seen.length - 1], { token: 'right' });
   });

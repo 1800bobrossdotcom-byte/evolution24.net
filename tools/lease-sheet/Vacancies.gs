@@ -4,8 +4,8 @@
  * Lives in the leasing team's "LEASE WORKSHEETS 2026" spreadsheet (Extensions → Apps Script).
  * The website's availability sync (.github/workflows/availability.yml, several times a day)
  * asks this script's web-app address, with a secret token, which units each building's tab
- * marks vacant and the rent to advertise for each (its "Total Amount Due", or "Total Rent
- * charged"). It answers with unit numbers and rents only: never a tenant's name, phone or
+ * marks vacant, the rent to advertise for each (its "Total Amount Due", or "Total Rent
+ * charged"), and its bedrooms, baths, size and whether it is furnished, where the tab says. It answers with those details of empty units only: never a tenant's name, phone or
  * payments, and it can neither change the sheet nor read anything else. The website then
  * lists exactly those units at those rents (scripts/availability.mjs).
  *
@@ -67,6 +67,15 @@ function unitName_(v) {
   return /^\d+\.0$/.test(s) ? s.slice(0, -2) : s;
 }
 
+/** [beds, baths] from "# of Beds": 2, "1B/1B", "2B/1Ba", "1 bed/1ba", "Studio"; null where it says neither. */
+function layout_(v) {
+  if (typeof v === 'number') return v >= 0 && v <= 6 ? [Math.trunc(v), null] : [null, null];
+  const s = String(v || '').trim().toLowerCase();
+  if (s.startsWith('studio')) { const m = /\/\s*(\d+(?:\.5)?)\s*b/.exec(s); return [0, m ? Number(m[1]) : null]; }
+  const m = /^(\d)\s*(?:b|bed|br)?\w*\s*(?:\/\s*(\d+(?:\.5)?)\s*b)?/.exec(s);
+  return m ? [Number(m[1]), m[2] ? Number(m[2]) : null] : [null, null];
+}
+
 /** 1–12 for a month column's heading ("November", a date, "PAID August 2025"), else 0. */
 function monthOf_(h) {
   if (h instanceof Date) return h.getMonth() + 1;
@@ -91,6 +100,7 @@ function readBuilding_(rows, spec, month) {
   const tenant = head.findIndex(who);
   const total = head.findIndex((c) => /total (amount due|rent)/i.test(String(c || '')));
   const beds = head.findIndex((c) => /beds?\b/i.test(String(c || '')));   // "# of Beds": "Commercial" there is a shop
+  const sqft = head.findIndex((c) => /sq\.? ?ft/i.test(String(c || '')));
   const months = head.map((c, j) => [j, j > tenant ? monthOf_(c) : 0]).filter(([, m]) => m);
   const recent = [0, 1, 2].map((k) => ((month - k - 1 + 12) % 12) + 1);
   const out = [];
@@ -104,7 +114,9 @@ function readBuilding_(rows, spec, month) {
     const filled = months.filter(([j]) => !isBlank(r[j]));
     const [lastJ, lastM] = filled.length ? filled[filled.length - 1] : [-1, 0];
     if (isVacant(r[tenant]) || (isBlank(r[tenant]) && lastJ >= 0 && isVacant(r[lastJ]) && recent.includes(lastM))) {
-      seen[name] = { unit: name, rent };
+      const [b, ba] = beds >= 0 ? layout_(r[beds]) : [null, null];
+      const size = sqft >= 0 && typeof r[sqft] === 'number' && r[sqft] >= 150 && r[sqft] <= 5000 ? Math.round(r[sqft]) : null;
+      seen[name] = { unit: name, rent, beds: b, baths: ba, sqft: size, furnished: /\d\s*-?\s*F$/i.test(name) };
       out.push(seen[name]);
     }
   });
@@ -181,4 +193,4 @@ function tokenFor_() {
   return token;
 }
 
-if (typeof module !== 'undefined') module.exports = { readBuilding_, unitName_, monthOf_, TABS };   // for the tests
+if (typeof module !== 'undefined') module.exports = { readBuilding_, unitName_, monthOf_, layout_, TABS };   // for the tests

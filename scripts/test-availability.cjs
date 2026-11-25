@@ -273,7 +273,7 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
     const sheet = path.join(path.dirname(file), 'vacancy-sheet.json');
     const write = (asOf) => fs.writeFileSync(sheet, JSON.stringify({ as_of: asOf, buildings: {
       'water-street': [{ unit: '502', rent: 1700 }, { unit: '103', rent: null }],   // 502RV is occupied in Rent Manager; 105RV and 302RV are vacant there
-      '301-central-avenue': ['7-F', '99'],   // 7 is occupied there; there is no 99
+      '301-central-avenue': [{ unit: '7-F', rent: 1600, beds: 2, baths: 1, sqft: 700, furnished: true }, '99'],   // 7 is occupied there; there is no 99
     } }));
     try {
       write(TODAY);
@@ -281,7 +281,8 @@ function rmUnit([id, pid, name, beds, baths, sqft, rent, occ, status], ask) {
       let d = read(file);
       // the worksheet's rent where it has one (502RV), Rent Manager's where it has none (103RV)
       assert.deepEqual(units(d, 'water-street').map((u) => [u.unit, u.rent]), [['103RV', 1175], ['502RV', 1700]]);
-      assert.deepEqual(units(d, '301-central-avenue').map((u) => u.unit), ['7']);
+      // the worksheet's bedrooms, size and furnished win over Rent Manager's (1 bed, no size, not furnished)
+      assert.deepEqual(units(d, '301-central-avenue'), [{ uid: 7, unit: '7', beds: 2, baths: 1, sqft: 700, rent: 1600, note: 'Furnished' }]);
       assert.deepEqual(units(d, '2215-james-street').map((u) => u.unit), ['1']);          // not in the worksheet: Rent Manager decides
       assert.ok(log.join('\n').includes('99: vacant in the lease worksheet, but Rent Manager has no home by that number'));
       assert.ok(log.join('\n').includes('Lease worksheet (read 2026-10-19) decides'));

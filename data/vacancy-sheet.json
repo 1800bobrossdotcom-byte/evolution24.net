@@ -5,76 +5,136 @@
   "301-central-avenue": [
    {
     "unit": "4-F",
-    "rent": 1795
+    "rent": 1795,
+    "beds": 2,
+    "baths": null,
+    "sqft": null,
+    "furnished": true
    },
    {
     "unit": "6-F",
-    "rent": 1895
+    "rent": 1895,
+    "beds": 2,
+    "baths": null,
+    "sqft": null,
+    "furnished": true
    },
    {
     "unit": "11",
-    "rent": 1625
+    "rent": 1625,
+    "beds": 2,
+    "baths": null,
+    "sqft": null,
+    "furnished": false
    }
   ],
   "water-street": [
    {
     "unit": "203",
-    "rent": 1600
+    "rent": 1600,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 568,
+    "furnished": false
    },
    {
     "unit": "205",
-    "rent": 1700
+    "rent": 1700,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 807,
+    "furnished": false
    },
    {
     "unit": "403",
-    "rent": 1600
+    "rent": 1600,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 568,
+    "furnished": false
    },
    {
     "unit": "505",
-    "rent": 1700
+    "rent": 1700,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 807,
+    "furnished": false
    },
    {
     "unit": "107IL",
-    "rent": 1795
+    "rent": 1795,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": null,
+    "furnished": false
    },
    {
     "unit": "208IL",
-    "rent": 1850
+    "rent": 1850,
+    "beds": 2,
+    "baths": 1.0,
+    "sqft": 905,
+    "furnished": false
    }
   ],
   "145-south-fitzhugh-street": [
    {
     "unit": "1-1F",
-    "rent": 1550
+    "rent": 1550,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 650,
+    "furnished": true
    }
   ],
   "181-st-paul-street": [],
   "biltmore": [
    {
     "unit": "10-F",
-    "rent": 1150
+    "rent": 1150,
+    "beds": 0,
+    "baths": null,
+    "sqft": 365,
+    "furnished": true
    },
    {
     "unit": "12B",
-    "rent": 1250
+    "rent": 1250,
+    "beds": 0,
+    "baths": null,
+    "sqft": 365,
+    "furnished": false
    },
    {
     "unit": "20",
-    "rent": 1495
+    "rent": 1495,
+    "beds": 1,
+    "baths": 1.0,
+    "sqft": 470,
+    "furnished": false
    }
   ],
   "2215-james-street": [],
   "121-park-drive": [
    {
     "unit": "5",
-    "rent": 1695
+    "rent": 1695,
+    "beds": 2,
+    "baths": null,
+    "sqft": null,
+    "furnished": false
    }
   ],
   "31-genesee-street": [],
   "379-south-main-street": [
    {
     "unit": "2",
-    "rent": 2200
+    "rent": 2200,
+    "beds": 3,
+    "baths": null,
+    "sqft": null,
+    "furnished": false
    }
   ],
   "561-south-main-street": []

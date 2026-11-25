@@ -38,8 +38,10 @@ export function checked(answer) {
     buildings[slug] = units.map((u) => {
       const unit = String(u && u.unit || '').trim();
       if (!/^[\w .\-/#]{1,20}$/.test(unit)) throw new Error(`a unit at ${slug} is not a unit number`);
-      const rent = Number(u.rent);
-      return { unit, rent: Number.isFinite(rent) && rent > 0 && rent < 100000 ? Math.round(rent) : null };
+      const num = (v, lo, hi) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) || Number(v) < lo || Number(v) > hi ? null : Number(v));
+      const rent = num(u.rent, 1, 99999);
+      return { unit, rent: rent && Math.round(rent), beds: num(u.beds, 0, 6), baths: num(u.baths, 0.5, 6),
+        sqft: num(u.sqft, 150, 5000), furnished: u.furnished === true };
     });
   }
   if (!Object.keys(buildings).length) throw new Error('its answer names no buildings');
