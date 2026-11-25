@@ -52,6 +52,13 @@
    "geo": [
     43.1624,
     -77.60901
+   ],
+   "commercial": [
+    {
+     "unit": "14",
+     "rent": 1850,
+     "note": "Commercial space"
+    }
    ]
   },
   {
@@ -250,6 +257,14 @@
    "geo": [
     43.16032,
     -77.61054
+   ],
+   "commercial": [
+    {
+     "unit": "179",
+     "sqft": 1915,
+     "rent": 3200,
+     "note": "Commercial space"
+    }
    ]
   },
   {
