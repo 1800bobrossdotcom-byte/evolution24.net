@@ -234,18 +234,6 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "5"
-    }
-   ],
-   "destination": "/properties/301-central-avenue/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "6"
     }
    ],
@@ -271,30 +259,6 @@
      "type": "query",
      "key": "uid",
      "value": "34"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "36"
-    }
-   ],
-   "destination": "/properties/145-south-fitzhugh-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "39"
     }
    ],
    "destination": "/properties/145-south-fitzhugh-street/#units",
@@ -366,18 +330,6 @@
     {
      "type": "query",
      "key": "uid",
-     "value": "82"
-    }
-   ],
-   "destination": "/properties/water-street/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
      "value": "88"
     }
    ],
@@ -418,18 +370,6 @@
     }
    ],
    "destination": "/properties/biltmore/#units",
-   "permanent": true
-  },
-  {
-   "source": "/unit-detail/",
-   "has": [
-    {
-     "type": "query",
-     "key": "uid",
-     "value": "26"
-    }
-   ],
-   "destination": "/properties/121-park-drive/#units",
    "permanent": true
   },
   {

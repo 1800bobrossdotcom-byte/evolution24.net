@@ -34,13 +34,6 @@
      "note": "Furnished"
     },
     {
-     "uid": 5,
-     "unit": "5",
-     "beds": 1,
-     "baths": 1,
-     "rent": 1295
-    },
-    {
      "uid": 6,
      "unit": "6",
      "beds": 2,
@@ -89,22 +82,6 @@
      "baths": 1,
      "sqft": 650,
      "rent": 1550
-    },
-    {
-     "uid": 36,
-     "unit": "1-3",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 650,
-     "rent": 1295
-    },
-    {
-     "uid": 39,
-     "unit": "2-2",
-     "beds": 0,
-     "baths": 1,
-     "sqft": 450,
-     "rent": 1020
     }
    ],
    "geo": [
@@ -175,14 +152,6 @@
      "beds": 1,
      "baths": 1,
      "sqft": 568,
-     "rent": 1600
-    },
-    {
-     "uid": 82,
-     "unit": "405RV",
-     "beds": 1,
-     "baths": 1,
-     "sqft": 734,
      "rent": 1600
     },
     {
@@ -374,13 +343,6 @@
     "On-site laundry"
    ],
    "units": [
-    {
-     "uid": 26,
-     "unit": "4",
-     "beds": 1,
-     "baths": 1,
-     "rent": 1595
-    },
     {
      "uid": 27,
      "unit": "5",
