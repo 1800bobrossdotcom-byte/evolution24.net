@@ -40,6 +40,7 @@
 - 121 Park Drive, Manlius: unit 4, 1 bed · 1 bath, $1,595/mo. Apply: https://evolution24.net/properties/121-park-drive/?unit=26&interest=apply#enquire
 - Water Street, Rochester: unit 203RV, 1 bed · 1 bath, 568 sq ft, $1,630/mo. Apply: https://evolution24.net/properties/water-street/?unit=68&interest=apply#enquire
 - Water Street, Rochester: unit 403RV, 1 bed · 1 bath, 568 sq ft, $1,630/mo. Apply: https://evolution24.net/properties/water-street/?unit=80&interest=apply#enquire
+- 121 Park Drive, Manlius: unit 5, 2 bed · 1 bath, $1,695/mo. Apply: https://evolution24.net/properties/121-park-drive/?unit=27&interest=apply#enquire
 - 301 Central Avenue, Rochester: unit 11, 1 bed · 1 bath, $1,710/mo. Apply: https://evolution24.net/properties/301-central-avenue/?unit=11&interest=apply#enquire
 - Water Street, Rochester: unit 205RV, 1 bed · 1 bath, 807 sq ft, $1,725/mo. Apply: https://evolution24.net/properties/water-street/?unit=70&interest=apply#enquire
 - Water Street, Rochester: unit 505RV, 1 bed · 1 bath, 807 sq ft, $1,725/mo. Apply: https://evolution24.net/properties/water-street/?unit=88&interest=apply#enquire
@@ -47,7 +48,6 @@
 - Water Street, Rochester: unit 107IL, 1 bed · 1 bath, 775 sq ft, $1,795/mo. Apply: https://evolution24.net/properties/water-street/?unit=102&interest=apply#enquire
 - 301 Central Avenue, Rochester: unit 4, 2 bed · 1 bath, $1,895/mo. Apply: https://evolution24.net/properties/301-central-avenue/?unit=4&interest=apply#enquire
 - 301 Central Avenue, Rochester: unit 6, 2 bed · 1 bath, $1,895/mo. Apply: https://evolution24.net/properties/301-central-avenue/?unit=6&interest=apply#enquire
-- 121 Park Drive, Manlius: unit 5, 2 bed · 1 bath, $1,895/mo. Apply: https://evolution24.net/properties/121-park-drive/?unit=27&interest=apply#enquire
 - Water Street, Rochester: unit 208IL, 2 bed · 1 bath, 905 sq ft, $2,000/mo. Apply: https://evolution24.net/properties/water-street/?unit=111&interest=apply#enquire
 - 379 South Main, Geneva: unit 2, 3 bed · 1 bath, $3,300/mo. Apply: https://evolution24.net/properties/379-south-main-street/?unit=152&interest=apply#enquire
 
