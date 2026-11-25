@@ -25,18 +25,19 @@ const TAB = [
   [new Date(2024, 2, 1), 'VACANT', '', 900, 1020, 900, '', '', '', ''],         // "1-3", turned into 1 March by Sheets
   ['Spot 8', 'VACANT', '', 50, 50, '', '', '', '', ''],                          // parking: never a home
   ['105-F', 'VACANT', '', 1700, '', '', '', '', '', ''],                         // no rent in the sheet: null
-  [14, 'VACANT', '', 1850, 1850, 'Commercial', '', '', '', ''],                  // a shop, by its "# of Beds": never a home
+  [14, 'VACANT', '', 1850, 1850, 'Commercial', '', '', '', ''],                  // a shop, by its "# of Beds": kept, as commercial
   ['TOTAL', '', '', '', '', '', '', '', '', ''],
 ];
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 
-test('the tenant cell decides; a blank one falls back to the latest month; homes only; dates read back', () => {
+test('the tenant cell decides; a blank one falls back to the latest month; no parking; dates read back; shops flagged', () => {
   const got = gs.readBuilding_(TAB, { tab: 'Test' }, 11);
-  assert.deepStrictEqual(got.map((u) => [u.unit, u.rent, u.furnished]), [
-    ['101', 1495, false], ['103', 1250, false], ['1-3', 1020, false], ['105-F', null, true],
+  assert.deepStrictEqual(got.map((u) => [u.unit, u.rent, u.furnished, u.commercial]), [
+    ['101', 1495, false, false], ['103', 1250, false, false], ['1-3', 1020, false, false], ['105-F', null, true, false], ['14', 1850, false, true],
   ]);
+  assert.deepStrictEqual([got[4].beds, got[4].baths], [null, null]);   // a shop has no bedrooms
 });
 
 test('bedrooms and baths read from how the tabs write them', () => {
@@ -88,7 +89,7 @@ test('two buildings on one tab are read apart', () => {
   test('the answer is saved, with the token sent in the body', async () => {
     assert.strictEqual(await run({ VACANCY_SHEET_URL: url, VACANCY_SHEET_TOKEN: 'right' }), true);
     const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
-    assert.deepStrictEqual(saved.buildings, { 'water-street': [{ unit: '203', rent: 1600, beds: null, baths: null, sqft: null, furnished: false }] });
+    assert.deepStrictEqual(saved.buildings, { 'water-street': [{ unit: '203', rent: 1600, beds: null, baths: null, sqft: null, furnished: false, commercial: false }] });
     assert.strictEqual(saved.as_of, '2026-11-25');
     assert.deepStrictEqual(seen[seen.length - 1], { token: 'right' });
   });
