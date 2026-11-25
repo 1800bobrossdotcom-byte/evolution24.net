@@ -8,8 +8,8 @@
    "pid": 1,
    "units": {
     "11": {
-     "label": "Unit 11 · 1 bed · $1,625/mo",
-     "bedrooms": "1"
+     "label": "Unit 11 · 2 bed · $1,625/mo",
+     "bedrooms": "2"
     },
     "4": {
      "label": "Unit 4 · 2 bed · $1,795/mo",

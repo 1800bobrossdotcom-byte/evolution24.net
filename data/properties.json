@@ -38,12 +38,13 @@
      "unit": "6",
      "beds": 2,
      "baths": 1,
-     "rent": 1895
+     "rent": 1895,
+     "note": "Furnished"
     },
     {
      "uid": 11,
      "unit": "11",
-     "beds": 1,
+     "beds": 2,
      "baths": 1,
      "rent": 1625
     }
@@ -81,7 +82,8 @@
      "beds": 1,
      "baths": 1,
      "sqft": 650,
-     "rent": 1550
+     "rent": 1550,
+     "note": "Furnished"
     }
    ],
    "geo": [
@@ -199,7 +201,8 @@
      "beds": 0,
      "baths": 1,
      "sqft": 365,
-     "rent": 1150
+     "rent": 1150,
+     "note": "Furnished"
     },
     {
      "uid": 131,
