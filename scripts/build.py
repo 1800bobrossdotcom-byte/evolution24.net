@@ -1355,7 +1355,7 @@ def property_page(p):
     else:
         units = f"""<section class="section ink" id="units"><div class="wrap">
   <p class="label" data-reveal>Availability</p><h2 data-reveal class="i1">Fully leased, <em>for now.</em></h2>
-  <p class="lead" data-reveal>Nothing is open at {esc(p['name'])} today. Tell us what you are looking for and we will let you know as soon as something comes up.</p>
+  <p class="lead" data-reveal>{'No apartments are' if p.get('commercial') else 'Nothing is'} open at {esc(p['name'])} today. Tell us what you are looking for and we will let you know as soon as something comes up.</p>
   <div class="hero-actions" data-reveal><a class="btn btn--solid" href="#enquire">Join the waitlist {icon('arrow')}</a><a class="btn" href="/properties/#available">See what’s available elsewhere</a></div>
 </div></section>"""
 
