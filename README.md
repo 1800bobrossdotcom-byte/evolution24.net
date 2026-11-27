@@ -912,6 +912,19 @@ python3 tools/ads/ads.py --only water-street,biltmore --no-video   # redraw some
 - **Where things are set:** the photos, lines and pitch for each building are the `ADS` table at
   the top of `ads.py`; the two shapes are `FORMATS`.
 
+**Charlotte Square's holiday pricing (through December 31, 2026).** Charlotte Square runs its
+own deals on its own site, and this site promotes them. Each build reads
+`https://www.charlottesquareroc.com/api/units`; while that carries `holiday`, Charlotte Square's
+card shows a **Holiday pricing** badge, the holiday rents (the market-rate range; the
+income-restricted AMI home is named in the popup with its limits, not quoted as a "from" price)
+and a **See holiday pricing** button to its availability page, and the deal popup and header chip
+carry the holiday homes, each linking there (`utm_campaign=holiday`). The popup only takes the
+place of the half-off special while that is not running. A home leased there drops off here at
+the next hourly build, and it all ends with Charlotte Square's own date (and main.js takes it
+down at midnight on a page built before). The last answer is kept in `data/charlotte-holiday.json`
+for a build that cannot reach the site. Nothing to edit here: change the holiday homes in
+Charlotte Square's repository (`HOLIDAY` in `functions/_lib/rentmanager.js`).
+
 **Specials.** `tools/ads/deals.py` makes the same kind of ads for a leasing special, from
 `data/deals.json`: half off the first month on leases signed by a date, as an ad for each
 building in one area (`AREA` in `deals.py`: Rochester) and one for all of them, and a special rent

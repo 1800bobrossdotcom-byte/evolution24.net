@@ -1,0 +1,75 @@
+{
+ "until": "2026-12-31",
+ "units": [
+  {
+   "unit": "308",
+   "beds": 1,
+   "baths": 1,
+   "den": false,
+   "sqft": 856,
+   "rent": 1700,
+   "ami": true,
+   "available": "now"
+  },
+  {
+   "unit": "301",
+   "beds": 1,
+   "baths": 1,
+   "den": false,
+   "sqft": 900,
+   "rent": 1895,
+   "ami": false,
+   "available": "now"
+  },
+  {
+   "unit": "320",
+   "beds": 1,
+   "baths": 1,
+   "den": false,
+   "sqft": 765,
+   "rent": 1895,
+   "ami": false,
+   "available": "now"
+  },
+  {
+   "unit": "224",
+   "beds": 1,
+   "baths": 1,
+   "den": true,
+   "sqft": 1045,
+   "rent": 2195,
+   "ami": false,
+   "available": "now"
+  },
+  {
+   "unit": "314",
+   "beds": 2,
+   "baths": 2,
+   "den": false,
+   "sqft": 1450,
+   "rent": 2895,
+   "ami": false,
+   "available": "now"
+  },
+  {
+   "unit": "402",
+   "beds": 2,
+   "baths": 2,
+   "den": true,
+   "sqft": 1640,
+   "rent": 3295,
+   "ami": false,
+   "available": "now"
+  },
+  {
+   "unit": "218",
+   "beds": 3,
+   "baths": 2,
+   "den": false,
+   "sqft": 1555,
+   "rent": 3395,
+   "ami": false,
+   "available": "now"
+  }
+ ]
+}

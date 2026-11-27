@@ -80,6 +80,50 @@ for _slug, _homes in (DEALS.get("special", {}) if DEAL_ON else {}).items():
                     _u["note"] = _h["detail"]
 CS_LEASING = BY_SLUG["charlotte-square"]["leasing"]   # Charlotte Square's leasing contact, as its own site gives it
 
+# Holiday pricing at Charlotte Square, read from its own site (/api/units carries `holiday` while
+# it runs, and only the holiday homes still open), so the two sites always agree: a home leased
+# there drops off here at the next build, and the promotion ends here when it ends there. The
+# last good answer is kept in data/charlotte-holiday.json for a build that cannot reach the site.
+# While it runs: Charlotte Square's card shows the holiday rents and links to its availability
+# page, and the deal popup and header chip (main.js: once a visit, gone after its last day) carry
+# it, whenever the half-off special is not running.
+CS_UNITS_API = "https://www.charlottesquareroc.com/api/units"
+CS_HOLIDAY_FILE = ROOT / "data" / "charlotte-holiday.json"
+CS_AVAILABILITY = ("https://www.charlottesquareroc.com/availability/"
+                   "?utm_source=evolution24&utm_medium=website&utm_campaign=holiday")
+
+
+def _charlotte_holiday():
+    import urllib.request
+    try:
+        req = urllib.request.Request(CS_UNITS_API, headers={"Accept": "application/json", "User-Agent": "evolution24.net build"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            d = json.loads(r.read())
+        h, units = d.get("holiday"), [u for u in d.get("units", []) if u.get("holiday") and u.get("rent")]
+        live = {"until": h["until"], "units": [
+            {k: u[k] for k in ("unit", "beds", "baths", "den", "sqft", "rent", "ami", "available") if u.get(k) is not None}
+            for u in sorted(units, key=lambda u: (u["rent"], str(u["unit"])))]} if h and units else {}
+        text = json.dumps(live, indent=1) + "\n"
+        if not CS_HOLIDAY_FILE.exists() or CS_HOLIDAY_FILE.read_text() != text:
+            CS_HOLIDAY_FILE.write_text(text)
+        return live
+    except Exception:                                   # offline, or the site is down: the last answer
+        try:
+            return json.loads(CS_HOLIDAY_FILE.read_text())
+        except Exception:
+            return {}
+
+
+CS_HOLIDAY = _charlotte_holiday()
+_today_et = dt.datetime.now(ZoneInfo("America/New_York")).date()
+HOLIDAY_ON = bool(CS_HOLIDAY.get("units")) and _today_et <= dt.date.fromisoformat(CS_HOLIDAY["until"])
+HOLIDAY_UNTIL = dt.date.fromisoformat(CS_HOLIDAY["until"]) if HOLIDAY_ON else None
+if HOLIDAY_ON:
+    # The card, map and building page show the holiday rents: the market-rate homes' range (an
+    # income-restricted home is named in the popup, with its limits, not quoted as a "from" price).
+    _market = [u["rent"] for u in CS_HOLIDAY["units"] if not u.get("ami")] or [u["rent"] for u in CS_HOLIDAY["units"]]
+    BY_SLUG["charlotte-square"].update(rent_range=[min(_market), max(_market)], rent_as_of=_today_et.isoformat(), holiday=True)
+
 FAQS = [
     ("How do I report a maintenance issue?",
      f'If your issue is an emergency, contact your property manager right away. If it is not an emergency, submit a maintenance request through <a href="{PORTAL}" rel="noopener">Tenant Web Access</a>.',
@@ -655,6 +699,7 @@ def card(p, i=0, sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1200p
     n = len(p["units"])
     tags = [p["region"]] + (["available"] if n else []) + sorted({unit_tag(u) for u in p["units"]})
     badge = (f'<span class="badge badge--live">{n} available</span>' if n
+             else '<span class="badge badge--holiday">Holiday pricing</span>' if p.get("holiday")
              else '<span class="badge">Visit site</span>' if p.get("external")
              else '<span class="badge">Join the waitlist</span>')
     rf = prop_rent_from(p)
@@ -714,6 +759,8 @@ def leasing_phone(p):
 
 def finder_action(p):
     """The row's main button: Apply, the building's own site, or its waitlist."""
+    if p.get("external") and p.get("holiday"):
+        return "See holiday pricing", CS_AVAILABILITY, ' rel="noopener"', "ext"
     if p.get("external"):
         href = f'{p["external"].rstrip("/")}/?utm_source=evolution24&utm_medium=website&utm_campaign=map'
         return "Visit its site", href, ' rel="noopener"', "ext"
@@ -731,6 +778,7 @@ def finder_row(p, i):
     n = len(p["units"])
     tags = [p["region"]] + (["available"] if n else []) + sorted({unit_tag(u) for u in p["units"]})
     badge = (f'<span class="badge badge--live">{n} available</span>' if n
+             else '<span class="badge badge--holiday">Holiday pricing</span>' if p.get("holiday")
              else '<span class="badge">Visit site</span>' if p.get("external")
              else '<span class="badge">Waitlist</span>')
     label, href, attrs, ic = finder_action(p)
@@ -744,6 +792,7 @@ def finder_row(p, i):
     <span class="kicker">{esc(p['area'])}</span>
     <h3><a href="{prop_url(p)}">{esc(p['name'])}</a></h3>
     <p class="fl-price">{price}{beds_html}</p>
+    {f'<p class="fl-holiday"><b>Holiday pricing</b> through {deal_day(HOLIDAY_UNTIL)}, while available</p>' if p.get("holiday") else ""}
     <p class="fl-type">{esc(p['type'])} · {esc(p['street'])}, {esc(p['city'])}</p>
   </div>
   <div class="fl-act">
@@ -800,6 +849,9 @@ def deal_note():
 
 def deal_chip():
     """In the header, while the special runs: opens its dialog (or, without JavaScript, the homes)."""
+    if not DEAL_ON and HOLIDAY_ON:
+        return (f'<a class="deal-chip" href="{CS_AVAILABILITY}" rel="noopener" data-deal-open aria-controls="deal">'
+                '<b>Holiday pricing</b><span> · Charlotte Square</span></a>')
     if not DEAL_ON:
         return ""
     return ('<a class="deal-chip" href="/properties/#available" data-deal-open aria-controls="deal">'
@@ -809,6 +861,8 @@ def deal_chip():
 def deal_dialog():
     """The special, as a dialog main.js opens once a visit (the header's deal_chip brings it back).
     Off once its last day has passed, in the build and again in the browser."""
+    if not DEAL_ON and HOLIDAY_ON:
+        return holiday_dialog()
     if not DEAL_ON:
         return ""
     rows = []
@@ -844,6 +898,41 @@ def deal_dialog():
   </div>
 </dialog>"""
 
+
+
+def holiday_dialog():
+    """Charlotte Square's holiday pricing, in the deal popup: its homes and rents, each linking
+    to Charlotte Square's availability page, where they are leased."""
+    p = BY_SLUG["charlotte-square"]
+    shown, tel = leasing_phone(p)
+
+    def kind(u):
+        b = "Studio" if not u.get("beds") else f'{u["beds"]} bed' + (" + den" if u.get("den") else "")
+        size = f' · {u["sqft"]:,} sq ft' if u.get("sqft") else ""
+        return b + size + (" · Income-restricted" if u.get("ami") else "")
+    rows = "".join(
+        f'<li><a href="{CS_AVAILABILITY}" rel="noopener" data-deal-link><span class="ds-where"><b>Unit {esc(u["unit"])}</b>'
+        f'{kind(u)}</span><span class="ds-rent">{money(u["rent"])}<small>/mo</small></span>{icon("ext")}</a></li>'
+        for u in CS_HOLIDAY["units"])
+    ami = [f'Unit {esc(u["unit"])}' for u in CS_HOLIDAY["units"] if u.get("ami")]
+    ami_note = (f' {" and ".join(ami)} {"are income-restricted (AMI) homes" if len(ami) > 1 else "is an income-restricted (AMI) home"}:'
+                ' household income limits apply.') if ami else ""
+    last = HOLIDAY_UNTIL
+    return f"""<dialog class="deal" id="deal" aria-labelledby="deal-title" data-until="{last.isoformat()}">
+  <div class="deal-box">
+    <form method="dialog"><button class="deal-x" aria-label="Close">{icon("close")}</button></form>
+    <p class="label">Charlotte Square · East End, Rochester</p>
+    <h2 id="deal-title">Holiday <em>pricing.</em></h2>
+    <p class="deal-lead">{len(CS_HOLIDAY["units"])} homes at Charlotte Square at holiday prices, good through <b>{deal_day(last)}</b> while available.</p>
+    <p class="deal-clock"><span data-deal-left>Ends {deal_day(last)}</span></p>
+    <div class="deal-specials"><h3>The holiday homes</h3><ul>{rows}</ul></div>
+    <div class="deal-actions">
+      <a class="btn btn--solid" href="{CS_AVAILABILITY}" rel="noopener" data-deal-link>See them at charlottesquareroc.com {icon("ext")}</a>
+      <a class="btn" href="tel:{tel}" data-deal-link>Call {shown}</a>
+    </div>
+    <p class="deal-small">Holiday pricing good through {deal_day(last)}, {last.year}, while available.{ami_note} Leased by Charlotte Square&rsquo;s own office. Equal Housing Opportunity.</p>
+  </div>
+</dialog>"""
 
 # ---------------------------------------------------------------- unit photos
 LINE = re.compile(r"^(\d+)([A-Z]+)$")

@@ -493,6 +493,8 @@ html:not(.js) .finder-map { display: none; }
 .fl:hover .fl-media img { transform: scale(1.05); }
 .fl-media .badge { position: absolute; left: 10px; top: 10px; background: rgba(21, 22, 19, .78); backdrop-filter: blur(6px); color: var(--cream); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 10px; border-radius: 999px; }
 .fl-media .badge--live { background: var(--tan); color: var(--ink); }
+/* Charlotte Square's holiday pricing: the accent, filled, so it reads before the photo. */
+.card-media .badge--holiday, .fl-media .badge--holiday { background: var(--accent); color: var(--paper); }
 .fl-num { position: absolute; right: 10px; bottom: 10px; min-width: 32px; height: 32px; padding: 0 8px; border-radius: 999px; background: var(--ink); color: var(--tan); font: 700 12px/32px var(--sans); letter-spacing: .06em; text-align: center; }
 .fl.is-hot .fl-num { background: var(--tan); color: var(--ink); }
 .fl-body { grid-area: body; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-top: 6px; }
@@ -503,6 +505,8 @@ html:not(.js) .finder-map { display: none; }
 .fl-price { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; font-size: 15px; color: var(--muted); }
 .fl-price b { color: var(--text); font-size: 18px; font-weight: 700; }
 .fl-price small { font-size: 13px; }
+.fl-holiday { margin: 0; font-size: 14px; color: var(--accent); }
+.fl-holiday b { font-weight: 800; }
 .fl-type { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
 .fl-act { grid-area: act; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 4px 0 2px; }
 .fl-act .btn { min-height: 42px; padding: 0 18px; font-size: 12px; }
