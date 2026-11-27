@@ -915,8 +915,9 @@ python3 tools/ads/ads.py --only water-street,biltmore --no-video   # redraw some
 **Charlotte Square's holiday pricing (through December 31, 2026).** Charlotte Square runs its
 own deals on its own site, and this site promotes them. Each build reads
 `https://www.charlottesquareroc.com/api/units`; while that carries `holiday`, Charlotte Square's
-card shows a **Holiday pricing** badge, the holiday rents (the market-rate range; the
-income-restricted AMI home is named in the popup with its limits, not quoted as a "from" price)
+card shows a **Holiday pricing** badge, the holiday rents (lowest to highest, as Charlotte
+Square's own list shows them; when the lowest is an income-restricted AMI home, the card says
+so and that income limits apply, and the popup names it)
 and a **See holiday pricing** button to its availability page, and the deal popup and header chip
 carry the holiday homes, each linking there (`utm_campaign=holiday`). The popup only takes the
 place of the half-off special while that is not running. A home leased there drops off here at

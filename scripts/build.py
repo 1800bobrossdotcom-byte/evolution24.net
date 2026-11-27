@@ -119,10 +119,12 @@ _today_et = dt.datetime.now(ZoneInfo("America/New_York")).date()
 HOLIDAY_ON = bool(CS_HOLIDAY.get("units")) and _today_et <= dt.date.fromisoformat(CS_HOLIDAY["until"])
 HOLIDAY_UNTIL = dt.date.fromisoformat(CS_HOLIDAY["until"]) if HOLIDAY_ON else None
 if HOLIDAY_ON:
-    # The card, map and building page show the holiday rents: the market-rate homes' range (an
-    # income-restricted home is named in the popup, with its limits, not quoted as a "from" price).
-    _market = [u["rent"] for u in CS_HOLIDAY["units"] if not u.get("ami")] or [u["rent"] for u in CS_HOLIDAY["units"]]
-    BY_SLUG["charlotte-square"].update(rent_range=[min(_market), max(_market)], rent_as_of=_today_et.isoformat(), holiday=True)
+    # The card, map and building page show the holiday rents, lowest to highest, as Charlotte
+    # Square's own list does. When the lowest is an income-restricted (AMI) home, the card says so.
+    _rents = [u["rent"] for u in CS_HOLIDAY["units"]]
+    _low = min(CS_HOLIDAY["units"], key=lambda u: u["rent"])
+    BY_SLUG["charlotte-square"].update(rent_range=[min(_rents), max(_rents)], rent_as_of=_today_et.isoformat(), holiday=True,
+                                       holiday_low_ami=bool(_low.get("ami")))
 
 FAQS = [
     ("How do I report a maintenance issue?",
@@ -785,6 +787,12 @@ def finder_row(p, i):
     shown, tel = leasing_phone(p)
     rr, beds = rent_range(p), beds_range(p)
     price = f'<span><b>{rr}</b><small>/mo</small></span>' if rr else '<span><b>Rents on request</b></span>'
+    holiday_line = ""
+    if p.get("holiday"):
+        ami = (f'<small>The {money(p["rent_range"][0])} home is income-restricted (AMI); income limits apply.</small>'
+               if p.get("holiday_low_ami") else "")
+        holiday_line = (f'<p class="fl-holiday"><b>Holiday pricing</b> through {deal_day(HOLIDAY_UNTIL)}, '
+                        f'while available{ami}</p>')
     beds_html = f'<span>{esc(beds)}</span>' if beds else ""
     return f"""<li class="fl" id="at-{p['slug']}" data-slug="{p['slug']}" data-tags="{' '.join(tags)}">
   <a class="fl-media" href="{prop_url(p)}" tabindex="-1" aria-hidden="true">{img(p['slug'], p['card'], '(max-width: 600px) 116px, (max-width: 980px) 40vw, 260px', alt='', fit=480)}{badge}<span class="fl-num">{i + 1:02d}</span></a>
@@ -792,7 +800,7 @@ def finder_row(p, i):
     <span class="kicker">{esc(p['area'])}</span>
     <h3><a href="{prop_url(p)}">{esc(p['name'])}</a></h3>
     <p class="fl-price">{price}{beds_html}</p>
-    {f'<p class="fl-holiday"><b>Holiday pricing</b> through {deal_day(HOLIDAY_UNTIL)}, while available</p>' if p.get("holiday") else ""}
+    {holiday_line}
     <p class="fl-type">{esc(p['type'])} · {esc(p['street'])}, {esc(p['city'])}</p>
   </div>
   <div class="fl-act">
