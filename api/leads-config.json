@@ -106,9 +106,9 @@
    "region": "syracuse",
    "pid": 3,
    "units": {
-    "27": {
-     "label": "Unit 5 · 2 bed · $1,695/mo",
-     "bedrooms": "2"
+    "26": {
+     "label": "Unit 4 · 1 bed · $1,595/mo",
+     "bedrooms": "1"
     }
    }
   },

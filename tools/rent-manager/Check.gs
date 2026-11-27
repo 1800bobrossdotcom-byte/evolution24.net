@@ -34,7 +34,7 @@ const WEBSITE = [
   { id: 11, name: "181 St. Paul", units: [] },
   { id: 12, name: "Charlotte Square", units: [] },
   { id: 2, name: "2215 James Street", units: [] },
-  { id: 3, name: "121 Park Drive", units: [[27, "5"]] },
+  { id: 3, name: "121 Park Drive", units: [[26, "4"]] },
   { id: 10, name: "379 South Main", units: [[152, "2"]] },
   { id: 5, name: "561 South Main", units: [] },
   { id: 7, name: "31 Genesee Street", units: [] },
